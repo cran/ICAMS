@@ -1,4 +1,4 @@
-context("Reading and splitting VCFs")
+context("Reading VCFs")
 
 test_that(
   "ReadStrelkaSBSVCFs",
@@ -26,7 +26,7 @@ test_that(
   "ReadMutectVCFs",
   { vcf <- ReadMutectVCFs("testdata/Mutect.GRCh37.vcf")
     vcf1 <- ReadMutectVCFs("testdata/Mutect.GRCh38.vcf")
-    vcf2 <- ReadMutectVCFs("testdata/Mutect.GRCm38.vcf")
+    vcf2 <- expect_warning(ReadMutectVCFs("testdata/Mutect.GRCm38.vcf"))
     expect_equal(dim(vcf[[1]]), c(1851, 12))
     expect_equal(dim(vcf1[[1]]), c(1561, 12))
     expect_equal(dim(vcf2[[1]]), c(1895, 12))
@@ -57,9 +57,10 @@ test_that(
                  "does not appear to be a Strelka SBS VCF",
                  fixed = TRUE)
     
-    expect_error(ReadStrelkaSBSVCFs("testdata/Strelka.ID.GRCm38.vcf"),
-                 "does not appear to be a Strelka SBS VCF",
-                 fixed = TRUE)
+    expect_error(
+      expect_warning(ReadStrelkaSBSVCFs("testdata/Strelka.ID.GRCm38.vcf")),
+      "does not appear to be a Strelka SBS VCF",
+      fixed = TRUE)
   })
 
 test_that(
@@ -115,9 +116,10 @@ test_that(
                  "does not appear to be a Mutect VCF",
                  fixed = TRUE)
     
-    expect_error(ReadMutectVCFs("testdata/Strelka.ID.GRCm38.vcf"),
-                 "does not appear to be a Mutect VCF",
-                 fixed = TRUE)
+    expect_error(
+      expect_warning(ReadMutectVCFs("testdata/Strelka.ID.GRCm38.vcf")),
+      "does not appear to be a Mutect VCF",
+      fixed = TRUE)
     
   }
 )

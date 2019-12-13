@@ -235,7 +235,12 @@ IsTransformationLegal <- function(s, t) {
  
   if (IsSignature(s$catalog.type) &&
       !IsSignature(t$catalog.type)) {
-    stop("cannot transform from a signture to a counts or density catalog")
+    stop("cannot transform from a signature to a counts or density catalog")
+  }
+  
+  if (("COMPOSITECatalog" %in% class(s)) ||
+       ("COMPOSITECatalog" %in% class(t))) {
+    stop("Transformation of class COMPOSITECatalog not supported")
   }
   
   if (IsDensity(s$catalog.type))
@@ -473,7 +478,7 @@ AbundanceIsSame <- function(a1, a2) {
 #'
 #'
 #' @param catalog An SBS or DBS catalog as described in \code{\link{ICAMS}};
-#'  must \strong{not} be an ID (indel) catalog.
+#'  must \strong{not} be an ID (small insertion and deletion) catalog.
 #'
 #' @param target.ref.genome A \code{ref.genome} argument as described in
 #'   \code{\link{ICAMS}}. If \code{NULL}, then defaults to the
@@ -619,6 +624,122 @@ StandardChromName <- function(df) {
   return(df)
 }
 
+#' Check and, if possible, correct the chromosome names in a VCF \code{data.frame}.
+#' 
+#' @param vcf.df A VCF as a \code{data.frame}. Check the names in column
+#' \code{CHROM}.
+#' 
+#' @param ref.genome The reference genome with the chromosome names to check
+#' \code{vcf.df$CHROM} against; must be a Bioconductor 
+#' \code{\link[BSgenome]{BSgenome}}, e.g.
+#' \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}.
+#' 
+#' @return If the \code{vcf.df$CHROM} values are correct or
+#' can be corrected, then a vector of chromosome names
+#' that can be used as a replacement for \code{vcf.df$CHROM}.
+#' If the names in \code{vcf.df$CHROM} cannot be made to
+#' be consistent with the chromosome names in \code{ref.genome},
+#' then \code{stop}.
+#' 
+#' @keywords internal
+CheckAndFixChrNames <- function(vcf.df, ref.genome) {
+  names.to.check <- unique(vcf.df$CHROM)
+  # Check whether the naming of chromosomes in vcf.df is consistent
+  if(!sum(grepl("^chr", names.to.check)) %in% c(0, length(names.to.check))) {
+    stop("Naming of chromosomes in input is not consistent: ",
+         paste(names.to.check, collapse = " "))
+  }
+  
+  ref.genome.names <- seqnames(ref.genome)
+  
+  not.matched <- setdiff(names.to.check, ref.genome.names)
+  
+  # The names match -- we leave well-enough alone
+  if (length(not.matched) == 0) return(vcf.df$CHROM)
+  
+  vcf.has.chr.prefix <- any(grepl(pattern = "^chr", names.to.check))
+  ref.has.chr.prefix <- any(grepl(pattern = "^chr", ref.genome.names))
+  
+  new.chr.names <- vcf.df$CHROM
+  if (ref.has.chr.prefix && !vcf.has.chr.prefix) {
+    names.to.check <- paste0("chr", names.to.check)
+    new.chr.names <- paste0("chr", new.chr.names)
+    not.matched1 <- setdiff(names.to.check, ref.genome.names)
+    if (length(not.matched1) == 0) return(new.chr.names)
+  }
+  
+  if (!ref.has.chr.prefix && vcf.has.chr.prefix) {
+    names.to.check <- gsub("chr", "", names.to.check)
+    new.chr.names <- gsub("chr", "", names.to.check)
+    not.matched2 <- setdiff(names.to.check, ref.genome.names)
+    if (length(not.matched2) == 0) return(new.chr.names)
+  }
+  
+  organism <- BSgenome::organism(ref.genome)
+  
+  if (organism == "Homo sapiens") {
+    
+    # Maybe the problem is that X and Y are encoded as chr23 and chr24
+    if ("chr23" %in% names.to.check) {
+      new.chr.names[new.chr.names == "chr23"] <- "chrX"
+      names.to.check <- setdiff(names.to.check, "chr23")
+      names.to.check <- unique(c(names.to.check, "chrX"))
+    }
+    if ("chr24" %in% names.to.check) {
+      new.chr.names[new.chr.names == "chr24"] <- "chrY"
+      names.to.check <- setdiff(names.to.check, "chr24")
+      names.to.check <- unique(c(names.to.check, "chrY"))
+    }
+    
+    # Maybe the problem is that X and Y are encoded as 23 and 24
+    if ("23" %in% names.to.check) {
+      new.chr.names[new.chr.names == "23"] <- "X"
+      names.to.check <- setdiff(names.to.check, "23")
+      names.to.check <- unique(c(names.to.check, "X"))
+    }
+    if ("24" %in% names.to.check) {
+      new.chr.names[new.chr.names == "24"] <- "Y"
+      names.to.check <- setdiff(names.to.check, "24")
+      names.to.check <- unique(c(names.to.check, "Y"))
+    }
+  }
+  
+  if (organism == "Mus musculus") {
+    
+    # Maybe the problem is that X and Y are encoded as chr20 and chr21
+    if ("chr20" %in% names.to.check) {
+      new.chr.names[new.chr.names == "chr20"] <- "chrX"
+      names.to.check <- setdiff(names.to.check, "chr20")
+      names.to.check <- unique(c(names.to.check, "chrX"))
+    }
+    if ("chr21" %in% names.to.check) {
+      new.chr.names[new.chr.names == "chr21"] <- "chrY"
+      names.to.check <- setdiff(names.to.check, "chr21")
+      names.to.check <- unique(c(names.to.check, "chrY"))
+    }
+    
+    # Maybe the problem is that X and Y are encoded as 20 and 21
+    if ("20" %in% names.to.check) {
+      new.chr.names[new.chr.names == "20"] <- "X"
+      names.to.check <- setdiff(names.to.check, "20")
+      names.to.check <- unique(c(names.to.check, "X"))
+    }
+    if ("21" %in% names.to.check) {
+      new.chr.names[new.chr.names == "21"] <- "Y"
+      names.to.check <- setdiff(names.to.check, "21")
+      names.to.check <- unique(c(names.to.check, "Y"))
+    }
+  }
+  
+  not.matched3 <- setdiff(names.to.check, ref.genome.names)
+  if (length(not.matched3) == 0) return(new.chr.names)
+  
+  stop("Chromosome names in input not in ref.genome for ",
+       organism, ": ", 
+       # We report the _original_ list of not matched names
+       paste(not.matched, collapse = " "))
+}
+
 #' Create a transcript range file from the raw GFF3 File
 #'
 #' @param file The name/path of the raw GFF3 File, or a complete URL.
@@ -668,8 +789,9 @@ CreateTransRanges <- function(file) {
 
   # Only keep the entries in dt3 with gene ID that is associated with CCDS ID.
   # Select the necessary columns and standardize the chromosome names.
-  dt4 <- dt3[gene.id %in% gene.id.CCDS, c(1, 4, 5, 7, 11)]
-  colnames(dt4) <- c("chrom", "start", "end", "strand", "gene.name")
+  dt4 <- dt3[gene.id %in% gene.id.CCDS, c(1, 4, 5, 7, 10, 11)]
+  colnames(dt4) <- c("chrom", "start", "end", "strand", 
+                     "Ensembl.gene.ID", "gene.name")
   dt5 <- StandardChromName(dt4)
 
   # Reorder dt5 according to chromosome name, start and end position
@@ -677,24 +799,35 @@ CreateTransRanges <- function(file) {
   dt5$chrom <- factor(dt5$chrom, chrOrder, ordered = TRUE)
   setkeyv(dt5, c("chrom", "start", "end"))
 
-  # Combine the overlapping ranges of the same gene if there is any
+  # Check whether one gene.name have multiple entries in dt5
   dt6 <- dt5[, count := .N, by = .(chrom, gene.name)]
   dt7 <- dt6[count == 1, ]
   dt8 <- dt6[count != 1, ]
   if (nrow(dt8) == 0) {
-    return(dt7[, c(1:5)])
+    return(dt7[, c(1:6)])
   } else {
-    gr <- GenomicRanges::makeGRangesFromDataFrame(dt8, keep.extra.columns = TRUE)
-    gr1 <- GenomicRanges::reduce(gr, with.revmap = TRUE)
-    GetGeneName <- function(idx, names){
-      return(names[idx])
-    }
-    mat <- t(sapply(gr1$revmap, FUN = GetGeneName, names = gr$gene.name))
-    unique.gene.name <- apply(mat, MARGIN = 1, FUN = unique)
-    GenomicRanges::mcols(gr1) <- unique.gene.name
-    dt9 <- as.data.table(gr1)[, c(1:3, 5:6)]
-    dt10 <- rbind(dt7[, c(1:5)], dt9, use.names = FALSE)
-    return(setkeyv(dt10, c("chrom", "start", "end")))
+    # Check and remove entries in dt8 if it has readthrough transcripts
+    dt9 <- dt[grep("readthrough", dt$V9), ]
+    info1 <- stri_split_fixed(dt9$V9, ";")
+    gene.id.readthrough.idx <- lapply(info1, grep, pattern = "gene_id")
+    gene.id.readthrough <-
+      unique(sapply(1:length(info1), ExtractInfo,
+                    list1 = info1, list2 = gene.id.readthrough.idx))
+    gene.id.readthrough1 <- 
+      sapply(stri_split_fixed(gene.id.readthrough, "="), "[", 2)
+    dt8$readthrough <- FALSE
+    dt9 <- dt8[Ensembl.gene.ID %in% gene.id.readthrough1, readthrough := TRUE]
+    dt10 <- dt9[readthrough == FALSE, ]
+    dt11 <- dplyr::distinct(dt10, chrom, gene.name, .keep_all = TRUE)
+    
+    # Rbind dt7 and dt11
+    dt12 <- rbind(dt7[, c(1:6)], dt11[, c(1:6)], use.names = FALSE)
+    
+    # Remove the string after dot in the Ensembl gene ID
+    Ensembl.gene.ID.withoutdot <- gsub("\\..*", "", dt12$Ensembl.gene.ID)
+    dt12$Ensembl.gene.ID <- Ensembl.gene.ID.withoutdot
+    
+    return(setkeyv(dt12, c("chrom", "start", "end")))
   }
 }
 
@@ -848,8 +981,16 @@ RevcDBS144 <- function(mutstring) {
 #' @keywords internal
 ReadTranscriptRanges <- function(file) {
   dt <- data.table::fread(file)
-  colnames(dt) <- c("chrom", "start", "end", "strand", "gene.name")
-  chrOrder <- c((1:22), "X", "Y")
+  colnames(dt) <- c("chrom", "start", "end", "strand", 
+                    "Ensembl.gene.ID", "gene.symbol")
+  
+  # Check whether the transcript ranges come from human or mouse genomes
+  if (length(unique(dt$chrom)) == 24) {
+    chrOrder <- c((1:22), "X", "Y")
+  } else if (length(unique(dt$chrom)) == 21) {
+    chrOrder <- c((1:19), "X", "Y")
+  }
+  
   dt$chrom <- factor(dt$chrom, chrOrder, ordered = TRUE)
   data.table::setkeyv(dt, c("chrom", "start", "end"))
   return(dt)
@@ -859,8 +1000,9 @@ ReadTranscriptRanges <- function(file) {
 #'
 #' @param file Path to the file in bed format.
 #'
-#' @return A data.table keyed by chrom, start, and end.
-#'
+#' @return A data.table keyed by chrom, start, and end. It uses one-based
+#'   coordinates.
+#'   
 #' @keywords internal
 ReadBedRanges <- function(file) {
   dt <- data.table::fread(file)
@@ -1080,10 +1222,8 @@ StopIfTranscribedRegionIllegal <- function(region) {
 #' 
 #' @keywords internal
 StopIfNrowIllegal <- function(object) {
-  if(!nrow(object) %in% c(96, 192, 1536, 78, 144, 136, 83)) {
-    stop("\nThe number of rows in the input object must be one of\n",
-         "96 192 1536 78 144 136 83\ngot ", nrow(object))
-  }
+  # Will call stop() if the number or rows is illegal.
+  InferCatalogClassString(object)
 
 }
 
@@ -1130,19 +1270,57 @@ InferClassOfCatalogForRead <- function(file) {
 }
 
 #' @keywords internal
+InferCatalogClassPrefix <- function(object) {
+  
+  nrow <- nrow(object)
+  
+  if (nrow == 96)   return("SBS96")
+  if (nrow == 192)  return("SBS192")
+  if (nrow == 1536) return("SBS1536")
+  if (nrow == 78)   return("DBS78")
+  if (nrow == 144)  return("DBS144")
+  if (nrow == 136)  return("DBS136")
+  if (nrow == 83)   return("ID")
+  if (nrow == 1697) return("COMPOSITE")
+  
+  stop("\nThe number of rows in the input object must be one of\n",
+       "96 192 1536 78 144 136 83 1697\ngot ", nrow)
+  
+}
+
+
+#' @keywords internal
 InferCatalogClassString <- function(object) {
   
-  StopIfNrowIllegal(object)
-  nrow <- nrow(object)
+  prefix <- InferCatalogClassPrefix(object)
+  if (prefix == "ID") prefix <- "Indel"
+  return(paste0(prefix, "Catalog"))
+}
 
-  if(nrow == 96)   return("SBS96Catalog")
-  if(nrow == 192)  return("SBS192Catalog")
-  if(nrow == 1536) return("SBS1536Catalog")
-  if(nrow == 78)   return("DBS78Catalog")
-  if(nrow == 144)  return("DBS144Catalog")
-  if(nrow == 136)  return("DBS136Catalog")
-  if(nrow == 83)   return("IndelCatalog")
 
+#' Infer the correct rownames for a matrix based on its number of rows
+#' 
+#' @keywords internal
+InferRownames <- function(object) {
+  prefix <- InferCatalogClassPrefix(object)
+  return(ICAMS::catalog.row.order[[prefix]])
+}
+
+#' Check whether the rownames of \code{object} are correct, if yes then put the
+#' rows in the correct order.
+#'
+#' @keywords internal
+CheckAndReorderRownames <- function(object) {
+  prefix <- InferCatalogClassPrefix(object)
+  correct.rownames <- ICAMS::catalog.row.order[[prefix]]
+  difference <- setdiff(correct.rownames, rownames(object))
+  if(identical(difference, character(0))) {
+    return(object[correct.rownames, , drop = FALSE])
+  } else {
+    stop("\nThe input object does not have correct rownames to denote the\n", 
+         "mutation types. Mutation types that are missing are\n", 
+         paste(difference, collapse = " "))
+  }
 }
 
 #' Test if object is \code{BSgenome.Hsapiens.1000genome.hs37d5}.
@@ -1208,6 +1386,10 @@ InferAbundance <- function(object, ref.genome, region, catalog.type) {
     StopIfNrowIllegal(object)
     StopIfRegionIllegal(region)
     StopIfCatalogTypeIllegal(catalog.type)
+    if (nrow(object) == 1697) {
+      return(NULL)
+      # There are no meaningful abundances for COMPOSITE catalogs.
+    }
 
     if (IsDensity(catalog.type)) {
       ab <- flat.abundance[[as.character(nrow(object))]]
@@ -1217,7 +1399,7 @@ InferAbundance <- function(object, ref.genome, region, catalog.type) {
     
     if (is.null(ref.genome)) return(NULL)
     ref.genome <- NormalizeGenomeArg(ref.genome)
-    ab <- all.abundance[[ref.genome@pkgname]]
+    ab <- ICAMS::all.abundance[[ref.genome@pkgname]]
     if (is.null(ab)) return(NULL)
 
     ab2 <- ab[[region]]
@@ -1228,12 +1410,16 @@ InferAbundance <- function(object, ref.genome, region, catalog.type) {
     return(ab3)
 
   }
-  
 
-#' Create a catalog from a numeric \code{matrix} or numeric \code{data.frame}.
+#' Create a catalog from a \code{matrix}, \code{data.frame}, or \code{vector}.
 #'
-#' @param object A numeric \code{matrix} or numeric \code{data.frame}. 
-#'  This object must have
+#' @param object A numeric \code{matrix}, numeric \code{data.frame},
+#' or \code{vector}.
+#' If a \code{vector}, converted to a 1-column \code{matrix}
+#' with rownames taken from the element names of the \code{vector}
+#' and with column name \code{"Unknown"}.
+#' If argument \code{infer.rownames}
+#'  is \code{FALSE} than this argument must have
 #'   rownames to denote the mutation types. See \code{\link{CatalogRowOrder}}
 #'   for more details.
 #'
@@ -1255,6 +1441,12 @@ InferAbundance <- function(object, ref.genome, region, catalog.type) {
 #'  The argument \code{abundance} should
 #'  contain the counts of different source sequences for mutations
 #'  in the same format as the numeric vectors in \code{\link{all.abundance}}.
+#'  
+#' @param infer.rownames If \code{TRUE}, and \code{object} has no
+#' rownames, then assume the rows of \code{object} are in the
+#' correct order and add the rownames implied by the number of rows
+#' in \code{object} (e.g. rownames for SBS 192 if there are 192 rows).
+#' If \code{TRUE}, \strong{be sure the order of rows is correct.}
 #'
 #' @return A catalog as described in \code{\link{ICAMS}}.
 #'
@@ -1270,21 +1462,35 @@ as.catalog <- function(object,
                        ref.genome = NULL, 
                        region = "unknown", 
                        catalog.type = "counts", 
-                       abundance = NULL) {
+                       abundance = NULL,
+                       infer.rownames = FALSE) {
   if (!is.matrix(object)) {
     if (is.data.frame(object)) {
       object <- as.matrix(object)
+    } else if (is.vector(object)) {
+      obj2 <- matrix(object, ncol = 1)
+      rownames(obj2) <- names(object)
+      colnames(obj2) <- "Unknown"
+      object <- obj2
     } else {
-      stop("object must be numeric matrix or data frame")
+      stop("object must be numeric matrix, vector, or data frame")
     }
   }
   stopifnot(mode(object) == "numeric")
 
-  stopifnot(!is.null(rownames(object)))
-  
+  if (is.null(rownames(object))) {
+    if (!infer.rownames) {
+      stop("Require correct rownames on object unless infer.rownames == TRUE")
+    }
+    rownames(object) <- InferRownames(object)
+  } else {
+    object <- CheckAndReorderRownames(object)
+  }
+
   StopIfRegionIllegal(region)
   
-  StopIfNrowIllegal(object)
+  # Will call stop() if nrow(object) is illegal
+  class.string  <- InferCatalogClassString(object)
   
   StopIfCatalogTypeIllegal(catalog.type)
   
@@ -1300,7 +1506,6 @@ as.catalog <- function(object,
   } 
   attr(object, "abundance") <- abundance
 
-  class.string  <- InferCatalogClassString(object)
   class(object) <- append(class(object), class.string, after = 0)
   class(object) <- unique(attributes(object)$class)
   
@@ -1504,7 +1709,8 @@ RemoveRangesOnBothStrand <- function(stranded.ranges) {
 #'   genome(sequence). Only simple repeat masking is accepted now.
 #'
 #' @param stranded.ranges A keyed data table which has stranded ranges
-#'   information. It has four columns: chrom, start, end and strand.
+#'   information. It has four columns: chrom, start, end and strand. It should
+#'   use one-based coordinate system.
 #'   
 #' @param verbose If \code{TRUE} generate progress messages.
 #'
@@ -1582,9 +1788,12 @@ GetStrandedKmerCounts <-
 #' @param ref.genome A \code{ref.genome} argument as described in
 #'   \code{\link{ICAMS}}.
 #'
-#' @param exome.range A keyed data table which has exome ranges information.
-#' It has three columns: chrom, start and end.
-#'
+#' @param exome.range A keyed data table which has exome ranges information. It
+#'   has three columns: chrom, start and end. It should use one-based coordinate
+#'   system. You can use the internal function in this package
+#'   \code{ICAMS:::ReadBedRanges} to read a BED file in 0-based coordinates and
+#'   convert it to 1-based coordinates.
+#'   
 #' @param filter.path If given, homopolymers will be masked from
 #'   genome(sequence). Only simple repeat masking is accepted now.
 #'   
@@ -1655,7 +1864,7 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
 `[.SBS96Catalog` <- function (x, i, j, drop = if (missing(i)) TRUE else length(cols) ==
                                 1) {
   y <- NextMethod("[")
-  if (class(y) %in% c("integer", "numeric")) {
+  if (inherits(y, c("integer", "numeric"))) {
     return(y)
   } else {
     class(y) <- class(x)
@@ -1670,7 +1879,7 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
 `[.SBS192Catalog` <- function (x, i, j, drop = if (missing(i)) TRUE else length(cols) ==
                                 1) {
   y <- NextMethod("[")
-  if (class(y) %in% c("integer", "numeric")) {
+  if (inherits(y, c("integer", "numeric"))) {
     return(y)
   } else {
     class(y) <- class(x)
@@ -1685,7 +1894,7 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
 `[.SBS1536Catalog` <- function (x, i, j, drop = if (missing(i)) TRUE else length(cols) ==
                                  1) {
   y <- NextMethod("[")
-  if (class(y) %in% c("integer", "numeric")) {
+  if (inherits(y, c("integer", "numeric"))) {
     return(y)
   } else {
     class(y) <- class(x)
@@ -1700,7 +1909,7 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
 `[.DBS78Catalog` <- function (x, i, j, drop = if (missing(i)) TRUE else length(cols) ==
                                   1) {
   y <- NextMethod("[")
-  if (class(y) %in% c("integer", "numeric")) {
+  if (inherits(y, c("integer", "numeric"))) {
     return(y)
   } else {
     class(y) <- class(x)
@@ -1715,7 +1924,7 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
 `[.DBS144Catalog` <- function (x, i, j, drop = if (missing(i)) TRUE else length(cols) ==
                                 1) {
   y <- NextMethod("[")
-  if (class(y) %in% c("integer", "numeric")) {
+  if (inherits(y, c("integer", "numeric"))) {
     return(y)
   } else {
     class(y) <- class(x)
@@ -1730,7 +1939,7 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
 `[.DBS136Catalog` <- function (x, i, j, drop = if (missing(i)) TRUE else length(cols) ==
                                  1) {
   y <- NextMethod("[")
-  if (class(y) %in% c("integer", "numeric")) {
+  if (inherits(y, c("integer", "numeric"))) {
     return(y)
   } else {
     class(y) <- class(x)
@@ -1745,7 +1954,7 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
 `[.IndelCatalog` <- function (x, i, j, drop = if (missing(i)) TRUE else length(cols) ==
                                  1) {
   y <- NextMethod("[")
-  if (class(y) %in% c("integer", "numeric")) {
+  if (inherits(y, c("integer", "numeric"))) {
     return(y)
   } else {
     class(y) <- class(x)

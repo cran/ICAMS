@@ -20,10 +20,12 @@
 #'
 #' @return A catalog as an S3 object; see \code{\link{as.catalog}}.
 #'
-#' @note In ID (insertion and deletion) catalogs, deletion repeat sizes
+#' @note In ID (small insertion and deletion) catalogs, deletion repeat sizes
 #'   range from 0 to 5+, but for plotting and end-user documentation
 #'   deletion repeat sizes range from 1 to 6+.
 #'
+#' @inheritSection MutectVCFFilesToCatalog Comments
+#' 
 #' @export
 #' 
 #' @examples 
@@ -53,7 +55,7 @@ ReadCatalog <- function(file, ref.genome = NULL, region = "unknown",
 #' @param strict If TRUE, do additional checks on the input, and stop if the
 #'   checks fail.
 #'
-#' @note In ID (insertion and deletion) catalogs, deletion repeat sizes
+#' @note In ID (small insertion and deletion) catalogs, deletion repeat sizes
 #'   range from 0 to 5+, but for plotting and end-user documentation
 #'   deletion repeat sizes range from 1 to 6+.
 #'
@@ -156,10 +158,11 @@ ReadCatalog.SBS1536Catalog <- function(file, ref.genome = NULL, region = "unknow
 }
 
 #' @export
-ReadCatalog.DBS78Catalog <- function(file, ref.genome = NULL, region = "unknown", 
-                                     catalog.type = "counts", strict = TRUE) {
-  cos <- data.table::fread(file)
-  stopifnot(nrow(cos) == 78)
+ReadCatalog.DBS78Catalog <- 
+  function(file, ref.genome = NULL, region = "unknown", 
+           catalog.type = "counts", strict = TRUE) {
+    cos <- data.table::fread(file)
+    stopifnot(nrow(cos) == 78)
   if (strict) {
     stopifnot(names(cos)[1 : 2] == c("Ref", "Var"))
   }
@@ -249,19 +252,34 @@ ReadCatalog.IndelCatalog <- function(file, ref.genome = NULL, region = "unknown"
                                      catalog.type = "counts", strict = TRUE) {
   cos <- data.table::fread(file)
   stopifnot(nrow(cos) == 83)
-  cn <- names(cos)
-  ex.cn <- c("Type", "Subtype", "Indel_size", "Repeat_MH_size")
-  # Repeat_MH_size is the size of repeat OR microhomology (MH)
-  if (strict) { for (i in 1 : 4) { stopifnot(cn[i] == ex.cn[i]) } }
-  names(cos)[1 : 4] <- ex.cn
-  rn <- apply(cos[, 1 : 4], MARGIN = 1, paste, collapse = ":")
-  # View(data.frame(mini=rn, good=ICAMS::catalog.row.order$ID))
-  out <- as.matrix(cos[ , -(1 : 4)], drop = FALSE)
-  rownames(out) <- rn
-  if (strict) {
-    stopifnot(rownames(out) == ICAMS::catalog.row.order$ID)
+  
+  if (any(grepl("Del:M:1", cos[ , 1]))) {
+    if (strict) {
+      stop("Cannot interpret ", file, 
+           " as a SigProfiler ID catalog when strict = TRUE")
+    } 
+    warning("Interpreting ", file, 
+            " as a SigProfiler insertion/deletion catalog")
+    rn <- TransRownames.ID.SigPro.PCAWG(unlist(cos[ , 1]))
+    out <- as.matrix(cos[ , -1, drop = FALSE])
+  } else {
+    cn <- names(cos)
+    ex.cn <- c("Type", "Subtype", "Indel_size", "Repeat_MH_size")
+    # Repeat_MH_size is the size of repeat OR microhomology (MH)
+    # if (strict) { for (i in 1:4) { stopifnot(cn[i] == ex.cn[i]) } }
+    if (strict) stopifnot(cn[1:4] == ex.cn)
+    names(cos)[1:4] <- ex.cn
+    rn <- apply(cos[ , 1:4], MARGIN = 1, paste, collapse = ":")
+    out <- as.matrix(cos[ , -(1:4), drop = FALSE])
   }
-  if (ncol(out) == 1) colnames(out) <- colnames(cos)[3]
+
+  stopifnot(setdiff(rn, ICAMS::catalog.row.order$ID) == c())
+  stopifnot(setdiff(ICAMS::catalog.row.order$ID, rn) == c())
+  if (strict) {
+    stopifnot(rn == ICAMS::catalog.row.order$ID)
+  }
+  rownames(out) <- rn
+#   if (ncol(out) == 1) colnames(out) <- colnames(cos)[3] 
   out <- out[ICAMS::catalog.row.order$ID, , drop = FALSE]
   return(as.catalog(out, ref.genome, region, catalog.type))
 }

@@ -4,17 +4,14 @@
 \alias{CreateOneColSBSMatrix}
 \title{Create the matrix an SBS catalog for *one* sample from an in-memory VCF.}
 \usage{
-CreateOneColSBSMatrix(vcf, trans.ranges = NULL, sample.id = "count")
+CreateOneColSBSMatrix(vcf, sample.id = "count")
 }
 \arguments{
-\item{vcf}{An in-memory VCF file annotated by the AddSeqContext and
-AddTranscript functions. It must *not* contain indels and must *not*
-contain DBS (double base substitutions), or triplet base substitutions
-etc., even if encoded as neighboring SBS.}
-
-\item{trans.ranges}{A \code{\link[data.table]{data.table}} which contains
-transcript range and strand information. Please refer to
-\code{\link{TranscriptRanges}} for more details.}
+\item{vcf}{An in-memory VCF file annotated with sequence context and
+transcript information by function \code{\link{AnnotateSBSVCF}}. It must
+*not* contain indels and must *not* contain DBS (double base
+substitutions), or triplet base substitutions etc., even if encoded as
+neighboring SBS.}
 
 \item{sample.id}{Usually the sample id, but defaults to "count".}
 }

@@ -7,6 +7,7 @@
 
 [![Travis build
 status](https://travis-ci.org/steverozen/ICAMS.svg?branch=master)](https://travis-ci.org/steverozen/ICAMS)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/ICAMS)](https://cran.r-project.org/package=ICAMS)
 
 <!-- badges: end -->
 
@@ -29,14 +30,32 @@ signatures.
 
 ## Installation
 
-Install development version of ICAMS from [GitHub](https://github.com/)
-with the R command
-line:
+Install the stable version of ICAMS from
+[CRAN](https://cran.r-project.org/) with the R command line:
 
 ``` r
+install.packages("ICAMS")
+```
+
+After that, install the necessary dependency package from
+[Bioconductor](https://www.bioconductor.org/) in order to successfully
+load ICAMS:
+
+``` r
+install.packages("BiocManager")
+BiocManager::install("BSgenome")
+```
+
+### Development version
+
+To use new features, you can install ICAMS from the master branch on
+[GitHub](https://github.com/), which may not be stable:
+
+``` r
+install.packages("devtools")
 devtools::install_github("steverozen/ICAMS")
 ```
 
 ## Reference manual
 
-<https://github.com/steverozen/ICAMS/blob/master/data-raw/ICAMS_2.0.8.pdf>
+<https://github.com/steverozen/ICAMS/blob/master/data-raw/ICAMS_2.0.10.pdf>

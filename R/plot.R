@@ -32,7 +32,10 @@
 #'
 #' @import graphics
 #'
-#' @return \code{invisible(TRUE)}
+#' @return A list whose first element is a logic value indicating whether the
+#'   plot is successful. The second element is a numeric vector giving the
+#'   coordinates of all the bar midpoints drawn, useful for adding to the
+#'   graph(\strong{currently only implemented for SBS96Catalog}).
 #'
 #' @note The sizes of repeats involved in deletions range from 0 to 5+ in the
 #'   mutational-spectra and signature catalog rownames, but for plotting and
@@ -89,7 +92,7 @@ PlotCatalog <- function(catalog, plot.SBS12 = NULL, cex = NULL,
 #'   implemented for SBS96Catalog.
 #'
 #' @return \code{invisible(TRUE)}
-#'
+#'   
 #' @note The sizes of repeats involved in deletions range from 0 to 5+ in the
 #'   mutational-spectra and signature catalog rownames, but for plotting and
 #'   end-user documentation deletion repeat sizes range from 1 to 6+.
@@ -122,12 +125,12 @@ PlotCatalog.SBS96Catalog <-
     stopifnot(dim(catalog) == c(96, 1))
     stopifnot(rownames(catalog) == ICAMS::catalog.row.order$SBS96)
 
-    class.col <- c("#0000ff",  # dark blue
-                   "#000000",  # black
-                   "#ff4040",  # red
-                   "#838383",  # grey
-                   "#40ff40",  # green
-                   "#ff667f")  # pink
+    class.col <- c("#0000ff",  
+                   "#000000",  
+                   "#ff4040",  
+                   "#838383",  
+                   "#40ff40",  
+                   "#ff667f")  
 
     cols <- rep(class.col, each = 16)
     maj.class.names <- c("C>A", "C>G", "C>T", "T>A", "T>C", "T>G")
@@ -142,14 +145,14 @@ PlotCatalog.SBS96Catalog <-
       # Get ylim
       ymax <- max(catalog[, 1] * 1000000)
     } else if (attributes(catalog)$catalog.type == "counts") {
-      # Get ylim
-      ymax <- max(catalog[, 1])
+      # Set a minimum value for ymax to make the plot more informative
+      ymax <- 4 * ceiling(max(max(catalog[, 1]), 10) / 4)
 
       # Barplot
       bp <- barplot(catalog[, 1], xaxt = "n", yaxt = "n", xlim = c(-1, 230),
-                    xaxs = "i", lwd = 3, space = 1.35, border = NA,
-                    col = cols, ylab = "counts", cex.lab = 0.8)
-
+                    ylim = c(0, ymax), xaxs = "i", lwd = 3, space = 1.35, 
+                    border = NA, col = cols, ylab = "counts", cex.lab = 0.8)
+                    
       # Write the mutation counts on top of graph
       for (i in 1 : 6) {
         j <- 16 + 16 * (i - 1)
@@ -185,7 +188,7 @@ PlotCatalog.SBS96Catalog <-
     if (attributes(catalog)$catalog.type != "counts") {
       y.axis.labels <- format(round(y.axis.values, 2), nsmall = 2)
     } else {
-      y.axis.labels <- round(y.axis.values, 0)
+      y.axis.labels <- y.axis.values
     }
     if (grid) {
       text(-0.5, y.axis.values, labels = y.axis.labels,
@@ -232,7 +235,7 @@ PlotCatalog.SBS96Catalog <-
       text((x.left + x.right)/2, ymax * 1.38, labels = maj.class.names, xpd = NA)
     }
 
-    invisible(TRUE)
+    return(list(plot.success = TRUE, plot.object = bp))
   }
 
 #' @export
@@ -288,8 +291,8 @@ PlotCatalog.SBS192Catalog <- function(catalog, plot.SBS12 = FALSE, cex = 0.8,
     cols <- rep(strand.col, num.classes / 2)
 
     if (attributes(cat)$catalog.type == "counts") {
-      # Get ylim
-      ymax <- max(cat[, 1]) * 1.3
+      # Set a minimum value for ymax to make the plot more informative
+      ymax <- 4 * ceiling(max(max(cat[, 1]) * 1.3, 10) / 4)
 
       # Barplot: side by side
       mat <- matrix(cat[, 1], nrow = 2, ncol = num.classes / 2)
@@ -351,7 +354,7 @@ PlotCatalog.SBS192Catalog <- function(catalog, plot.SBS12 = FALSE, cex = 0.8,
     if (attributes(cat)$catalog.type != "counts") {
       y.axis.labels <- format(round(y.axis.values, 2), nsmall = 2)
     } else {
-      y.axis.labels <- round(y.axis.values, 0)
+      y.axis.labels <- y.axis.values
 
       # Write the mutation counts on top of graph
       for (i in 1 : 6) {
@@ -400,7 +403,7 @@ PlotCatalog.SBS192Catalog <- function(catalog, plot.SBS12 = FALSE, cex = 0.8,
       }
 
       # Get ylim
-      ymax <- max(counts.strand) * 1.3
+      ymax <- 4 * ceiling(max(max(counts.strand) * 1.3, 10) / 4)
 
       # Barplot: side by side
       mat <- matrix(counts.strand, nrow = 2, ncol = num.classes / 2)
@@ -482,7 +485,7 @@ PlotCatalog.SBS192Catalog <- function(catalog, plot.SBS12 = FALSE, cex = 0.8,
          font = 2, cex = cex, adj = c(0, 0))
   }
 
-  invisible(TRUE)
+  return(list(plot.success = TRUE))
 }
 
 #' @export
@@ -704,7 +707,7 @@ PlotCatalog.SBS1536Catalog <-
     }
   }
 
-  invisible(TRUE)
+  return(list(plot.success = TRUE))
 }
 
 #' @export
@@ -751,8 +754,8 @@ PlotCatalog.DBS78Catalog <- function(catalog, plot.SBS12, cex,
                   lwd = 3, space = 1.35, border = NA, col = cols,
                   xpd = NA, ylab = "mut/million", cex.lab = 0.8)
   } else if (attributes(catalog)$catalog.type == "counts") {
-    # Get ylim
-    ymax <- max(catalog[, 1]) * 1.3
+    # Set a minimum value for ymax to make the plot more informative
+    ymax <- 4 * ceiling(max(max(catalog[, 1]) * 1.3, 10) / 4)
 
     # Barplot
     bp <- barplot(catalog[, 1], xaxt = "n", yaxt = "n", ylim = c(0, ymax),
@@ -805,7 +808,7 @@ PlotCatalog.DBS78Catalog <- function(catalog, plot.SBS12, cex,
   if (attributes(catalog)$catalog.type != "counts") {
     y.axis.labels <- format(round(y.axis.values, 2), nsmall = 2)
   } else {
-    y.axis.labels <- round(y.axis.values, 0)
+    y.axis.labels <- y.axis.values
   }
   text(0.35, y.axis.values, labels = y.axis.labels,
        las = 1, adj = 1, xpd = NA, cex = 0.75)
@@ -816,7 +819,7 @@ PlotCatalog.DBS78Catalog <- function(catalog, plot.SBS12, cex,
   text(bp, -ymax / 15, labels = substr(rownames(catalog), 3, 3),
        cex = 0.5, srt = 90, adj = 1, xpd = NA)
 
-  invisible(TRUE)
+  return(list(plot.success = TRUE))
 }
 
 #' @export
@@ -865,9 +868,9 @@ PlotCatalog.DBS144Catalog <- function(catalog, plot.SBS12, cex = 1,
       counts.strand[2 * i] <-
         sum(counts[seq(idx[i] + 2, idx[i + 1], by = 2)])
     }
-
-    # Get ylim
-    ymax <- max(counts.strand) * 1.3
+    
+    # Set a minimum value for ymax to make the plot more informative
+    ymax <- 4 * ceiling(max(max(counts.strand) * 1.3, 10) / 4)
 
     # Barplot: side by side
     mat <- matrix(counts.strand, nrow = 2, ncol = num.classes / 2)
@@ -929,7 +932,7 @@ PlotCatalog.DBS144Catalog <- function(catalog, plot.SBS12, cex = 1,
   if (attributes(catalog)$catalog.type != "counts") {
     y.axis.labels <- format(round(y.axis.values, 2), nsmall = 2)
   } else {
-    y.axis.labels <- round(y.axis.values, 0)
+    y.axis.labels <- y.axis.values
   }
   Axis(side = 2, at = y.axis.values, las = 1, labels = FALSE)
   text(-0.35, y.axis.values, labels = y.axis.labels,
@@ -949,7 +952,7 @@ PlotCatalog.DBS144Catalog <- function(catalog, plot.SBS12, cex = 1,
   text(bp[8], ymax, labels = colnames(catalog), xpd = NA,
        font = 2, cex = cex, adj = c(0, 0))
 
-  invisible(TRUE)
+  return(list(plot.success = TRUE))
 }
 
 #' @export
@@ -978,8 +981,10 @@ PlotCatalog.DBS136Catalog <- function(catalog, plot.SBS12, cex,
   stopifnot(dim(catalog) == c(136, 1))
 
   # Specify the layout of the plotting
-  invisible(layout(matrix(c(7, 8, 9, 10, 4, 5, 6, 11, 1, 2 , 3, 11), 3, 4,
-                          byrow = TRUE)))
+  # invisible(
+    layout(matrix(c(7, 8, 9, 10, 4, 5, 6, 11, 1, 2 , 3, 11), 3, 4,
+                          byrow = TRUE))
+  #  )
 
   # Define the bases and their colors in plot
   base <- c("A", "C", "G", "T")
@@ -1114,7 +1119,7 @@ PlotCatalog.DBS136Catalog <- function(catalog, plot.SBS12, cex,
   text(rep(0.5, 5), seq(0.7, 0.3, length.out = 5),
        paste(ref[6:10], maxima[6:10], sep = " = "), adj = 0, cex = 1.2, xpd = NA)
   
-  invisible(TRUE)
+  return(list(plot.success = TRUE))
 }
 
 #' @export
@@ -1322,8 +1327,8 @@ PlotCatalog.IndelCatalog <- function(catalog, plot.SBS12, cex,
                 1, 2, 3, 5))
 
   if (attributes(catalog)$catalog.type == "counts") {
-    # Get ylim
-    ymax <- max(catalog) * 1.3
+    # Set a minimum value for ymax to make the plot more informative
+    ymax <- 4 * ceiling(max(max(catalog[, 1]) * 1.3, 10) / 4)
 
     # Barplot
     bp <- barplot(catalog[, 1], ylim = c(0, ymax), axes = FALSE, xaxt = "n",
@@ -1396,7 +1401,7 @@ PlotCatalog.IndelCatalog <- function(catalog, plot.SBS12, cex,
     text(-9, ymax / 2, labels = "counts proportion",
          srt = 90, xpd = NA, cex = 0.8)
   } else {
-    y.axis.labels <- round(y.axis.values, 0)
+    y.axis.labels <- y.axis.values
     text(-9, ymax / 2, labels = "counts",
          srt = 90, xpd = NA, cex = 0.8)
   }
@@ -1420,7 +1425,7 @@ PlotCatalog.IndelCatalog <- function(catalog, plot.SBS12, cex,
   text(bp, -ymax * 0.15, labels = mut.type, cex = 0.65, xpd = NA)
   text(bottom.pos, -ymax * 0.27, labels = bottom.lab, cex = 0.75, xpd = NA)
 
-  invisible(TRUE)
+  return(list(plot.success = TRUE))
 }
 
 #' @export

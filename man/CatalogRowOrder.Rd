@@ -4,11 +4,14 @@
 \name{CatalogRowOrder}
 \alias{CatalogRowOrder}
 \alias{catalog.row.order}
+\alias{catalog.row.order.sp}
 \title{Standard order of row names in a catalog.}
 \format{A list of character vectors indicating the standard
   orders of row names in catalogs.}
 \usage{
 catalog.row.order
+
+catalog.row.order.sp
 }
 \description{
 This data is designed for those
@@ -18,9 +21,10 @@ types.  For example, for SBS96 catalogs, the rowname
  AGAT represents a mutation from AGA > ATA.
 }
 \note{
-In ID (insertion and deletion) catalogs, deletion repeat sizes
-  range from 0 to 5+, but for plotting and end-user documentation
-  deletion repeat sizes range from 1 to 6+.
+In ID (small insertion and deletion) catalogs, deletion repeat sizes
+  range from 0 to 5+, but for plotting and end-user documentation deletion
+  repeat sizes range from 1 to 6+. In ID83 catalogs, deletion repeat sizes
+  range from 0 to 5.
 }
 \examples{
 catalog.row.order$SBS96
@@ -28,5 +32,9 @@ catalog.row.order$SBS96
 # There are altogether 96 row names to denote the mutation types
 # in SBS96 catalog.
 
+catalog.row.order.sp$ID83
+# "DEL:C:1:0" "DEL:C:1:1" "DEL:C:1:2" "DEL:C:1:3" ...
+# There are altogether 83 row names to denote the mutation types
+# in ID83 catalog.
 }
 \keyword{datasets}

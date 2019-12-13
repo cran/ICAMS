@@ -9,9 +9,10 @@
 #' @format A list of character vectors indicating the standard
 #'   orders of row names in catalogs.
 #'
-#' @note In ID (insertion and deletion) catalogs, deletion repeat sizes
-#'   range from 0 to 5+, but for plotting and end-user documentation
-#'   deletion repeat sizes range from 1 to 6+.
+#' @note In ID (small insertion and deletion) catalogs, deletion repeat sizes
+#'   range from 0 to 5+, but for plotting and end-user documentation deletion
+#'   repeat sizes range from 1 to 6+. In ID83 catalogs, deletion repeat sizes
+#'   range from 0 to 5.
 #'
 #' @name CatalogRowOrder
 #' 
@@ -21,7 +22,18 @@
 #' # There are altogether 96 row names to denote the mutation types
 #' # in SBS96 catalog.
 #' 
+#' catalog.row.order.sp$ID83
+#' # "DEL:C:1:0" "DEL:C:1:1" "DEL:C:1:2" "DEL:C:1:3" ...
+#' # There are altogether 83 row names to denote the mutation types
+#' # in ID83 catalog.
+NULL
+
+#' @rdname CatalogRowOrder
 "catalog.row.order"
+
+#' @rdname CatalogRowOrder
+"catalog.row.order.sp"
+
 
 #' Transcript ranges data
 #'
@@ -52,7 +64,7 @@
 #' @format A \code{\link[data.table]{data.table}} which contains transcript
 #'   range and strand information for a particular reference genome.
 #'   \code{colname}s are \code{chrom}, \code{start}, \code{end}, \code{strand},
-#'   \code{gene.name}. It uses one-based coordinates.
+#'   \code{Ensembl.gene.ID}, \code{gene.symbol}. It uses one-based coordinates.
 #' 
 #' @source \url{ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/GRCh37_mapping/gencode.v30lift37.annotation.gff3.gz}
 #' 
@@ -64,14 +76,13 @@
 #' 
 #' @examples 
 #' trans.ranges.GRCh37
-#' # chrom    start      end strand gene.name
-#' #     1    65419    71585      +     OR4F5
-#' #     1   367640   368634      +    OR4F29
-#' #     1   621059   622053      -    OR4F16
-#' #     1   859308   879961      +    SAMD11
-#' #     1   879583   894689      -     NOC2L
-#' #   ...      ...      ...    ...       ...
-#' 
+#' # chrom    start      end strand Ensembl.gene.ID  gene.symbol
+#' #     1    65419    71585      + ENSG00000186092        OR4F5
+#' #     1   367640   368634      + ENSG00000235249       OR4F29
+#' #     1   621059   622053      - ENSG00000284662       OR4F16
+#' #     1   859308   879961      + ENSG00000187634       SAMD11
+#' #     1   879583   894689      - ENSG00000188976        NOC2L
+#' #   ...      ...      ...    ...             ...          ... 
 NULL
 
 #' @rdname TranscriptRanges
@@ -82,6 +93,7 @@ NULL
 
 #' @rdname TranscriptRanges
 "trans.ranges.GRCm38"
+
 
 #' K-mer abundances.
 #'
@@ -114,17 +126,46 @@ NULL
 
 "all.abundance"
 
+#' Example gene expression data from two cell lines.
+#'
+#' This data is designed to be used as an example in function \cr
+#' \code{\link{PlotTransBiasGeneExp}} and \code{\link{PlotTransBiasGeneExpToPdf}}.
+#'
+#' @format A \code{\link{data.table}} which contains the expression values of genes.
+#'   
+#' @name GeneExpressionData
+#' 
+#' @examples 
+#' gene.expression.data.HepG2
+#' # Ensembl.gene.ID  gene.symbol  counts            TPM
+#' # ENSG00000000003       TSPAN6    6007   33.922648455
+#' # ENSG00000000005         TNMD       0    0.000000000
+#' # ENSG00000000419         DPM1    4441   61.669371091
+#' # ENSG00000000457        SCYL3    1368    3.334619195
+#' # ENSG00000000460     C1orf112     916    2.416263423
+#' #             ...          ...     ...            ...
+NULL
+
+#' @rdname GeneExpressionData
+"gene.expression.data.HepG2"
+
+#' @rdname GeneExpressionData
+"gene.expression.data.MCF10A"
+
 # Quiets concerns of R CMD check about no visible binding for global variable
 if(getRversion() >= "2.15.1") {
-  utils::globalVariables(c("all.abundance",
-                           "BSgenome.Mmusculus.UCSC.mm10",
-                           "POS2", "POS", 
-                           "bothstrand", "strand", ".", "CHROM",
+  utils::globalVariables(c("all.abundance", "binomial", "trans.ranges.GRCh38",
+                           "BSgenome.Mmusculus.UCSC.mm10", "trans.ranges.GRCm38",
+                           "POS2", "POS", "trans.strand", "trans.gene.symbol",
+                           "bothstrand", "strand", ".", "CHROM", "Exp_Level",
                            "ALT", "count", "rn", "occurrences", "type", "strand",
                            "bothstrand", "chrom", "exome.start", "exome.end",
                            "count", "REF", "seq.21bases", "N", "pyr.mut", "nrn",
                            "mutation", "LOW", "ID", "REF.x", "REF.y", "ALT.x",
                            "ALT.y", "ref2alt", "minus1bs", "minus2bs", "plus1bs",
                            "plus2bs", "POS.plus.one", "HIGH", "POS.y", "VAF.x",
-                           "VAF.y", "delete.flag", "trans.ranges.GRCh37", "cols"))
+                           "VAF.y", "delete.flag", "trans.ranges.GRCh37", "cols",
+                           "Ensembl.gene.ID", "readthrough", "exp.value", 
+                           "trans.end.pos", "trans.start.pos",
+                           "exp.level", "trans.Ensembl.gene.ID"))
 }

@@ -10,7 +10,7 @@
 \format{A \code{\link[data.table]{data.table}} which contains transcript
   range and strand information for a particular reference genome.
   \code{colname}s are \code{chrom}, \code{start}, \code{end}, \code{strand},
-  \code{gene.name}. It uses one-based coordinates.}
+  \code{Ensembl.gene.ID}, \code{gene.symbol}. It uses one-based coordinates.}
 \source{
 \url{ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/GRCh37_mapping/gencode.v30lift37.annotation.gff3.gz}
 
@@ -51,13 +51,12 @@ This information is needed for \code{\link{StrelkaSBSVCFFilesToCatalog}}, \cr
 }
 \examples{
 trans.ranges.GRCh37
-# chrom    start      end strand gene.name
-#     1    65419    71585      +     OR4F5
-#     1   367640   368634      +    OR4F29
-#     1   621059   622053      -    OR4F16
-#     1   859308   879961      +    SAMD11
-#     1   879583   894689      -     NOC2L
-#   ...      ...      ...    ...       ...
-
+# chrom    start      end strand Ensembl.gene.ID  gene.symbol
+#     1    65419    71585      + ENSG00000186092        OR4F5
+#     1   367640   368634      + ENSG00000235249       OR4F29
+#     1   621059   622053      - ENSG00000284662       OR4F16
+#     1   859308   879961      + ENSG00000187634       SAMD11
+#     1   879583   894689      - ENSG00000188976        NOC2L
+#   ...      ...      ...    ...             ...          ... 
 }
 \keyword{datasets}
