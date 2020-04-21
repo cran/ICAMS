@@ -297,7 +297,7 @@ TCFromCouSig <- function(s, t) {
     # counts.signature -> density.signature
      if (is.null(s[["abundance"]])) {
        stop("Cannot transform from counts.signature -> denisity.signature ",
-            "if target abundance is NULL")
+            "if source abundance is NULL")
      } else {
        return(TRUE)
      }
@@ -323,7 +323,7 @@ TCFromCou <- function(s, t) {
     }
     if (is.null(t[["abundance"]])) {
       if (!is.null(s[["abundance"]]))
-      stop("Cannot transform from counts.signature -> counts.signature ",
+      stop("Cannot transform from counts -> counts.signature ",
            "target abundance is NULL")
     }
     if (AbundanceIsSame(s[["abundance"]], t[["abundance"]])) {
@@ -332,6 +332,10 @@ TCFromCou <- function(s, t) {
     return(TRUE)
   } else if (t$catalog.type == "counts") {
     # counts -> counts
+    warning("counts -> counts is deprecated; ",
+            "it simply infers new counts based on ",
+            "changes in abundance; ", 
+            "we strongly suggest that you work with densities")
     if (is.null(s[["abundance"]]) || is.null(t[["abundance"]])) {
       stop("Cannot transform from counts -> counts if either ",
            "source or target abundance is null")
@@ -437,6 +441,37 @@ AbundanceIsSame <- function(a1, a2) {
   return(FALSE)
 }
 
+#' @keywords internal
+CheckCatalogAttributes <- function(catalog) {
+  ref.genome <- attr(catalog, "ref.genome", exact = TRUE)
+  catalog.type <- attr(catalog, "catalog.type", exact = TRUE)
+  abundance <- attr(catalog, "abundance", exact = TRUE)
+  region <- attr(catalog, "region", exact = TRUE)
+  check.result <- TRUE
+  
+  if (is.null(ref.genome)) {
+    check.result <<- TRUE
+  } else if (inherits(ref.genome, "BSgenome")) {
+    check.result <<- TRUE
+  } else if (ref.genome == "mixed") {
+    stop('Cannot perform transformation from a catalog with "mixed" ref.genome')
+  }
+  if (is.null(catalog.type)) {
+    stop("Cannot perform transformation from a catalog with NULL catalog.type")
+  }
+  if (is.null(abundance)) {
+    stop("Cannot perform transformation from a catalog with NULL abundance")
+  } else if (!inherits(abundance, "integer")) {
+    stop("Cannot perform transformation from a catalog with non integer abundance")
+  }
+  if (is.null(region)) {
+    stop("Cannot perform transformation from a catalog with NULL region")
+  } else if (region == "mixed") {
+    stop('Cannot perform transformation from a catalog with "mixed" region')
+  }
+  return(check.result)
+}
+
 #' Transform between counts and density spectrum catalogs
 #' and counts and density signature catalogs.
 #'
@@ -444,9 +479,11 @@ AbundanceIsSame <- function(a1, a2) {
 #'
 #' \enumerate{
 #'
-#' \item \code{counts -> counts} (used to transform
-#'    between the source abundance and \code{target.abundance})
-#'
+#' \item \code{counts -> counts} (deprecated, generates a warning;
+#' we strongly suggest that you work with densities if comparing
+#' spectra or signatures generated from data with
+#' different underlying abundances.)
+#' 
 #' \item \code{counts -> density}
 #'
 #' \item \code{counts -> (counts.signature, density.signature)}
@@ -494,15 +531,15 @@ AbundanceIsSame <- function(a1, a2) {
 #'   \code{catalog.type} attribute of \code{catalog}.
 #'   
 #' @param target.abundance  
-#'   A vector of counts different
-#'   source K-mer sequences for mutations. See
-#'   \code{\link{all.abundance}}. If \code{NULL},
-#'   then the function attempt to infer the \code{target.abundace}
-#'   from the class of \code{catalog} and the values of the
-#'   \code{target.ref.genome}, \code{target.region}, and
-#'   \code{target.catalog.type}. It is an error if the inferred
-#'   abundance is different from an non-\code{NULL} 
-#'   \code{target.abundance}.
+#'   A vector of counts, one for each source K-mer for mutations (e.g. for
+#'   strand-agnostic single nucleotide substitutions in trinucleotide -- i.e.
+#'   3-mer -- context, one count each for ACA, ACC, ACG, ... TTT). See
+#'   \code{\link{all.abundance}}. If \code{NULL}, the function tries to infer
+#'   \code{target.abundace} from the class of \code{catalog} and the value of
+#'   the \code{target.ref.genome}, \code{target.region}, and
+#'   \code{target.catalog.type}. If the \code{target.abundance} can be inferred
+#'   and is different from a supplied non-\code{NULL} value of
+#'   \code{target.abundance}, raise an error.
 #'   
 #' @return A catalog as defined in \code{\link{ICAMS}}.
 #'
@@ -526,7 +563,9 @@ TransformCatalog <-
            target.region       = NULL, 
            target.catalog.type = NULL,
            target.abundance    = NULL) {
-  
+    # Check the attributes of the catalog
+    stopifnot(CheckCatalogAttributes(catalog))
+    
     # Check and normalize the arguments
     args <-
       CheckAndNormalizeTranCatArgs(
@@ -629,6 +668,8 @@ StandardChromName <- function(df) {
 #' @param vcf.df A VCF as a \code{data.frame}. Check the names in column
 #' \code{CHROM}.
 #' 
+#' @param name.of.VCF Name of the VCF file.
+#' 
 #' @param ref.genome The reference genome with the chromosome names to check
 #' \code{vcf.df$CHROM} against; must be a Bioconductor 
 #' \code{\link[BSgenome]{BSgenome}}, e.g.
@@ -642,11 +683,12 @@ StandardChromName <- function(df) {
 #' then \code{stop}.
 #' 
 #' @keywords internal
-CheckAndFixChrNames <- function(vcf.df, ref.genome) {
+CheckAndFixChrNames <- function(vcf.df, ref.genome, name.of.VCF = NULL) {
   names.to.check <- unique(vcf.df$CHROM)
   # Check whether the naming of chromosomes in vcf.df is consistent
   if(!sum(grepl("^chr", names.to.check)) %in% c(0, length(names.to.check))) {
-    stop("Naming of chromosomes in input is not consistent: ",
+    stop("\nNaming of chromosomes in VCF ", dQuote(name.of.VCF), 
+         " is not consistent: ",
          paste(names.to.check, collapse = " "))
   }
   
@@ -677,65 +719,68 @@ CheckAndFixChrNames <- function(vcf.df, ref.genome) {
   
   organism <- BSgenome::organism(ref.genome)
   
+  CheckForPossibleMatchedChrName <- function(chr1, chr2) {
+    if (chr1 %in% names.to.check) {
+      # If chr2 is already in names.to.check, then stop
+      if (chr2 %in% names.to.check) {
+        stopmessage <- function() {
+          stop("\n", chr1, " and ", chr2, " both are chromosome names in VCF ",
+               dQuote(name.of.VCF),
+               ", which should not be the case for ", organism, ". Please check ",
+               "your data or specify the correct ref.genome argument")
+        }
+        if (vcf.has.chr.prefix) {
+          if (grepl(pattern = "^chr", chr1)) {
+            stopmessage()
+          } else {
+            chr1 <- paste0("chr", chr1)
+            chr2 <- paste0("chr", chr2)
+            stopmessage()
+          }
+        } else {
+          if (!grepl(pattern = "^chr", chr1)) {
+            stopmessage()
+          } else {
+            chr1 <- gsub("chr", "", chr1)
+            chr2 <- gsub("chr", "", chr2)
+            stopmessage()
+          }
+        }
+      }
+      
+      new.chr.names[new.chr.names == chr1] <<- chr2
+      names.to.check <- setdiff(names.to.check, chr1)
+      names.to.check <<- unique(c(names.to.check, chr2))
+    }
+    }
+      
   if (organism == "Homo sapiens") {
     
     # Maybe the problem is that X and Y are encoded as chr23 and chr24
-    if ("chr23" %in% names.to.check) {
-      new.chr.names[new.chr.names == "chr23"] <- "chrX"
-      names.to.check <- setdiff(names.to.check, "chr23")
-      names.to.check <- unique(c(names.to.check, "chrX"))
-    }
-    if ("chr24" %in% names.to.check) {
-      new.chr.names[new.chr.names == "chr24"] <- "chrY"
-      names.to.check <- setdiff(names.to.check, "chr24")
-      names.to.check <- unique(c(names.to.check, "chrY"))
-    }
+    CheckForPossibleMatchedChrName("chr23", "chrX")
+    CheckForPossibleMatchedChrName("chr24", "chrY")
     
     # Maybe the problem is that X and Y are encoded as 23 and 24
-    if ("23" %in% names.to.check) {
-      new.chr.names[new.chr.names == "23"] <- "X"
-      names.to.check <- setdiff(names.to.check, "23")
-      names.to.check <- unique(c(names.to.check, "X"))
-    }
-    if ("24" %in% names.to.check) {
-      new.chr.names[new.chr.names == "24"] <- "Y"
-      names.to.check <- setdiff(names.to.check, "24")
-      names.to.check <- unique(c(names.to.check, "Y"))
-    }
+    CheckForPossibleMatchedChrName("23", "X")
+    CheckForPossibleMatchedChrName("24", "Y")
   }
   
   if (organism == "Mus musculus") {
     
     # Maybe the problem is that X and Y are encoded as chr20 and chr21
-    if ("chr20" %in% names.to.check) {
-      new.chr.names[new.chr.names == "chr20"] <- "chrX"
-      names.to.check <- setdiff(names.to.check, "chr20")
-      names.to.check <- unique(c(names.to.check, "chrX"))
-    }
-    if ("chr21" %in% names.to.check) {
-      new.chr.names[new.chr.names == "chr21"] <- "chrY"
-      names.to.check <- setdiff(names.to.check, "chr21")
-      names.to.check <- unique(c(names.to.check, "chrY"))
-    }
+    CheckForPossibleMatchedChrName("chr20", "chrX")
+    CheckForPossibleMatchedChrName("chr21", "chrY")
     
     # Maybe the problem is that X and Y are encoded as 20 and 21
-    if ("20" %in% names.to.check) {
-      new.chr.names[new.chr.names == "20"] <- "X"
-      names.to.check <- setdiff(names.to.check, "20")
-      names.to.check <- unique(c(names.to.check, "X"))
-    }
-    if ("21" %in% names.to.check) {
-      new.chr.names[new.chr.names == "21"] <- "Y"
-      names.to.check <- setdiff(names.to.check, "21")
-      names.to.check <- unique(c(names.to.check, "Y"))
-    }
+    CheckForPossibleMatchedChrName("20", "X")
+    CheckForPossibleMatchedChrName("21", "Y")
   }
   
   not.matched3 <- setdiff(names.to.check, ref.genome.names)
   if (length(not.matched3) == 0) return(new.chr.names)
   
-  stop("Chromosome names in input not in ref.genome for ",
-       organism, ": ", 
+  stop("\nChromosome names in VCF ", dQuote(name.of.VCF), 
+       " not in ref.genome for ", organism, ": ", 
        # We report the _original_ list of not matched names
        paste(not.matched, collapse = " "))
 }
@@ -1781,14 +1826,14 @@ GetStrandedKmerCounts <-
   return(kmer.counts)
 }
 
-#' Generate exome k-mer abundance from a given reference genome
+#' Generate custom k-mer abundance from a given reference genome
 #'
 #' @param k Length of k-mers (k>=2)
 #'
 #' @param ref.genome A \code{ref.genome} argument as described in
 #'   \code{\link{ICAMS}}.
 #'
-#' @param exome.range A keyed data table which has exome ranges information. It
+#' @param custom.range A keyed data table which has custom ranges information. It
 #'   has three columns: chrom, start and end. It should use one-based coordinate
 #'   system. You can use the internal function in this package
 #'   \code{ICAMS:::ReadBedRanges} to read a BED file in 0-based coordinates and
@@ -1805,20 +1850,20 @@ GetStrandedKmerCounts <-
 #'
 #' @importFrom IRanges IRanges
 #'
-#' @return Matrix of the counts of exome k-mer across the \code{ref.genome}
+#' @return Matrix of the counts of custom k-mer across the \code{ref.genome}
 #'
 #' @keywords internal
-GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path, 
-                               verbose = FALSE) {
-  exome.ranges <- StandardChromName(exome.ranges)
+GetCustomKmerCounts <- function(k, ref.genome, custom.ranges, filter.path, 
+                                verbose = FALSE) {
+  custom.ranges <- StandardChromName(custom.ranges)
   genome <- NormalizeGenomeArg(ref.genome)
   kmer.counts <- GenerateEmptyKmerCounts(k)
-
-  # Check whether chromosome names in exome.ranges are the same as in ref.genome
-  if (!(seqnames(genome)[1] %in% exome.ranges$chrom)) {
-    exome.ranges$chrom <- paste0("chr", exome.ranges$chrom)
+  
+  # Check whether chromosome names in custom.ranges are the same as in ref.genome
+  if (!(seqnames(genome)[1] %in% custom.ranges$chrom)) {
+    custom.ranges$chrom <- paste0("chr", custom.ranges$chrom)
   }
-
+  
   if (!missing(filter.path)) {
     filter.df <- fread(filter.path, header = FALSE, stringsAsFactors = FALSE)
     filter.df <- filter.df[filter.df$V6 <= 6]
@@ -1827,34 +1872,34 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
     if (!(seqnames(genome)[1] %in% filter.df$V2)){
       filter.df$V2 <- paste0("chr", filter.df$V2)
     }
-
+    
   }
   if (verbose) message("Start counting by chromosomes")
-
-  for (chr in unique(exome.ranges$chrom)) {
+  
+  for (chr in unique(custom.ranges$chrom)) {
     if (verbose) message(chr)
-    temp.exome.ranges <- exome.ranges[exome.ranges$chrom == chr, ]
-    exome.range.chr <-
-      with(temp.exome.ranges, GRanges(chrom, IRanges(start, end)))
-
-    # Remove the overlapping ranges in exome.range.chr
-    exome.range.chr <- IRanges::reduce(exome.range.chr)
-
+    temp.custom.ranges <- custom.ranges[custom.ranges$chrom == chr, ]
+    custom.range.chr <-
+      with(temp.custom.ranges, GRanges(chrom, IRanges(start, end)))
+    
+    # Remove the overlapping ranges in custom.range.chr
+    custom.range.chr <- IRanges::reduce(custom.range.chr)
+    
     if (!missing(filter.path)) {
       chr.filter.df <- filter.df[which(filter.df$V2 == chr), ]
       filter.chr <- with(chr.filter.df, GRanges(V2, IRanges(V3 + 1, V4)))
-      filtered.exome.range.chr <-
-        GenomicRanges::setdiff(exome.range.chr, filter.chr)
-      exome.seq <- BSgenome::getSeq(genome, filtered.exome.range.chr,
-                                    as.character = TRUE)
+      filtered.custom.range.chr <-
+        GenomicRanges::setdiff(custom.range.chr, filter.chr)
+      custom.seq <- BSgenome::getSeq(genome, filtered.custom.range.chr,
+                                     as.character = TRUE)
       #Filter shorter homopolymer and microsatellites by regex
-      exome.seq <- gsub(homopolymer.ms.regex.pattern, "N", exome.seq)
-
+      custom.seq <- gsub(homopolymer.ms.regex.pattern, "N", custom.seq)
+      
     } else {
-      exome.seq <- BSgenome::getSeq(genome, exome.range.chr,
-                                    as.character = TRUE)
+      custom.seq <- BSgenome::getSeq(genome, custom.range.chr,
+                                     as.character = TRUE)
     }
-    kmer.counts <- kmer.counts + GetSequenceKmerCounts(exome.seq, k)
+    kmer.counts <- kmer.counts + GetSequenceKmerCounts(custom.seq, k)
   }
   return(kmer.counts)
 }
@@ -1965,15 +2010,136 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
   }
 }
 
+#' @keywords internal
+CheckAndAssignAttributes <- function(x, list0) {
+  for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
+    
+    GetAttribute2 <- function(item, at) {
+      attr(item, at, exact = TRUE)
+    }
+    attributes.list <- lapply(list0, FUN = GetAttribute2, at = at)
+    
+    CheckNullAttribute <- function(x, attributes.list) {
+      is.null.result <- sapply(attributes.list, FUN = is.null)
+      # If all the attributes are NULL, then x will also have NULL attribute
+      if (all(is.null.result)) {
+        attr(x, at) <- NULL
+        return(list(is.null = TRUE, x = x))
+      } else if (any(is.null.result)) {
+        # If some attributes are NULL, then x will have a "mixed" attribute
+        attr(x, at) <- "mixed"
+        return(list(is.null = TRUE, x = x))
+      }
+    }
+    
+    if (at == "ref.genome") {
+      result.list <- CheckNullAttribute(x, attributes.list)
+      if (isTRUE(result.list$is.null)) {
+        x <- result.list$x
+      } else {
+        GetRefGenomeName <- function(object) {
+          return(object@pkgname)
+        }
+        ref.genome.check.result <- 
+          sapply(attributes.list, FUN = GetRefGenomeName)
+        if (length(unique(ref.genome.check.result)) == 1) {
+          attr(x, at) <- attributes.list[[1]]
+        } else {
+          attr(x, at) <- "mixed"
+        }
+      }
+    }
+    
+    if (at == "catalog.type") {
+      is.null.result <- sapply(attributes.list, FUN = is.null)
+      if (any(is.null.result)) {
+        # If any attribute is NULL, then stop
+        stop("Cannot perform cbind operation to catalogs with NULL",
+             " catalog.type")
+      } else {
+        catalog.type.check.result <- do.call("c", attributes.list)
+        if (length(unique(catalog.type.check.result)) == 1) {
+          attr(x, at) <- attributes.list[[1]]
+        } else {
+          stop("Cannot perform cbind operation to catalogs with different",
+               " catalog.type")
+        }
+      }
+    }
+    
+    if (at == "abundance") {
+      result.list <- CheckNullAttribute(x, attributes.list)
+      if (isTRUE(result.list$is.null)) {
+        x <- result.list$x
+      } else {
+        abundance.length.result <- sapply(attributes.list, FUN = length)
+        if (length(unique(abundance.length.result)) == 1) {
+          GetAbundanceNames <- function(abundance) {
+            return(sort(names(abundance)))
+          }
+          
+          abundance.names.list <- 
+            lapply(attributes.list, FUN = GetAbundanceNames)
+          CheckNamesOfAbundance <- function(abundance.names.list) {
+            num <- length(abundance.names.list)
+            ref.names <- abundance.names.list[[1]]
+            for (i in 2:num) {
+              if (!all(abundance.names.list[[i]] == ref.names)) {
+                return(FALSE)
+              } 
+            }
+            return(TRUE)
+          }
+          
+          CheckValuesOfAbundance <- function(abundance.list) {
+            num <- length(abundance.list)
+            ref.values <- abundance.list[[1]][abundance.names.list[[1]]]
+            for (i in 2:num) {
+              if (!all(abundance.list[[i]][abundance.names.list[[i]]] == 
+                       ref.values)) {
+                return(FALSE)
+              }
+            }
+            return(TRUE)
+          }
+          
+          if (CheckNamesOfAbundance(abundance.names.list) && 
+              CheckValuesOfAbundance(attributes.list)) {
+            attr(x, at) <- attributes.list[[1]]
+          } else {
+            attr(x, at) <- "mixed"
+          }
+        } else {
+          attr(x, at) <- "mixed"
+        }
+      }
+    }
+    
+    if (at == "region") {
+      result.list <- CheckNullAttribute(x, attributes.list)
+      if (isTRUE(result.list$is.null)) {
+        x <- result.list$x
+      } else {
+        region.check.result <- do.call("c", attributes.list)
+        if (length(unique(region.check.result)) == 1) {
+          attr(x, at) <- attributes.list[[1]]
+        } else {
+          attr(x, at) <- "mixed"
+        }
+      }
+    }
+  }
+  return(x)
+}
+
 # Redefine the cbind methods for catalogs
 #' @export
 `cbind.SBS96Catalog` <- function (..., deparse.level = 1) {
   x <- base::cbind.data.frame(..., deparse.level = deparse.level)
   x <- data.matrix(x)
   class(x) <- class(..1)
-  for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
-    attr(x, at) <- attr(..1, at, exact = TRUE)
-  }
+  list0 <- list(...)
+  x <- CheckAndAssignAttributes(x, list0)
   return(x)
 }
 
@@ -1982,9 +2148,8 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
   x <- base::cbind.data.frame(..., deparse.level = deparse.level)
   x <- data.matrix(x)
   class(x) <- class(..1)
-  for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
-    attr(x, at) <- attr(..1, at, exact = TRUE)
-  }
+  list0 <- list(...)
+  x <- CheckAndAssignAttributes(x, list0)
   return(x)
 }
 
@@ -1993,9 +2158,8 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
   x <- base::cbind.data.frame(..., deparse.level = deparse.level)
   x <- data.matrix(x)
   class(x) <- class(..1)
-  for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
-    attr(x, at) <- attr(..1, at, exact = TRUE)
-  }
+  list0 <- list(...)
+  x <- CheckAndAssignAttributes(x, list0)
   return(x)
 }
 
@@ -2004,9 +2168,8 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
   x <- base::cbind.data.frame(..., deparse.level = deparse.level)
   x <- data.matrix(x)
   class(x) <- class(..1)
-  for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
-    attr(x, at) <- attr(..1, at, exact = TRUE)
-  }
+  list0 <- list(...)
+  x <- CheckAndAssignAttributes(x, list0)
   return(x)
 }
 
@@ -2015,9 +2178,8 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
   x <- base::cbind.data.frame(..., deparse.level = deparse.level)
   x <- data.matrix(x)
   class(x) <- class(..1)
-  for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
-    attr(x, at) <- attr(..1, at, exact = TRUE)
-  }
+  list0 <- list(...)
+  x <- CheckAndAssignAttributes(x, list0)
   return(x)
 }
 
@@ -2026,9 +2188,8 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
   x <- base::cbind.data.frame(..., deparse.level = deparse.level)
   x <- data.matrix(x)
   class(x) <- class(..1)
-  for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
-    attr(x, at) <- attr(..1, at, exact = TRUE)
-  }
+  list0 <- list(...)
+  x <- CheckAndAssignAttributes(x, list0)
   return(x)
 }
 
@@ -2037,8 +2198,50 @@ GetExomeKmerCounts <- function(k, ref.genome, exome.ranges, filter.path,
   x <- base::cbind.data.frame(..., deparse.level = deparse.level)
   x <- data.matrix(x)
   class(x) <- class(..1)
-  for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
-    attr(x, at) <- attr(..1, at, exact = TRUE)
-  }
+  list0 <- list(...)
+  x <- CheckAndAssignAttributes(x, list0)
   return(x)
+}
+
+#' Calculate base counts from three mer abundance
+#' @keywords internal
+CalBaseCountsFrom3MerAbundance <- function(three.mer.abundance) {
+  base.counts <- integer(4)
+  names(base.counts) <- c("A", "C", "G", "T")
+  
+  tmp <- three.mer.abundance
+  names(tmp) <- substr(names(tmp), 2, 2)
+  for (base in c("A", "C", "G", "T")) {
+    base.counts[base] <- sum(tmp[names(tmp) == base])
+  }
+  return(base.counts)
+}
+
+#' @keywords internal
+IsBinomialTestApplicable <- function(catalog) {
+  catalog.type <- attributes(catalog)$catalog.type
+  abundance <- attributes(catalog)$abundance
+  
+  if(catalog.type == "counts" && !is.null(abundance)) {
+    if (length(abundance) == 64) {
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  } else {
+    return(FALSE)
+  }
+}
+
+#' @keywords internal
+AssignNumberOfAsterisks <- function(value) {
+  label <- NULL
+  if (value < 0.001) {
+    label <- "***"
+  } else if (value < 0.01) {
+    label <- "**"
+  } else if (value < 0.05) {
+    label <- "*"
+  }
+  return(label)
 }

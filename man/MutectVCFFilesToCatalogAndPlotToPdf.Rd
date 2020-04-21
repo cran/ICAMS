@@ -4,9 +4,16 @@
 \alias{MutectVCFFilesToCatalogAndPlotToPdf}
 \title{Create SBS, DBS and Indel catalogs from Mutect VCF files and plot them to PDF}
 \usage{
-MutectVCFFilesToCatalogAndPlotToPdf(files, ref.genome,
-  trans.ranges = NULL, region = "unknown", names.of.VCFs = NULL,
-  tumor.col.names = NA, output.file = "")
+MutectVCFFilesToCatalogAndPlotToPdf(
+  files,
+  ref.genome,
+  trans.ranges = NULL,
+  region = "unknown",
+  names.of.VCFs = NULL,
+  tumor.col.names = NA,
+  output.file = "",
+  flag.mismatches = 0
+)
 }
 \arguments{
 \item{files}{Character vector of file paths to the Mutect VCF files.}
@@ -14,30 +21,44 @@ MutectVCFFilesToCatalogAndPlotToPdf(files, ref.genome,
 \item{ref.genome}{A \code{ref.genome} argument as described in
 \code{\link{ICAMS}}.}
 
-\item{trans.ranges}{a \code{\link[data.table]{data.table}} which contains
-transcript range and strand information. Please refer to
-\code{\link{TranscriptRanges}} for more details.}
+\item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
+\code{\link{BSgenome}} object 
+\enumerate{
+  \item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
+  \item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
+  \item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
+}
+then the function will infer \code{trans.ranges} automatically. Otherwise,
+user will need to provide the necessary \code{trans.ranges}. Please refer to
+\code{\link{TranscriptRanges}} for more details.
+If \code{is.null(trans.ranges)} do not add transcript range
+information.}
 
 \item{region}{A character string designating a genomic region;
 see \code{\link{as.catalog}} and \code{\link{ICAMS}}.}
 
-\item{names.of.VCFs}{Character vector of names of the VCF files. The order of
-names in \code{names.of.VCFs} should match the order of VCF file paths in
-\code{files}. If \code{NULL}(default), this function will remove all of the
-path up to and including the last path separator (if any) in \code{files}
-and file paths without extensions (and the leading dot) will be used as the
-names of the VCF files.}
+\item{names.of.VCFs}{Optional. Character vector of names of the VCF files.
+The order of names in \code{names.of.VCFs} should match the order of VCF
+file paths in \code{files}. If \code{NULL}(default), this function will
+remove all of the path up to and including the last path separator (if any)
+in \code{files} and file paths without extensions (and the leading dot)
+will be used as the names of the VCF files.}
 
-\item{tumor.col.names}{Character vector of column names in VCFs which contain
-the tumor sample information. The order of names in \code{tumor.col.names}
-should match the order of VCFs specified in \code{files}. If
-\code{tumor.col.names} is equal to \code{NA}(default), this function will
-use the 10th column in all the VCFs to calculate VAFs.
+\item{tumor.col.names}{Optional. Character vector of column names in VCFs
+which contain the tumor sample information. The order of names in
+\code{tumor.col.names} should match the order of VCFs specified in
+\code{files}. If \code{tumor.col.names} is equal to \code{NA}(default),
+this function will use the 10th column in all the VCFs to calculate VAFs.
 See \code{\link{GetMutectVAF}} for more details.}
 
-\item{output.file}{The base name of the PDF files to be produced; multiple
-files will be generated, each ending in \eqn{x}\code{.pdf}, where \eqn{x}
-indicates the type of catalog plotted in the file.}
+\item{output.file}{Optional. The base name of the PDF files to be produced;
+multiple files will be generated, each ending in \eqn{x}\code{.pdf}, where
+\eqn{x} indicates the type of catalog plotted in the file.}
+
+\item{flag.mismatches}{Optional. If > 0, then if there are mismatches to
+references in the ID (insertion/deletion) VCF, generate messages showing
+the mismatched rows and continue. Otherwise \code{stop} if there are
+mismatched rows. See \code{\link{AnnotateIDVCF}} for more details.}
 }
 \value{
 A list of 3 SBS catalogs (one each for 96, 192, and 1536), 3 DBS
@@ -63,13 +84,14 @@ SBS 192 and DBS 144 catalogs include only mutations in transcribed
 }
 \section{Comments}{
 
-To add or change attributes of the catalog, you can use function \code{\link[base]{attr}}. \cr
-For example, \code{attr(catalog, "abundance") <- custom.abundance}.
+To add or change attributes of the catalog, you can use function
+\code{\link[base]{attr}}. \cr For example, \code{attr(catalog, "abundance")
+<- custom.abundance}.
 }
 
 \examples{
-file <- c(system.file("extdata",
-                      "Mutect.GRCh37.vcf",
+file <- c(system.file("extdata/Mutect-vcf",
+                      "Mutect.GRCh37.s1.vcf",
                       package = "ICAMS"))
 if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
   catalogs <- 

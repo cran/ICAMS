@@ -10,19 +10,20 @@ ReadMutectVCF(file, name.of.VCF = NULL, tumor.col.name = NA)
 \arguments{
 \item{file}{The name/path of the VCF file, or a complete URL.}
 
+\item{name.of.VCF}{Name of the VCF file. If \code{NULL}(default), this
+function will remove all of the path up to and including the last path
+separator (if any) in \code{file} and file path without extensions (and the
+leading dot) will be used as the name of the VCF file.}
+
 \item{tumor.col.name}{Name of the column in VCF which contains the tumor
 sample information. It \strong{must} have quotation marks. If
 \code{tumor.col.name} is equal to \code{NA}(default), this function will
 use the 10th column to calculate VAFs. See \code{\link{GetMutectVAF}} for
 more details.}
-
-\item{name.of.vcf}{Name of the VCF file. If \code{NULL}(default), this
-function will remove all of the path up to and including the last path
-separator (if any) in \code{file} and file path without extensions (and the
-leading dot) will be used as the name of the VCF file.}
 }
 \value{
-A data frame storing mutation records of a VCF file with VAFs added.
+A data frame storing data lines of a VCF file with VAFs (variant
+  allele frequencies) added.
 }
 \description{
 Read in the data lines of a Variant Call Format (VCF) file created by

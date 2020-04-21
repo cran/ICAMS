@@ -13,21 +13,30 @@ SplitStrelkaSBSVCF(vcf.df, max.vaf.diff = 0.02)
 \item{max.vaf.diff}{The maximum difference of VAF, default value is 0.02.}
 }
 \value{
-A list of 3 in-memory objects with the elements:
+A list of in-memory objects with the elements:
+
 \enumerate{
-   \item \code{SBS.vcf}:   Data frame of pure SBS mutations -- no DBS or 3+BS mutations
-   \item \code{DBS.vcf}:   Data frame of pure DBS mutations -- no SBS or 3+BS mutations
-   \item{ThreePlus}: Data table with the key CHROM, LOW.POS, HIGH.POS and additional
-   information (reference sequence, alternative sequence, context, etc.)
-   Additional information not fully implemented at this point because of
-   limited immediate biological interest.
+   \item \code{SBS.vcf}: Data frame of pure SBS mutations -- no DBS or 3+BS
+   mutations.
+
+   \item \code{DBS.vcf}: Data frame of pure DBS mutations -- no SBS or 3+BS
+   mutations.
+
+   \item \code{ThreePlus}: Data table with the key CHROM, LOW.POS, HIGH.POS
+   and additional information (reference sequence, alternative sequence,
+   context, etc.) Additional information not fully implemented at this point
+   because of limited immediate biological interest.
+
+   \item \code{multiple.alt} Rows with multiple alternate alleles (removed
+   from \code{SBS.vcf} etc.)
+   
    }
 }
 \description{
 SBSs are single base substitutions,
-e.g. C>T, A<G,....  DBSs are double base substitutions,
+e.g. C>T, A>G,....  DBSs are double base substitutions,
 e.g. CC>TT, AT>GG, ...  Variants involving > 2 consecutive
 bases are rare, so this function just records them. These
-would be variants such ATG>CCT, AGAT > TCTA, ...
+would be variants such ATG>CCT, AGAT>TCTA, ...
 }
 \keyword{internal}

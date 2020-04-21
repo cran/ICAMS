@@ -5,9 +5,13 @@
 \title{Transform between counts and density spectrum catalogs
 and counts and density signature catalogs.}
 \usage{
-TransformCatalog(catalog, target.ref.genome = NULL,
-  target.region = NULL, target.catalog.type = NULL,
-  target.abundance = NULL)
+TransformCatalog(
+  catalog,
+  target.ref.genome = NULL,
+  target.region = NULL,
+  target.catalog.type = NULL,
+  target.abundance = NULL
+)
 }
 \arguments{
 \item{catalog}{An SBS or DBS catalog as described in \code{\link{ICAMS}};
@@ -26,15 +30,15 @@ identifier, one of "counts", "density", "counts.signature",
 "density.signature"; see \code{\link{as.catalog}}. If \code{NULL}, then defaults to the
 \code{catalog.type} attribute of \code{catalog}.}
 
-\item{target.abundance}{A vector of counts different
-source K-mer sequences for mutations. See
-\code{\link{all.abundance}}. If \code{NULL},
-then the function attempt to infer the \code{target.abundace}
-from the class of \code{catalog} and the values of the
-\code{target.ref.genome}, \code{target.region}, and
-\code{target.catalog.type}. It is an error if the inferred
-abundance is different from an non-\code{NULL} 
-\code{target.abundance}.}
+\item{target.abundance}{A vector of counts, one for each source K-mer for mutations (e.g. for
+strand-agnostic single nucleotide substitutions in trinucleotide -- i.e.
+3-mer -- context, one count each for ACA, ACC, ACG, ... TTT). See
+\code{\link{all.abundance}}. If \code{NULL}, the function tries to infer
+\code{target.abundace} from the class of \code{catalog} and the value of
+the \code{target.ref.genome}, \code{target.region}, and
+\code{target.catalog.type}. If the \code{target.abundance} can be inferred
+and is different from a supplied non-\code{NULL} value of
+\code{target.abundance}, raise an error.}
 }
 \value{
 A catalog as defined in \code{\link{ICAMS}}.
@@ -48,8 +52,10 @@ Only the following transformations are legal:
 
 \enumerate{
 
-\item \code{counts -> counts} (used to transform
-   between the source abundance and \code{target.abundance})
+\item \code{counts -> counts} (deprecated, generates a warning;
+we strongly suggest that you work with densities if comparing
+spectra or signatures generated from data with
+different underlying abundances.)
 
 \item \code{counts -> density}
 

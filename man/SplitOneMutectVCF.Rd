@@ -11,8 +11,29 @@ SplitOneMutectVCF(vcf.df)
 VAFs, which are added by \code{\link{ReadMutectVCF}}.}
 }
 \value{
-A list with the SBS, DBS, and ID portions of the VCF file, plus two
-data.frames of other mutations
+A list with 3 in-memory VCFs and two left-over
+VCF-like data frames with rows that were not incorporated
+into the first 3 VCFs, as follows:
+
+\enumerate{
+
+ \item \code{SBS} VCF with only single base substitutions.
+
+ \item \code{DBS} VCF with only doublet base substitutions
+  as called by Mutect.
+
+ \item \code{ID} VCF with only small insertions and deletions.
+
+ \item \code{other.subs} VCF like data.frame with
+ rows for coordinate substitutions involving
+ 3 or more nucleotides (e.g. ACT > TGA or AACT > GGTA)
+ and rows for complex indels.
+
+ \item \code{multiple.alt} VCF like data.frame with
+ rows for variants with multiple alternative alleles, for example
+ ACT mutated to both AGT and ACT at the same position.
+
+}
 }
 \description{
 Split a mutect2 VCF into SBS, DBS, and ID VCFs, plus a list of other mutations

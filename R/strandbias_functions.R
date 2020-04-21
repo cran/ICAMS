@@ -53,8 +53,8 @@
 #' @export
 #'
 #' @examples 
-#' file <- c(system.file("extdata",
-#'                       "Strelka.SBS.GRCh37.vcf",
+#' file <- c(system.file("extdata/Strelka-SBS-vcf/",
+#'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
 #' list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
 #' SBS.vcf <- list.of.vcfs$SBS.vcfs[[1]]             
@@ -100,8 +100,8 @@ PlotTransBiasGeneExp <-
 #' @export
 #'
 #' @examples
-#' file <- c(system.file("extdata",
-#'                       "Strelka.SBS.GRCh37.vcf",
+#' file <- c(system.file("extdata/Strelka-SBS-vcf/",
+#'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
 #' list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
 #' SBS.vcf <- list.of.vcfs$SBS.vcfs[[1]]             
@@ -131,10 +131,13 @@ PlotTransBiasGeneExpToPdf <-
     opar <- par(mfrow = c(4, 3), mar = c(8, 5.5, 2, 1), oma = c(1, 1, 2, 1))
     on.exit(par(opar))
     num <- length(plot.type)
-    type <- plot.type
+    
+    # Calculate ymax on the plot based on plot.type
+    ymax <- max(list$plotmatrix[, c(plot.type, revcSBS6(plot.type))])
+    
     for (i in 1:num) {
       PlotGeneExp(list = list, type = plot.type[i], 
-                  num.of.bins = num.of.bins, ymax = max(list$plotmatrix))
+                  num.of.bins = num.of.bins, ymax = ymax)
     }
     
     grDevices::dev.off()

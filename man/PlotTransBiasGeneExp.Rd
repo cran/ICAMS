@@ -4,9 +4,16 @@
 \alias{PlotTransBiasGeneExp}
 \title{Plot transcription strand bias with respect to gene expression values.}
 \usage{
-PlotTransBiasGeneExp(annotated.SBS.vcf, expression.data,
-  Ensembl.gene.ID.col, expression.value.col, num.of.bins, plot.type,
-  damaged.base = NULL, ymax = NULL)
+PlotTransBiasGeneExp(
+  annotated.SBS.vcf,
+  expression.data,
+  Ensembl.gene.ID.col,
+  expression.value.col,
+  num.of.bins,
+  plot.type,
+  damaged.base = NULL,
+  ymax = NULL
+)
 }
 \arguments{
 \item{annotated.SBS.vcf}{An SBS VCF annotated by
@@ -64,8 +71,8 @@ expression value.
 }
 
 \examples{
-file <- c(system.file("extdata",
-                      "Strelka.SBS.GRCh37.vcf",
+file <- c(system.file("extdata/Strelka-SBS-vcf/",
+                      "Strelka.SBS.GRCh37.s1.vcf",
                       package = "ICAMS"))
 list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
 SBS.vcf <- list.of.vcfs$SBS.vcfs[[1]]             

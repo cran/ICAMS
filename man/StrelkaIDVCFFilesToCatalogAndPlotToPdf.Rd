@@ -5,8 +5,14 @@
 \title{Create ID (small insertion and deletion) catalog from Strelka ID VCF files
 and plot them to PDF}
 \usage{
-StrelkaIDVCFFilesToCatalogAndPlotToPdf(files, ref.genome,
-  region = "unknown", names.of.VCFs = NULL, output.file = "")
+StrelkaIDVCFFilesToCatalogAndPlotToPdf(
+  files,
+  ref.genome,
+  region = "unknown",
+  names.of.VCFs = NULL,
+  output.file = "",
+  flag.mismatches = 0
+)
 }
 \arguments{
 \item{files}{Character vector of file paths to the Strelka ID VCF files.}
@@ -17,22 +23,27 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf(files, ref.genome,
 \item{region}{A character string designating a genomic region;
 see \code{\link{as.catalog}} and \code{\link{ICAMS}}.}
 
-\item{names.of.VCFs}{Character vector of names of the VCF files. The order
-of names in \code{names.of.VCFs} should match the order of VCF file paths
-in \code{files}. If \code{NULL}(default), this function will remove all of
-the path up to and including the last path separator (if any) and file
-paths without extensions (and the leading dot) will be used as the names of
-the VCF files.}
+\item{names.of.VCFs}{Optional. Character vector of names of the VCF files.
+The order of names in \code{names.of.VCFs} should match the order of VCF
+file paths in \code{files}. If \code{NULL}(default), this function will
+remove all of the path up to and including the last path separator (if any)
+in \code{files} and file paths without extensions (and the leading dot)
+will be used as the names of the VCF files.}
 
-\item{output.file}{The base name of the PDF file to be produced; the file is
-ending in \code{catID.pdf}.}
+\item{output.file}{Optional. The base name of the PDF file to be produced;
+the file is ending in \code{catID.pdf}.}
+
+\item{flag.mismatches}{Optional. If > 0, then if there are mismatches to
+references in the ID (insertion/deletion) VCF, generate messages showing
+the mismatched rows and continue. Otherwise \code{stop} if there are
+mismatched rows. See \code{\link{AnnotateIDVCF}} for more details.}
 }
 \value{
 A list whose first element is an ID (small insertion and deletion)
   catalog with its graph plotted to PDF with specified file name. The ID
-  catalog has attributes added. See \code{\link{as.catalog}} for more
-  details. The second element of the returned list is a list of further
-  annotated VCFs.
+  catalog has class attribute "IndelCatalog" added. See
+  \code{\link{as.catalog}} for more details. The second element of the
+  returned list is a list of further annotated VCFs.
 }
 \description{
 Create ID (small insertion and deletion) catalog from the Strelka ID VCFs
@@ -48,8 +59,8 @@ In ID (small insertion and deletion) catalogs, deletion repeat sizes
   repeat sizes range from 1 to 6+.
 }
 \examples{
-file <- c(system.file("extdata",
-                      "Strelka.ID.GRCh37.vcf",
+file <- c(system.file("extdata/Strelka-ID-vcf",
+                      "Strelka.ID.GRCh37.s1.vcf",
                       package = "ICAMS"))
 if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
   catID <- 

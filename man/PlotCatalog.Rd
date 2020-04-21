@@ -4,8 +4,15 @@
 \alias{PlotCatalog}
 \title{Plot \strong{one} spectrum or signature.}
 \usage{
-PlotCatalog(catalog, plot.SBS12 = NULL, cex = NULL, grid = NULL,
-  upper = NULL, xlabels = NULL)
+PlotCatalog(
+  catalog,
+  plot.SBS12 = NULL,
+  cex = NULL,
+  grid = NULL,
+  upper = NULL,
+  xlabels = NULL,
+  ylim = NULL
+)
 }
 \arguments{
 \item{catalog}{A catalog as defined in \code{\link{ICAMS}} with attributes added.
@@ -17,11 +24,8 @@ C>A, C>G, C>T, T>A, T>C, T>G each on transcribed and untranscribed strands,
 rather than SBS in trinucleotide context, e.g.
 ACA > AAA, ACA > AGA, ..., TCT > TAT, ...}
 
-\item{cex}{A numerical value giving the amount by which mutation class labels,
-mutation counts(if it exists), y axis and its labels, x axis labels and
-its annotations(if it exists), sample name and legend(if it exists)
-should be magnified relative to the default. Only implemented for SBS96Catalog,
-SBS192Catalog and DBS144Catalog.}
+\item{cex}{Has the usual meaning. Taken from \code{par("cex")} by default.
+Only implemented for SBS96Catalog, SBS192Catalog and DBS144Catalog.}
 
 \item{grid}{A logical value indicating whether to draw grid lines. Only
 implemented for SBS96Catalog.}
@@ -31,13 +35,19 @@ the names of major mutation class on top of graph. Only implemented for
 SBS96Catalog.}
 
 \item{xlabels}{A logical value indicating whether to draw x axis labels. Only
-implemented for SBS96Catalog.}
+implemented for \code{SBS96Catalog}. If \code{FALSE} then plot x axis tick marks;
+set \code{par(tck = 0)} to suppress.}
+
+\item{ylim}{Has the usual meaning. Only implemented for SBS96Catalog and
+IndelCatalog.}
 }
 \value{
 A list whose first element is a logic value indicating whether the
-  plot is successful. The second element is a numeric vector giving the
-  coordinates of all the bar midpoints drawn, useful for adding to the
-  graph(\strong{currently only implemented for SBS96Catalog}).
+  plot is successful. For \strong{SBS96Catalog}, the list will have a second
+  element, which is a numeric vector giving the coordinates of all the bar
+  midpoints drawn, useful for adding to the graph. For \strong{SBS192Catalog}
+  with "counts" catalog.type and non-NULL abundance, the list will have a
+  second element which is a list containing the strand bias statistics.
 }
 \description{
 Plot the spectrum of \strong{one} sample or plot \strong{one} signature. The
@@ -50,6 +60,16 @@ The sizes of repeats involved in deletions range from 0 to 5+ in the
   mutational-spectra and signature catalog rownames, but for plotting and
   end-user documentation deletion repeat sizes range from 1 to 6+.
 }
+\section{Comments}{
+ For \strong{SBS192Catalog} with "counts" catalog.type and
+  non-NULL abundance, the strand bias statistics are Benjamini-Hochberg
+  q-values based on two-sided binomial tests of the mutation counts
+  on the transcribed and untranscribed strands relative to the 
+  actual abundances of C and T on the transcribed strand.
+  On the SBS12 plot, asterisks indicate q-values as follows
+  *, \eqn{Q<0.05}; **, \eqn{Q<0.01}; ***, \eqn{Q<0.001}.
+}
+
 \examples{
 file <- system.file("extdata",
                     "strelka.regress.cat.sbs.96.csv",
