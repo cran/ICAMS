@@ -5,31 +5,18 @@
 \title{Split a list of in-memory Strelka SBS VCF into SBS, DBS, and variants involving
 > 2 consecutive bases}
 \usage{
-SplitListOfStrelkaSBSVCFs(list.of.vcfs)
+SplitListOfStrelkaSBSVCFs(
+  list.of.vcfs,
+  suppress.discarded.variants.warnings = TRUE
+)
 }
 \arguments{
 \item{list.of.vcfs}{A list of in-memory data frames containing Strelka SBS
 VCF file contents.}
-}
-\value{
-A list of in-memory objects with the elements: 
-\enumerate{
 
-   \item \code{SBS.vcfs}:  List of Data frames of pure SBS mutations -- no
-   DBS or 3+BS mutations.
-
-   \item \code{DBS.vcfs}:  List of Data frames of pure DBS mutations -- no
-   SBS or 3+BS mutations.
-
-   \item \code{ThreePlus}: List of Data tables with the key CHROM, LOW.POS,
-   HIGH.POS and additional information (reference sequence, alternative
-   sequence, context, etc.) Additional information not fully implemented at
-   this point because of limited immediate biological interest.
-
-   \item \code{multiple.alt} Rows with multiple alternate alleles (removed
-   from \code{SBS.vcfs} etc.)
-   
-   }
+\item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
+warning messages showing information about the discarded variants. Default
+is TRUE.}
 }
 \description{
 SBSs are single base substitutions,
@@ -38,4 +25,18 @@ e.g. CC>TT, AT>GG, ...  Variants involving > 2 consecutive
 bases are rare, so this function just records them. These
 would be variants such ATG>CCT, AGAT>TCTA, ...
 }
+\section{Value}{
+
+A list of elements as follows:
+\itemize{
+\item \code{SBS.vcfs}: List of data.frames of pure SBS mutations -- no DBS or
+3+BS mutations.
+\item \code{DBS.vcfs}: List of data.frames of pure DBS mutations -- no SBS or
+3+BS mutations.
+\item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+that were excluded from the analysis. See the added extra column
+\code{discarded.reason} for more details.
+}
+}
+
 \keyword{internal}

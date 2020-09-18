@@ -2,7 +2,7 @@
 % Please edit documentation in R/ID_functions.R
 \name{FindDelMH}
 \alias{FindDelMH}
-\title{Return the length of microhomology at a deletion.}
+\title{Return the length of microhomology at a deletion}
 \usage{
 FindDelMH(context, deleted.seq, pos, trace = 0, warn.cryptic = TRUE)
 }
@@ -25,7 +25,7 @@ The length of the maximum microhomology of \code{del.sequence}
   in \code{context}.
 }
 \description{
-Return the length of microhomology at a deletion.
+Return the length of microhomology at a deletion
 }
 \details{
 This function is primarily for internal use, but we export it
@@ -124,6 +124,23 @@ GACT----AGTT GACTAGTT GACT[AGCT]AGTT
 "cryptic repeats" with a -1 return; it does not figure
 out the repeat extent.}
 }
+\section{ID classification}{
+
+See
+\url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
+for additional information on ID (small insertion and deletion) mutation
+classification.
+
+See the documentation for \code{\link{Canonicalize1Del}} which first handles
+deletions in homopolymers, then handles deletions in simple repeats with
+longer repeat units, (e.g. \code{CACACACA}, see
+\code{\link{FindMaxRepeatDel}}), and if the deletion is not in a simple
+repeat, looks for microhomology (see \code{\link{FindDelMH}}).
+
+See the code for unexported function \code{\link{CanonicalizeID}}
+and the functions it calls for handling of insertions.
+}
+
 \examples{
 # GAGAGG[CTAGAA]CTAGTT
 #        ----   ----

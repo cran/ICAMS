@@ -12,7 +12,9 @@ MutectVCFFilesToCatalogAndPlotToPdf(
   names.of.VCFs = NULL,
   tumor.col.names = NA,
   output.file = "",
-  flag.mismatches = 0
+  flag.mismatches = 0,
+  return.annotated.vcfs = FALSE,
+  suppress.discarded.variants.warnings = TRUE
 )
 }
 \arguments{
@@ -22,11 +24,11 @@ MutectVCFFilesToCatalogAndPlotToPdf(
 \code{\link{ICAMS}}.}
 
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
-\code{\link{BSgenome}} object 
+\code{\link{BSgenome}} object
 \enumerate{
-  \item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
-  \item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
-  \item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
+\item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
+\item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
+\item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
 }
 then the function will infer \code{trans.ranges} automatically. Otherwise,
 user will need to provide the necessary \code{trans.ranges}. Please refer to
@@ -55,17 +57,19 @@ See \code{\link{GetMutectVAF}} for more details.}
 multiple files will be generated, each ending in \eqn{x}\code{.pdf}, where
 \eqn{x} indicates the type of catalog plotted in the file.}
 
-\item{flag.mismatches}{Optional. If > 0, then if there are mismatches to
-references in the ID (insertion/deletion) VCF, generate messages showing
-the mismatched rows and continue. Otherwise \code{stop} if there are
-mismatched rows. See \code{\link{AnnotateIDVCF}} for more details.}
-}
-\value{
-A list of 3 SBS catalogs (one each for 96, 192, and 1536), 3 DBS
-  catalogs (one each for 78, 136, and 144), Indel catalog and their graphs
-  plotted to PDF with specified file name. If trans.ranges = NULL, SBS 192
-  and DBS 144 catalog will not be generated and plotted. Each catalog has
-  attributes added. See \code{\link{as.catalog}} for more details.
+\item{flag.mismatches}{Deprecated. If there are ID variants whose \code{REF}
+do not match the extracted sequence from \code{ref.genome}, the function
+will automatically discard these variants and an element
+\code{discarded.variants} will appear in the return value. See
+\code{\link{AnnotateIDVCF}} for more details.}
+
+\item{return.annotated.vcfs}{Logical. Whether to return the annotated VCFs
+with additional columns showing mutation class for each variant. Default is
+FALSE.}
+
+\item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
+warning messages showing information about the discarded variants. Default
+is TRUE.}
 }
 \description{
 Create 3 SBS catalogs (96, 192, 1536), 3 DBS catalogs (78, 136, 144) and
@@ -76,12 +80,64 @@ PDF
 This function calls \code{\link{MutectVCFFilesToCatalog}} and
 \code{\link{PlotCatalogToPdf}}
 }
-\note{
-SBS 192 and DBS 144 catalogs include only mutations in transcribed
-  regions. In ID (small insertion and deletion) catalogs, deletion repeat sizes
-  range from 0 to 5+, but for plotting and end-user documentation deletion
-  repeat sizes range from 1 to 6+.
+\section{Value}{
+
+A list containing the following objects:
+\itemize{
+\item \code{catSBS96}, \code{catSBS192}, \code{catSBS1536}: Matrix of
+3 SBS catalogs (one each for 96, 192, and 1536).
+\item \code{catDBS78}, \code{catDBS136}, \code{catDBS144}: Matrix of
+3 DBS catalogs (one each for 78, 136, and 144).
+\item \code{catID}: Matrix of ID (small insertion and deletion) catalog.
+\item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+that were excluded from the analysis. See the added extra column
+\code{discarded.reason} for more details.
+\item \code{annotated.vcfs}:
+\strong{Non-NULL only if} \code{return.annotated.vcfs} = TRUE.
+A list of elements:
+\itemize{
+\item \code{SBS}: SBS VCF annotated by \code{\link{AnnotateSBSVCF}} with
+three new columns \code{SBS96.class}, \code{SBS192.class} and
+\code{SBS1536.class} showing the mutation class for each SBS variant.
+\item \code{DBS}: DBS VCF annotated by \code{\link{AnnotateDBSVCF}} with
+three new columns \code{DBS78.class}, \code{DBS136.class} and
+\code{DBS144.class} showing the mutation class for each DBS variant.
+\item \code{ID}: ID VCF annotated by \code{\link{AnnotateIDVCF}} with one
+new column \code{ID.class} showing the mutation class for each
+ID variant.
 }
+}
+
+If \code{trans.ranges} is not provided by user and cannot be inferred by
+ICAMS, SBS 192 and DBS 144 catalog will not be generated. Each catalog has
+attributes added. See \code{\link{as.catalog}} for more details.
+}
+
+\section{ID classification}{
+
+See
+\url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
+for additional information on ID (small insertion and deletion) mutation
+classification.
+
+See the documentation for \code{\link{Canonicalize1Del}} which first handles
+deletions in homopolymers, then handles deletions in simple repeats with
+longer repeat units, (e.g. \code{CACACACA}, see
+\code{\link{FindMaxRepeatDel}}), and if the deletion is not in a simple
+repeat, looks for microhomology (see \code{\link{FindDelMH}}).
+
+See the code for unexported function \code{\link{CanonicalizeID}}
+and the functions it calls for handling of insertions.
+}
+
+\section{Note}{
+
+SBS 192 and DBS 144 catalogs include only mutations in transcribed regions.
+In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+from 0 to 5+, but for plotting and end-user documentation deletion repeat
+sizes range from 1 to 6+.
+}
+
 \section{Comments}{
 
 To add or change attributes of the catalog, you can use function

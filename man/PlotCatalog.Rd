@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.R
 \name{PlotCatalog}
 \alias{PlotCatalog}
-\title{Plot \strong{one} spectrum or signature.}
+\title{Plot \strong{one} spectrum or signature}
 \usage{
 PlotCatalog(
   catalog,
@@ -42,12 +42,15 @@ set \code{par(tck = 0)} to suppress.}
 IndelCatalog.}
 }
 \value{
-A list whose first element is a logic value indicating whether the
-  plot is successful. For \strong{SBS96Catalog}, the list will have a second
-  element, which is a numeric vector giving the coordinates of all the bar
-  midpoints drawn, useful for adding to the graph. For \strong{SBS192Catalog}
-  with "counts" catalog.type and non-NULL abundance, the list will have a
-  second element which is a list containing the strand bias statistics.
+An \strong{invisible} list whose first element is a logic value
+  indicating whether the plot is successful. For \code{SBS96Catalog},
+  \code{SBS192Catalog}, \code{DBS78Catalog}, \code{DBS144Catalog} and
+  \code{IndelCatalog}, the list will have a second element, which is a
+  numeric vector giving the coordinates of all the bar midpoints drawn,
+  useful for adding to the graph. For \strong{SBS192Catalog} with "counts"
+  catalog.type and non-NULL abundance and \code{plot.SBS12 = TRUE}, the list
+  will have an additional element which is a list containing the strand bias
+  statistics.
 }
 \description{
 Plot the spectrum of \strong{one} sample or plot \strong{one} signature. The
@@ -62,12 +65,12 @@ The sizes of repeats involved in deletions range from 0 to 5+ in the
 }
 \section{Comments}{
  For \strong{SBS192Catalog} with "counts" catalog.type and
-  non-NULL abundance, the strand bias statistics are Benjamini-Hochberg
-  q-values based on two-sided binomial tests of the mutation counts
-  on the transcribed and untranscribed strands relative to the 
-  actual abundances of C and T on the transcribed strand.
-  On the SBS12 plot, asterisks indicate q-values as follows
-  *, \eqn{Q<0.05}; **, \eqn{Q<0.01}; ***, \eqn{Q<0.001}.
+  non-NULL abundance and \code{plot.SBS12 = TRUE}, the strand bias statistics
+  are Benjamini-Hochberg q-values based on two-sided binomial tests of the
+  mutation counts on the transcribed and untranscribed strands relative to
+  the actual abundances of C and T on the transcribed strand. On the SBS12
+  plot, asterisks indicate q-values as follows *, \eqn{Q<0.05}; **,
+  \eqn{Q<0.01}; ***, \eqn{Q<0.001}.
 }
 
 \examples{

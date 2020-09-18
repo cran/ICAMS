@@ -1,4 +1,4 @@
-#' Standard order of row names in a catalog.
+#' Standard order of row names in a catalog
 #'
 #' This data is designed for those
 #' who need to create their own catalogs from formats not
@@ -8,6 +8,8 @@
 #'
 #' @format A list of character vectors indicating the standard
 #'   orders of row names in catalogs.
+#'
+#' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf ID classification
 #'
 #' @note In ID (small insertion and deletion) catalogs, deletion repeat sizes
 #'   range from 0 to 5+, but for plotting and end-user documentation deletion
@@ -95,7 +97,7 @@ NULL
 "trans.ranges.GRCm38"
 
 
-#' K-mer abundances.
+#' K-mer abundances
 #'
 #' An R list with one element each for 
 #' \code{BSgenome.Hsapiens.1000genomes.hs37d5}, \cr
@@ -126,7 +128,7 @@ NULL
 
 "all.abundance"
 
-#' Example gene expression data from two cell lines.
+#' Example gene expression data from two cell lines
 #'
 #' This data is designed to be used as an example in function \cr
 #' \code{\link{PlotTransBiasGeneExp}} and \code{\link{PlotTransBiasGeneExpToPdf}}.

@@ -11,7 +11,9 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf(
   region = "unknown",
   names.of.VCFs = NULL,
   output.file = "",
-  flag.mismatches = 0
+  flag.mismatches = 0,
+  return.annotated.vcfs = FALSE,
+  suppress.discarded.variants.warnings = TRUE
 )
 }
 \arguments{
@@ -33,17 +35,19 @@ will be used as the names of the VCF files.}
 \item{output.file}{Optional. The base name of the PDF file to be produced;
 the file is ending in \code{catID.pdf}.}
 
-\item{flag.mismatches}{Optional. If > 0, then if there are mismatches to
-references in the ID (insertion/deletion) VCF, generate messages showing
-the mismatched rows and continue. Otherwise \code{stop} if there are
-mismatched rows. See \code{\link{AnnotateIDVCF}} for more details.}
-}
-\value{
-A list whose first element is an ID (small insertion and deletion)
-  catalog with its graph plotted to PDF with specified file name. The ID
-  catalog has class attribute "IndelCatalog" added. See
-  \code{\link{as.catalog}} for more details. The second element of the
-  returned list is a list of further annotated VCFs.
+\item{flag.mismatches}{Deprecated. If there are ID variants whose \code{REF}
+do not match the extracted sequence from \code{ref.genome}, the function
+will automatically discard these variants and an element
+\code{discarded.variants} will appear in the return value. See
+\code{\link{AnnotateIDVCF}} for more details.}
+
+\item{return.annotated.vcfs}{Logical. Whether to return the annotated VCFs
+with additional columns showing mutation class for each variant. Default is
+FALSE.}
+
+\item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
+warning messages showing information about the discarded variants. Default
+is TRUE.}
 }
 \description{
 Create ID (small insertion and deletion) catalog from the Strelka ID VCFs
@@ -53,11 +57,48 @@ specified by \code{files} and plot them to PDF
 This function calls \code{\link{StrelkaIDVCFFilesToCatalog}} and
 \code{\link{PlotCatalogToPdf}}
 }
-\note{
-In ID (small insertion and deletion) catalogs, deletion repeat sizes
-  range from 0 to 5+, but for plotting and end-user documentation deletion
-  repeat sizes range from 1 to 6+.
+\section{Value}{
+
+A \strong{list} of elements:
+\itemize{
+\item \code{catalog}: The ID (small insertion and deletion) catalog with
+attributes added. See \code{\link{as.catalog}} for more details.
+\item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+that were excluded from the analysis. See the added extra column
+\code{discarded.reason} for more details.
+\item \code{annotated.vcfs}:
+\strong{Non-NULL only if} \code{return.annotated.vcfs} = TRUE. A list of
+data frames which contain the original VCF's ID mutation rows with three
+additional columns \code{seq.context.width}, \code{seq.context} and
+\code{ID.class} added. The category assignment of each ID mutation in VCF can
+be obtained from \code{ID.class} column.
 }
+}
+
+\section{ID classification}{
+
+See
+\url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
+for additional information on ID (small insertion and deletion) mutation
+classification.
+
+See the documentation for \code{\link{Canonicalize1Del}} which first handles
+deletions in homopolymers, then handles deletions in simple repeats with
+longer repeat units, (e.g. \code{CACACACA}, see
+\code{\link{FindMaxRepeatDel}}), and if the deletion is not in a simple
+repeat, looks for microhomology (see \code{\link{FindDelMH}}).
+
+See the code for unexported function \code{\link{CanonicalizeID}}
+and the functions it calls for handling of insertions.
+}
+
+\section{Note}{
+
+In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+from 0 to 5+, but for plotting and end-user documentation deletion repeat
+sizes range from 1 to 6+.
+}
+
 \examples{
 file <- c(system.file("extdata/Strelka-ID-vcf",
                       "Strelka.ID.GRCh37.s1.vcf",

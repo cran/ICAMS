@@ -2,9 +2,14 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{ReadAndSplitMutectVCFs}
 \alias{ReadAndSplitMutectVCFs}
-\title{Read and split Mutect VCF files.}
+\title{Read and split Mutect VCF files}
 \usage{
-ReadAndSplitMutectVCFs(files, names.of.VCFs = NULL, tumor.col.names = NA)
+ReadAndSplitMutectVCFs(
+  files,
+  names.of.VCFs = NULL,
+  tumor.col.names = NA,
+  suppress.discarded.variants.warnings = TRUE
+)
 }
 \arguments{
 \item{files}{Character vector of file paths to the Mutect VCF files.}
@@ -22,32 +27,27 @@ which contain the tumor sample information. The order of names in
 \code{files}. If \code{tumor.col.names} is equal to \code{NA}(default),
 this function will use the 10th column in all the VCFs to calculate VAFs.
 See \code{\link{GetMutectVAF}} for more details.}
-}
-\value{
-A list with 3 in-memory VCFs and two left-over VCF-like data frames
-  with rows that were not incorporated into the first 3 VCFs, as follows:
-  
-\enumerate{
 
- \item \code{SBS} VCF with only single base substitutions.
-
- \item \code{DBS} VCF with only doublet base substitutions.
-
- \item \code{ID} VCF with only small insertions and deletions.
-
- \item \code{other.subs} VCF like data.frame with rows for coordinate
- substitutions involving 3 or more nucleotides (e.g. ACT > TGA or AACT >
- GGTA) and rows for complex indels.
-
- \item \code{multiple.alt} VCF like data.frame with
- rows for variants with multiple alternative alleles, for example
- ACT mutated to both AGT and ACT at the same position.
-
-}
+\item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
+warning messages showing information about the discarded variants. Default
+is TRUE.}
 }
 \description{
-Read and split Mutect VCF files.
+Read and split Mutect VCF files
 }
+\section{Value}{
+ A list containing the following objects:
+\itemize{
+\item \code{SBS}: List of VCFs with only single base substitutions.
+\item \code{DBS}: List of VCFs with only doublet base substitutions as called
+by Mutect.
+\item \code{ID}: List of VCFs with only small insertions and deletions.
+\item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+that were excluded from the analysis. See the added extra column
+\code{discarded.reason} for more details.
+}
+}
+
 \examples{
 file <- c(system.file("extdata/Mutect-vcf",
                       "Mutect.GRCh37.s1.vcf",

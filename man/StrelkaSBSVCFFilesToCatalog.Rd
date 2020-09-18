@@ -2,14 +2,16 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{StrelkaSBSVCFFilesToCatalog}
 \alias{StrelkaSBSVCFFilesToCatalog}
-\title{Create SBS and DBS catalogs from Strelka SBS VCF files.}
+\title{Create SBS and DBS catalogs from Strelka SBS VCF files}
 \usage{
 StrelkaSBSVCFFilesToCatalog(
   files,
   ref.genome,
   trans.ranges = NULL,
   region = "unknown",
-  names.of.VCFs = NULL
+  names.of.VCFs = NULL,
+  return.annotated.vcfs = FALSE,
+  suppress.discarded.variants.warnings = TRUE
 )
 }
 \arguments{
@@ -19,11 +21,11 @@ StrelkaSBSVCFFilesToCatalog(
 \code{\link{ICAMS}}.}
 
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
-\code{\link{BSgenome}} object 
+\code{\link{BSgenome}} object
 \enumerate{
-  \item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
-  \item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
-  \item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
+\item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
+\item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
+\item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
 }
 then the function will infer \code{trans.ranges} automatically. Otherwise,
 user will need to provide the necessary \code{trans.ranges}. Please refer to
@@ -40,25 +42,59 @@ file paths in \code{files}. If \code{NULL}(default), this function will
 remove all of the path up to and including the last path separator (if any)
 in \code{files} and file paths without extensions (and the leading dot)
 will be used as the names of the VCF files.}
-}
-\value{
-A list of 3 SBS catalogs (one each for 96, 192, and 1536) and 3 DBS
-  catalogs (one each for 78, 136, and 144). If trans.ranges is not provided
-  by user and cannot be inferred by ICAMS, SBS 192 and DBS 144 catalog will
-  not be generated. Each catalog has attributes added. See
-  \code{\link{as.catalog}} for more details.
+
+\item{return.annotated.vcfs}{Logical. Whether to return the annotated VCFs
+with additional columns showing mutation class for each variant. Default is
+FALSE.}
+
+\item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
+warning messages showing information about the discarded variants. Default
+is TRUE.}
 }
 \description{
-Create 3 SBS catalogs (96, 192, 1536) and 3 DBS catalogs (78, 136, 144)
-from the Strelka SBS VCFs specified by \code{files}
+Create 3 SBS catalogs (96, 192, 1536) and 3 DBS catalogs (78, 136, 144) from
+the Strelka SBS VCFs specified by \code{files}. The function will find and
+merge adjacent SBS pairs into DBS if their VAFs are very similar. The default
+threshold value for VAF is 0.02.
 }
 \details{
 This function calls \code{\link{VCFsToSBSCatalogs}} and
 \code{\link{VCFsToDBSCatalogs}}.
 }
-\note{
-SBS 192 and DBS 144 catalog only contains mutations in transcribed regions.
+\section{Value}{
+
+A list containing the following objects:
+\itemize{
+\item \code{catSBS96}, \code{catSBS192}, \code{catSBS1536}: Matrix of
+3 SBS catalogs (one each for 96, 192, and 1536).
+\item \code{catDBS78}, \code{catDBS136}, \code{catDBS144}: Matrix of
+3 DBS catalogs (one each for 78, 136, and 144).
+\item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+that were excluded from the analysis. See the added extra column
+\code{discarded.reason} for more details.
+\item \code{annotated.vcfs}:
+\strong{Non-NULL only if} \code{return.annotated.vcfs} = TRUE.
+A list of elements:
+\itemize{
+\item \code{SBS}: SBS VCF annotated by \code{\link{AnnotateSBSVCF}} with
+three new columns \code{SBS96.class}, \code{SBS192.class} and
+\code{SBS1536.class} showing the mutation class for each SBS variant.
+\item \code{DBS}: DBS VCF annotated by \code{\link{AnnotateDBSVCF}} with
+three new columns \code{DBS78.class}, \code{DBS136.class} and
+\code{DBS144.class} showing the mutation class for each DBS variant.
 }
+}
+
+If \code{trans.ranges} is not provided by user and cannot be inferred by
+ICAMS, SBS 192 and DBS 144 catalog will not be generated. Each catalog has
+attributes added. See \code{\link{as.catalog}} for more details.
+}
+
+\section{Note}{
+ SBS 192 and DBS 144 catalogs include only mutations in
+transcribed regions.
+}
+
 \section{Comments}{
 
 To add or change attributes of the catalog, you can use function

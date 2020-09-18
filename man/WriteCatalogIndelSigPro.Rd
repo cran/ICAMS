@@ -2,9 +2,9 @@
 % Please edit documentation in R/other_catalog_formats.R
 \name{WriteCatalogIndelSigPro}
 \alias{WriteCatalogIndelSigPro}
-\title{Write Indel Catalogs in SigProExtractor format.}
+\title{Write Indel Catalogs in SigProExtractor format}
 \usage{
-WriteCatalogIndelSigPro(catalog, file, strict = TRUE)
+WriteCatalogIndelSigPro(catalog, file, strict = TRUE, sep = "\\t")
 }
 \arguments{
 \item{catalog}{A catalog as defined in \code{\link{ICAMS}};
@@ -14,9 +14,13 @@ see also \code{\link{as.catalog}}.}
 
 \item{strict}{If TRUE, do additional checks on the input, and stop if the
 checks fail.}
+
+\item{sep}{Separator to use in the output file. In older version 
+SigProfiler read comma-separated files; as of May 2020 it
+reads tab-separated files.}
 }
 \description{
-Write Indel Catalogs in SigProExtractor format to a csv file.
+Write Indel Catalogs in SigProExtractor format to a file.
 }
 \note{
 In ID (small insertion and deletion) catalogs in SigProExtractor format, 

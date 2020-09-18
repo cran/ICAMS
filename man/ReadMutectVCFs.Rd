@@ -23,11 +23,13 @@ should match the order of VCFs specified in \code{files}. If
 use the 10th column in all the VCFs to calculate VAFs.
 See \code{\link{GetMutectVAF}} for more details.}
 }
-\value{
-A list of data frames which store data lines of VCF files with VAFs
-  (variant allele frequencies) added.
-}
 \description{
 Read Mutect VCF files.
 }
+\section{Value}{
+ A list of data frames which store data lines of VCF files
+  with two additional columns added which contain the VAF(variant allele
+  frequency) and read depth information.
+}
+
 \keyword{internal}

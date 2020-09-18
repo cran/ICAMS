@@ -1,4 +1,4 @@
-#' "Collapse" a catalog.
+#' "Collapse" a catalog
 #' 
 #' @description 
 #' \enumerate{
@@ -85,7 +85,7 @@ Collapse1536CatalogTo96 <- function(catalog) {
 
   # The next gsub replaces the string representing a
   # single-base mutation in pentanucleotide with the corresponding
-  # sring for that mutation in a trinucleotide context.
+  # string for that mutation in a trinucleotide context.
   dt$rn <- gsub(".(...).(.)", "\\1\\2", rn, perl = TRUE)
   dt96 <- dt[, lapply(.SD, sum), by = rn, .SDcols = ]
   mat96 <- as.matrix(dt96[, -1])
@@ -324,7 +324,24 @@ TCFromCou <- function(s, t) {
     if (is.null(t[["abundance"]])) {
       if (!is.null(s[["abundance"]]))
       stop("Cannot transform from counts -> counts.signature ",
-           "target abundance is NULL")
+           "target abundance is NULL and source abundance in not NULL")
+    }
+    # Source and target catalog both have NULL abundance
+    if (is.null(s[["abundance"]]) && is.null(t[["abundance"]])) {
+      # If source and target catalog have different ref.genome, 
+      # raise an error
+      if (!RefGenomeIsSame(s[["ref.genome"]], t[["ref.genome"]])) {
+        stop("Cannot transform from counts -> counts.signature ",
+             "source and target catalog both have NULL abundance,",
+             "but have different ref.genome")
+      }
+      # If source and target catalog have different region, 
+      # raise an error
+      if (!RegionIsSame(s[["region"]], t[["region"]])) {
+        stop("Cannot transform from counts -> counts.signature ",
+             "source and target catalog both have NULL abundance,",
+             "but have different region")
+      }
     }
     if (AbundanceIsSame(s[["abundance"]], t[["abundance"]])) {
       return("sig.only")
@@ -442,7 +459,27 @@ AbundanceIsSame <- function(a1, a2) {
 }
 
 #' @keywords internal
-CheckCatalogAttributes <- function(catalog) {
+RefGenomeIsSame <- function(a1, a2) {
+  if (is.null(a1)  && is.null(a2))  return(TRUE)
+  if (is.null(a1)  && !is.null(a2)) return(FALSE)
+  if (!is.null(a1) && is.null(a2))  return(FALSE)
+  a1 <- NormalizeGenomeArg(a1)
+  a2 <- NormalizeGenomeArg(a2)
+  if (a1@pkgname == a2@pkgname) return(TRUE)
+  return(FALSE)
+}
+
+#' @keywords internal
+RegionIsSame <- function(a1, a2) {
+  if (is.null(a1)  && is.null(a2))  return(TRUE)
+  if (is.null(a1)  && !is.null(a2)) return(FALSE)
+  if (!is.null(a1) && is.null(a2))  return(FALSE)
+  if (a1 == a2) return(TRUE)
+  return(FALSE)
+}
+
+#' @keywords internal
+CheckCatalogAttributes <- function(catalog, target.catalog.type) {
   ref.genome <- attr(catalog, "ref.genome", exact = TRUE)
   catalog.type <- attr(catalog, "catalog.type", exact = TRUE)
   abundance <- attr(catalog, "abundance", exact = TRUE)
@@ -460,7 +497,9 @@ CheckCatalogAttributes <- function(catalog) {
     stop("Cannot perform transformation from a catalog with NULL catalog.type")
   }
   if (is.null(abundance)) {
-    stop("Cannot perform transformation from a catalog with NULL abundance")
+    if (!(catalog.type == "counts" && target.catalog.type == "counts.signature")) {
+      stop("Cannot perform transformation from a catalog with NULL abundance")
+    }
   } else if (!inherits(abundance, "integer")) {
     stop("Cannot perform transformation from a catalog with non integer abundance")
   }
@@ -473,7 +512,7 @@ CheckCatalogAttributes <- function(catalog) {
 }
 
 #' Transform between counts and density spectrum catalogs
-#' and counts and density signature catalogs.
+#' and counts and density signature catalogs
 #'
 #' @details Only the following transformations are legal:
 #'
@@ -542,6 +581,51 @@ CheckCatalogAttributes <- function(catalog) {
 #'   \code{target.abundance}, raise an error.
 #'   
 #' @return A catalog as defined in \code{\link{ICAMS}}.
+#' 
+#' @section Rationale:  
+#' The \code{\link{TransformCatalog}}
+#' function transforms catalogs of mutational spectra or
+#' signatures to account for differing abundances of the source
+#' sequence of the mutations in the genome.
+#'
+#' For example, mutations from
+#' ACG are much rarer in the human genome than mutations from ACC
+#' simply because CG dinucleotides are rare in the genome.
+#' Consequently, there are two possible representations of
+#' mutational spectra or signatures. One representation is
+#' based on mutation counts as observed in a given genome
+#' or exome,
+#' and this approach is widely used, as, for example, at
+#' https://cancer.sanger.ac.uk/cosmic/signatures, which
+#' presents signatures based on observed mutation counts
+#' in the human genome. We call these "counts-based spectra"
+#' or "counts-based signatures".
+#'
+#' Alternatively,
+#' mutational spectra or signatures can be represented as
+#' mutations per source sequence, for example
+#' the number of ACT > AGT mutations occurring at all
+#' ACT 3-mers in a genome. We call these "density-based
+#' spectra" or "density-based signatures".
+#'
+#' This function can also transform spectra
+#' based on observed genome-wide counts to "density"-based
+#' catalogs. In density-based catalogs
+#' mutations are expressed as mutations per
+#' source sequences. For example,
+#' a density-based catalog represents
+#' the proportion of ACCs mutated to
+#' ATCs, the proportion of ACGs mutated to ATGs, etc.
+#' This is
+#' different from counts-based mutational spectra catalogs, which
+#' contain the number of ACC > ATC mutations, the number of
+#' ACG > ATG mutations, etc.
+#'
+#' This function can also transform observed-count based
+#' spectra or signatures from genome to exome based counts,
+#' or between different species (since the abundances of
+#' source sequences vary between genome and exome and between
+#' species).
 #'
 #' @export
 #' 
@@ -564,7 +648,7 @@ TransformCatalog <-
            target.catalog.type = NULL,
            target.abundance    = NULL) {
     # Check the attributes of the catalog
-    stopifnot(CheckCatalogAttributes(catalog))
+    stopifnot(CheckCatalogAttributes(catalog, target.catalog.type))
     
     # Check and normalize the arguments
     args <-
@@ -636,31 +720,138 @@ StandardChromName <- function(df) {
   if (sum(grepl("GL", df[[1]])) > 0) {
     df <- df[-grep("GL", df[[1]]), ]
   }
-
+  
   # Is there any row in df whose Chromosome names have "KI"?
   if (sum(grepl("KI", df[[1]])) > 0) {
     df <- df[-grep("KI", df[[1]]), ]
   }
-
+  
   # Is there any row in df whose Chromosome names have "random"?
   if (sum(grepl("random", df[[1]])) > 0) {
     df <- df[-grep("random", df[[1]]), ]
   }
-
+  
   # Is there any row in df whose Chromosome names are "Hs37D5"?
   if (sum(grepl("^Hs", df[[1]])) > 0) {
     df <- df[-grep("^Hs", df[[1]]), ]
   }
-
+  
   # Is there any row in df whose Chromosome names contain "M"?
   if (sum(grepl("M", df[[1]])) > 0) {
     df <- df[-grep("M", df[[1]]), ]
   }
-
+  
   # Remove the "chr" character in the Chromosome's name
   df[, 1] <- sub(pattern = "chr", replacement = "", df[[1]])
-
+  
   return(df)
+}
+
+#' Standardize the chromosome name annotations for a data frame.
+#'
+#' @param df A data frame whose first column contains the Chromosome name
+#' 
+#' @param name.of.VCF Name of the VCF file.
+#'
+#' @return A \strong{list} with the elements
+#' * \code{df} a data frame with variants that had "legal" chromosome
+#'   names (see below for illegal chromosome names).
+#'   Leading "chr" strings are removed.
+#' * \code{discarded.variants}: \strong{Non-NULL only if} there 
+#'   variants with illegal chromosome names; these are
+#'   names that contain the strings "GL", "Hs", "KI", "M", "random".
+#' @md
+#'   
+#' @keywords internal
+StandardChromNameNew <- function(df, name.of.VCF = NULL) {
+  # Create an empty data frame for discarded variants
+  discarded.variants <- df[0, ]
+  
+  # Is there any row in df whose Chromosome names have "GL"?
+  if (sum(grepl("GL", df[[1]])) > 0) {
+    warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)), 
+            " ", sum(grepl("GL", df[[1]])), " row out of ",
+            nrow(df), " had chromosome names that contain 'GL' and ", 
+            "were removed. ",
+            "See discarded.variants in the return value for more details")
+    df1 <- df[-grep("GL", df[[1]]), ]
+    df1.to.remove <- df[grep("GL", df[[1]]), ]
+    df1.to.remove$discarded.reason <- 'Chromosome name contains "GL"'
+    discarded.variants <- 
+      dplyr::bind_rows(discarded.variants, df1.to.remove)
+  } else {
+    df1 <- df
+  }
+  
+  # Is there any row in df whose Chromosome names have "KI"?
+  if (sum(grepl("KI", df1[[1]])) > 0) {
+    warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)), 
+            " ", sum(grepl("KI", df1[[1]])), " row out of ",
+            nrow(df), " had chromosome names that contain 'KI' and ", 
+            "were removed. ",
+            "See discarded.variants in the return value for more details")
+    df2 <- df1[-grep("KI", df1[[1]]), ]
+    df2.to.remove <- df1[grep("KI", df1[[1]]), ]
+    df2.to.remove$discarded.reason <- 'Chromosome name contains "KI"'
+    discarded.variants <- 
+      dplyr::bind_rows(discarded.variants, df2.to.remove)
+  } else {
+    df2 <- df1
+  }
+  
+  # Is there any row in df whose Chromosome names have "random"?
+  if (sum(grepl("random", df2[[1]])) > 0) {
+    warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)), 
+            " ", sum(grepl("random", df2[[1]])), " row out of ",
+            nrow(df), " had chromosome names that contain 'random' and ", 
+            "were removed. ",
+            "See discarded.variants in the return value for more details")
+    df3 <- df2[-grep("random", df2[[1]]), ]
+    df3.to.remove <- df2[grep("random", df2[[1]]), ]
+    df3.to.remove$discarded.reason <- 'Chromosome name contains "random"'
+    discarded.variants <- 
+      dplyr::bind_rows(discarded.variants, df3.to.remove)
+  } else {
+    df3 <- df2
+  }
+  
+  # Is there any row in df whose Chromosome names are "Hs37D5"?
+  if (sum(grepl("^Hs", df3[[1]])) > 0) {
+    warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
+            " ", sum(grepl("^Hs", df3[[1]])), " row out of ",
+            nrow(df), " had chromosome names that contain 'Hs' and ", 
+            "were removed. ",
+            "See discarded.variants in the return value for more details")
+    df4 <- df3[-grep("^Hs", df3[[1]]), ]
+    df4.to.remove <- df3[grep("^Hs", df3[[1]]), ]
+    df4.to.remove$discarded.reason <- 'Chromosome name contains "Hs"'
+    discarded.variants <- 
+      dplyr::bind_rows(discarded.variants, df4.to.remove)
+  } else {
+    df4 <- df3
+  }
+  
+  # Is there any row in df whose Chromosome names contain "M"?
+  if (sum(grepl("M", df4[[1]])) > 0) {
+    warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)), 
+            " ", sum(grepl("M", df4[[1]])), " row out of ",
+            nrow(df), " had chromosome names that contain 'M' and ", 
+            "were removed. ",
+            "See discarded.variants in the return value for more details")
+    df5 <- df4[-grep("M", df4[[1]]), ]
+    df5.to.remove <- df4[grep("M", df4[[1]]), ]
+    df5.to.remove$discarded.reason <- 'Chromosome name contains "M"'
+    discarded.variants <- 
+      dplyr::bind_rows(discarded.variants, df5.to.remove)
+  } else {
+    df5 <- df4
+  }
+  
+  if (nrow(discarded.variants) == 0) {
+    return(list(df = df5))
+  } else {
+    return(list(df = df5, discarded.variants = discarded.variants))
+  }
 }
 
 #' Check and, if possible, correct the chromosome names in a VCF \code{data.frame}.
@@ -949,7 +1140,7 @@ PyrPenta <- function(mutstring) {
   return(output)
 }
 
-#' Reverse complement every string in \code{string.vec}.
+#' Reverse complement every string in \code{string.vec}
 #' 
 #' Based on \code{\link{reverseComplement}}.
 #' Handles IUPAC ambiguity codes but not "u" (uracil). \cr
@@ -1051,8 +1242,8 @@ ReadTranscriptRanges <- function(file) {
 #' @keywords internal
 ReadBedRanges <- function(file) {
   dt <- data.table::fread(file)
-  dt1 <- StandardChromName(dt[, 1:3])
-  colnames(dt1) <- c("chrom", "start", "end")
+  dt1 <- StandardChromName(dt)
+  colnames(dt1)[1:3] <- c("chrom", "start", "end")
 
   # Delete duplicate entries in the BED file
   dt2 <- dplyr::distinct(dt1, chrom, start, end, .keep_all = TRUE)
@@ -1456,7 +1647,7 @@ InferAbundance <- function(object, ref.genome, region, catalog.type) {
 
   }
 
-#' Create a catalog from a \code{matrix}, \code{data.frame}, or \code{vector}.
+#' Create a catalog from a \code{matrix}, \code{data.frame}, or \code{vector}
 #'
 #' @param object A numeric \code{matrix}, numeric \code{data.frame},
 #' or \code{vector}.
@@ -1665,7 +1856,7 @@ GetGenomeKmerCounts <- function(k, ref.genome, filter.path, verbose = FALSE) {
     filter.df <- filter.df[filter.df$V6 <= 6]
     filter.df <- StandardChromName(filter.df[, 2:ncol(filter.df)])
     # Check whether chromosome names in filter.df are the same as in ref.genome
-    if (!(seqnames(genome)[1] %in% filter.df$V2)){
+    if (!(filter.df$V2[1] %in% seqnames(genome))){
       filter.df$V2 <- paste0("chr", filter.df$V2)
     }
   }
@@ -1776,7 +1967,7 @@ GetStrandedKmerCounts <-
   kmer.counts <- GenerateEmptyKmerCounts(k)
 
   # Check whether chromosome names in stranded.ranges are the same as in ref.genome
-  if (!(seqnames(genome)[1] %in% stranded.ranges$chrom)) {
+  if (!(stranded.ranges$chrom[1] %in% seqnames(genome))) {
     stranded.ranges$chrom <- paste0("chr", stranded.ranges$chrom)
   }
 
@@ -1785,7 +1976,7 @@ GetStrandedKmerCounts <-
     filter.df <- filter.df[filter.df$V6 <= 6]
     filter.df <- StandardChromName(filter.df[, 2:ncol(filter.df)])
     # Check whether chromosome names in filter.df are the same as in ref.genome
-    if (!(seqnames(genome)[1] %in% filter.df$V2)){
+    if (!(filter.df$V2[1] %in% seqnames(genome))){
       filter.df$V2 <- paste0("chr", filter.df$V2)
     }
   }
@@ -1860,7 +2051,7 @@ GetCustomKmerCounts <- function(k, ref.genome, custom.ranges, filter.path,
   kmer.counts <- GenerateEmptyKmerCounts(k)
   
   # Check whether chromosome names in custom.ranges are the same as in ref.genome
-  if (!(seqnames(genome)[1] %in% custom.ranges$chrom)) {
+  if (!(custom.ranges$chrom[1] %in% seqnames(genome))) {
     custom.ranges$chrom <- paste0("chr", custom.ranges$chrom)
   }
   
@@ -1869,7 +2060,7 @@ GetCustomKmerCounts <- function(k, ref.genome, custom.ranges, filter.path,
     filter.df <- filter.df[filter.df$V6 <= 6]
     filter.df <- StandardChromName(filter.df[, 2:ncol(filter.df)])
     # Check whether chromosome names in filter.df are the same as in ref.genome
-    if (!(seqnames(genome)[1] %in% filter.df$V2)){
+    if (!(filter.df$V2[1] %in% seqnames(genome))){
       filter.df$V2 <- paste0("chr", filter.df$V2)
     }
     

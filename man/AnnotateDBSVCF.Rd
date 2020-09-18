@@ -2,7 +2,7 @@
 % Please edit documentation in R/VCF_to_catalog_functions.R
 \name{AnnotateDBSVCF}
 \alias{AnnotateDBSVCF}
-\title{Add sequence context and transcript information to an in-memory DBS VCF.}
+\title{Add sequence context and transcript information to an in-memory DBS VCF}
 \usage{
 AnnotateDBSVCF(DBS.vcf, ref.genome, trans.ranges = NULL)
 }
@@ -13,11 +13,11 @@ AnnotateDBSVCF(DBS.vcf, ref.genome, trans.ranges = NULL)
 \code{\link{ICAMS}}.}
 
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
-\code{\link{BSgenome}} object 
+\code{\link{BSgenome}} object
 \enumerate{
-  \item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
-  \item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
-  \item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
+\item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
+\item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
+\item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
 }
 then the function will infer \code{trans.ranges} automatically. Otherwise,
 user will need to provide the necessary \code{trans.ranges}. Please refer to
@@ -35,7 +35,7 @@ An in-memory DBS VCF as a \code{data.table}. This has been annotated
   These columns are not added if \code{is.null(trans.ranges)}.
 }
 \description{
-Add sequence context and transcript information to an in-memory DBS VCF.
+Add sequence context and transcript information to an in-memory DBS VCF
 }
 \examples{
 file <- c(system.file("extdata/Strelka-SBS-vcf",

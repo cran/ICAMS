@@ -3,9 +3,15 @@
 \name{AnnotateIDVCF}
 \alias{AnnotateIDVCF}
 \title{Add sequence context to an in-memory ID (insertion/deletion) VCF, and
-  confirm that they match the given reference genome.}
+confirm that they match the given reference genome}
 \usage{
-AnnotateIDVCF(ID.vcf, ref.genome, flag.mismatches = 0, name.of.VCF = NULL)
+AnnotateIDVCF(
+  ID.vcf,
+  ref.genome,
+  flag.mismatches = 0,
+  name.of.VCF = NULL,
+  suppress.discarded.variants.warnings = TRUE
+)
 }
 \arguments{
 \item{ID.vcf}{An in-memory ID (insertion/deletion) VCF as a
@@ -16,35 +22,34 @@ ACC (insertion of CC).}
 \item{ref.genome}{A \code{ref.genome} argument as described in
 \code{\link{ICAMS}}.}
 
-\item{flag.mismatches}{Deprecated. If there are mismatches to references, the
-function will automatically discard these rows. User can refer to the
-element discarded.variants in the return value for more details.}
+\item{flag.mismatches}{Deprecated. If there are ID variants whose \code{REF}
+do not match the extracted sequence from \code{ref.genome}, the function
+will automatically discard these variants. See element
+\code{discarded.variants} in the return value for more details.}
 
 \item{name.of.VCF}{Name of the VCF file.}
+
+\item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
+warning messages showing information about the discarded variants. Default
+is TRUE.}
 }
 \value{
-A list whose first element "annotated.vcf" contains the original VCF data
-  frame with 2 new columns added to the input data frame:
-  \enumerate{ 
-  \item \code{seq.context}
-  The sequence embedding the variant.
-
-  \item \code{seq.context.width} The width of \code{seq.context} to the left.
-  }
-  If there are rows that are discarded from the original VCF data frame, the
-  function will generate a warning and a second element "discarded.variants"
-  will be included in the return value. The discarded variants can belong to the 
-  following types:
-  \enumerate{
-  \item Variants which have the same number of bases for REF and ALT alleles.
-  \item Variants which have empty REF or ALT allels.
-  \item Complex indels.
-  \item Variants with mismatches between VCF and reference sequence.
-  }
+A list of elements:
+\itemize{
+\item \code{annotated.vcf}: The original VCF data
+frame with two new columns added to the input data frame:
+\itemize{
+\item \code{seq.context}: The sequence embedding the variant.
+\item \code{seq.context.width}: The width of \code{seq.context} to the left.
+}
+\item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+that were excluded from the analysis. See the added extra column
+\code{discarded.reason} for more details.
+}
 }
 \description{
 Add sequence context to an in-memory ID (insertion/deletion) VCF, and
-  confirm that they match the given reference genome.
+confirm that they match the given reference genome
 }
 \examples{
 file <- c(system.file("extdata/Strelka-ID-vcf/",

@@ -1,4 +1,4 @@
-#' Plot transcription strand bias with respect to gene expression values.
+#' Plot transcription strand bias with respect to gene expression values
 #'
 #' @param annotated.SBS.vcf An SBS VCF annotated by
 #'   \code{\link{AnnotateSBSVCF}}. It \strong{must} have transcript range
@@ -81,7 +81,7 @@ PlotTransBiasGeneExp <-
   }
 
 #' Plot transcription strand bias with respect to gene expression values to a
-#' PDF file.
+#' PDF file
 #' 
 #' @inheritParams PlotTransBiasGeneExp
 #' 
@@ -126,7 +126,7 @@ PlotTransBiasGeneExpToPdf <-
                               num.of.bins, damaged.base)
     
     # Setting the width and length for A4 size plotting
-    grDevices::cairo_pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
+    grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
     
     opar <- par(mfrow = c(4, 3), mar = c(8, 5.5, 2, 1), oma = c(1, 1, 2, 1))
     on.exit(par(opar))
@@ -171,11 +171,14 @@ CalculateExpressionLevel <- function(dt, num.of.bins, type, damaged.base) {
   
   setorder(dt1, exp.value)
   setorder(dt2, exp.value)
+  setorder(dt, exp.value)
   if (num.of.bins == 1) {
     dt[, exp.level := num.of.bins]
     return(dt)
-  } else {
-    if (nrow(dt1) <= num.of.bins) {
+  } else if (nrow(dt) <= num.of.bins) {
+    dt[, exp.level := cut(exp.value, breaks = num.of.bins, labels = FALSE)]
+    return(dt)
+  } else if (nrow(dt1) <= num.of.bins) {
       dt1$exp.level <- 1:nrow(dt1)
       max.exp.value <- max(dt1$exp.value)
       dt3 <- dt2[exp.value > max.exp.value, ]
@@ -229,7 +232,6 @@ CalculateExpressionLevel <- function(dt, num.of.bins, type, damaged.base) {
       return(dt)
     }
   }
-}
 
 #' @keywords internal
 CalculatePValues <- function(dt) {
@@ -253,7 +255,15 @@ CalculatePValues <- function(dt) {
       logit.model1 <- stats::glm(class ~ log2(exp.value + 1), 
                                  family = binomial, 
                                  data = dt1)
-      p.values[type[i]] <- summary(logit.model1)$coefficients[2, 4]
+      # Calculate the number of unique expression values in dt1
+      num.exp.value <- length(unique(dt1$exp.value))
+      if (num.exp.value == 1) {
+        # If there is only one unique expression value in dt1, then this
+        # predictor variable will be dropped from the logistic regression model
+        p.values[type[i]] <- NA
+      } else {
+        p.values[type[i]] <- summary(logit.model1)$coefficients[2, 4]
+      }
     }
   }
   

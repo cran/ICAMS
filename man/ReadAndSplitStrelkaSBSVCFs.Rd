@@ -2,9 +2,13 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{ReadAndSplitStrelkaSBSVCFs}
 \alias{ReadAndSplitStrelkaSBSVCFs}
-\title{Read and split Strelka SBS VCF files.}
+\title{Read and split Strelka SBS VCF files}
 \usage{
-ReadAndSplitStrelkaSBSVCFs(files, names.of.VCFs = NULL)
+ReadAndSplitStrelkaSBSVCFs(
+  files,
+  names.of.VCFs = NULL,
+  suppress.discarded.variants.warnings = TRUE
+)
 }
 \arguments{
 \item{files}{Character vector of file paths to the Strelka SBS VCF files.}
@@ -15,30 +19,29 @@ file paths in \code{files}. If \code{NULL}(default), this function will
 remove all of the path up to and including the last path separator (if any)
 in \code{files} and file paths without extensions (and the leading dot)
 will be used as the names of the VCF files.}
-}
-\value{
-A list of 3 in-memory objects as follows:
 
-\enumerate{
-
-   \item \code{SBS.vcfs} List of data.frames of pure SBS mutations -- no DBS
-   or 3+BS mutations.
-   
-   \item \code{DBS.vcfs} List of data.frames of pure DBS mutations -- no SBS
-   or 3+BS mutations.
-
-   \item \code{ThreePlus} List of data.tables with the key CHROM, LOW.POS,
-   HIGH.POS which contain rows in the input that did not represent SBSs or
-   DBSs.
-   
-   \item \code{multiple.alt} Rows with multiple alternate alleles (removed from
-   \code{SBS.vcfs} etc.)
-
-   }
+\item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
+warning messages showing information about the discarded variants. Default
+is TRUE.}
 }
 \description{
-Read and split Strelka SBS VCF files.
+The function will find and merge adjacent SBS pairs into DBS if their VAFs
+are very similar. The default threshold value for VAF is 0.02.
 }
+\section{Value}{
+
+A list of elements as follows:
+\itemize{
+\item \code{SBS.vcfs}: List of data.frames of pure SBS mutations -- no DBS or
+3+BS mutations.
+\item \code{DBS.vcfs}: List of data.frames of pure DBS mutations -- no SBS or
+3+BS mutations.
+\item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+that were excluded from the analysis. See the added extra column
+\code{discarded.reason} for more details.
+}
+}
+
 \examples{
 file <- c(system.file("extdata/Strelka-SBS-vcf",
                       "Strelka.SBS.GRCh37.s1.vcf",

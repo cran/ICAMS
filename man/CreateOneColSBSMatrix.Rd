@@ -4,7 +4,7 @@
 \alias{CreateOneColSBSMatrix}
 \title{Create the matrix an SBS catalog for *one* sample from an in-memory VCF.}
 \usage{
-CreateOneColSBSMatrix(vcf, sample.id = "count")
+CreateOneColSBSMatrix(vcf, sample.id = "count", return.annotated.vcf = FALSE)
 }
 \arguments{
 \item{vcf}{An in-memory VCF file annotated with sequence context and
@@ -14,12 +14,10 @@ substitutions), or triplet base substitutions etc., even if encoded as
 neighboring SBS.}
 
 \item{sample.id}{Usually the sample id, but defaults to "count".}
-}
-\value{
-A list of three 1-column matrices with the names
-\code{catSBS96}, \code{catSBS192}, \code{catSBS1536}.
- If trans.ranges is NULL, \code{catSBS192} is not generated.
- Do not rely on the order of elements in the list.
+
+\item{return.annotated.vcf}{Whether to return the annotated VCF with
+additional columns showing the mutation class for each variant. Default is
+FALSE.}
 }
 \description{
 Create the matrix an SBS catalog for *one* sample from an in-memory VCF.
@@ -27,4 +25,16 @@ Create the matrix an SBS catalog for *one* sample from an in-memory VCF.
 \note{
 catSBS192 only contains mutations in transcribed regions.
 }
+\section{Value}{
+ A list of three 1-column matrices with the names
+  \code{catSBS96}, \code{catSBS192}, \code{catSBS1536}. If transcript
+  information is not available in \code{vcf}, \code{catSBS192} is not
+  generated. Do not rely on the order of elements in the list. If
+  \code{return.annotated.vcf} = TRUE, another element \code{annotated.vcf}
+  will appear in the list. If there are SBS variants whose pentanucleotide
+  context contains "N", they will be excluded in the analysis and an
+  additional element \code{discarded.variants} will appear in the return
+  list.
+}
+
 \keyword{internal}

@@ -1,4 +1,4 @@
-#' Plot \strong{one} spectrum or signature.
+#' Plot \strong{one} spectrum or signature
 #'
 #' Plot the spectrum of \strong{one} sample or plot \strong{one} signature. The
 #' type of graph is based on one attribute("catalog.type") of the input catalog.
@@ -35,24 +35,27 @@
 #' 
 #' @importFrom stats binom.test p.adjust
 #'
-#' @return A list whose first element is a logic value indicating whether the
-#'   plot is successful. For \strong{SBS96Catalog}, the list will have a second
-#'   element, which is a numeric vector giving the coordinates of all the bar
-#'   midpoints drawn, useful for adding to the graph. For \strong{SBS192Catalog}
-#'   with "counts" catalog.type and non-NULL abundance, the list will have a
-#'   second element which is a list containing the strand bias statistics.
+#' @return An \strong{invisible} list whose first element is a logic value
+#'   indicating whether the plot is successful. For \code{SBS96Catalog},
+#'   \code{SBS192Catalog}, \code{DBS78Catalog}, \code{DBS144Catalog} and
+#'   \code{IndelCatalog}, the list will have a second element, which is a
+#'   numeric vector giving the coordinates of all the bar midpoints drawn,
+#'   useful for adding to the graph. For \strong{SBS192Catalog} with "counts"
+#'   catalog.type and non-NULL abundance and \code{plot.SBS12 = TRUE}, the list
+#'   will have an additional element which is a list containing the strand bias
+#'   statistics.
 #'   
 #' @note The sizes of repeats involved in deletions range from 0 to 5+ in the
 #'   mutational-spectra and signature catalog rownames, but for plotting and
 #'   end-user documentation deletion repeat sizes range from 1 to 6+.
 #'
 #' @section Comments: For \strong{SBS192Catalog} with "counts" catalog.type and
-#'   non-NULL abundance, the strand bias statistics are Benjamini-Hochberg
-#'   q-values based on two-sided binomial tests of the mutation counts
-#'   on the transcribed and untranscribed strands relative to the 
-#'   actual abundances of C and T on the transcribed strand.
-#'   On the SBS12 plot, asterisks indicate q-values as follows
-#'   *, \eqn{Q<0.05}; **, \eqn{Q<0.01}; ***, \eqn{Q<0.001}.
+#'   non-NULL abundance and \code{plot.SBS12 = TRUE}, the strand bias statistics
+#'   are Benjamini-Hochberg q-values based on two-sided binomial tests of the
+#'   mutation counts on the transcribed and untranscribed strands relative to
+#'   the actual abundances of C and T on the transcribed strand. On the SBS12
+#'   plot, asterisks indicate q-values as follows *, \eqn{Q<0.05}; **,
+#'   \eqn{Q<0.01}; ***, \eqn{Q<0.001}.
 #'   
 #' @export
 #'
@@ -71,7 +74,7 @@ PlotCatalog <- function(catalog, plot.SBS12 = NULL, cex = NULL,
   UseMethod(generic = "PlotCatalog")
 }
 
-#' Plot catalog to a PDF file.
+#' Plot catalog to a PDF file
 #'
 #' Plot catalog to a PDF file. The type of graph is based on one
 #' attribute("catalog.type") of the input catalog. You can first use
@@ -107,10 +110,11 @@ PlotCatalog <- function(catalog, plot.SBS12 = NULL, cex = NULL,
 #' @param ylim Has the usual meaning. Only implemented for SBS96Catalog and
 #'   IndelCatalog.
 #'   
-#' @return A list whose first element is a logic value indicating whether the
-#'   plot is successful. For \strong{SBS192Catalog} with "counts" catalog.type
-#'   and non-null abundance, the list will have a second element which is a list
-#'   containing the strand bias statistics.
+#' @return An \strong{invisible} list whose first element is a logic value
+#'   indicating whether the plot is successful. For \strong{SBS192Catalog} with
+#'   "counts" catalog.type and non-null abundance and \code{plot.SBS12 = TRUE},
+#'   the list will have a second element which is a list containing the strand
+#'   bias statistics.
 #'   
 #' @note The sizes of repeats involved in deletions range from 0 to 5+ in the
 #'   mutational-spectra and signature catalog rownames, but for plotting and
@@ -274,11 +278,11 @@ PlotCatalog.SBS96Catalog <-
       rect(xleft = x.left, ybottom = ymax * 1.28, 
            xright = x.right, ytop = ymax * 1.3,
            col = class.col, border = NA, xpd = NA, adj = 0.5)
-      text((x.left + x.right)/2, ymax * 1.38, 
+      text((x.left + x.right)/2, ymax * 1.38,   
            labels = maj.class.names, xpd = NA, cex = cex * 1.25)
     }
 
-    return(list(plot.success = TRUE, plot.object = bp))
+    invisible(list(plot.success = TRUE, plot.object = bp))
   }
 
 #' @export
@@ -288,7 +292,7 @@ PlotCatalogToPdf.SBS96Catalog <-
            ylim = NULL) {
     old.par.tck.value <- par("tck")
     # Setting the width and length for A4 size plotting
-    grDevices::cairo_pdf(file, width = 8.2677, 
+    grDevices::pdf(file, width = 8.2677, 
                          height = 11.6929, onefile = TRUE)
     par(tck = old.par.tck.value)
     # opar <- par(no.readonly = TRUE)
@@ -304,7 +308,7 @@ PlotCatalogToPdf.SBS96Catalog <-
     }
     
     grDevices::dev.off()
-    return(list(plot.success = TRUE))
+    invisible(list(plot.success = TRUE))
   }
 
 #' @export
@@ -432,6 +436,11 @@ PlotCatalog.SBS192Catalog <-
 
     # Write the name of the sample
     text(1.5, ymax * 7 / 8, labels = colnames(cat), adj = 0, cex = cex, font = 2)
+    
+    # Add legend
+    legend(bp[159], ymax * 1.05, fill = strand.col, border = strand.col,
+           xpd = NA, bty = "n", x.intersp = 0.5, , cex = cex * 0.88,
+           legend = c("Transcribed strand", "Untranscribed strand"))
   } else {
     strand.col <- c('#394398',
                     '#e83020')
@@ -587,8 +596,8 @@ PlotCatalog.SBS192Catalog <-
 
     # Add legend
     legend(bp[6], ymax * 0.95, fill = strand.col, border = "white",
-           xpd = NA, bty = "n",
-           legend = c("Transcribed", "Untranscribed"), cex = cex)
+           xpd = NA, bty = "n", 
+           legend = c("Transcribed strand", "Untranscribed strand"), cex = cex)
 
     # Draw the sample name information on top of graph
     text(bp[5], ymax * 1.02, labels = colnames(catalog), xpd = NA,
@@ -597,9 +606,10 @@ PlotCatalog.SBS192Catalog <-
     
     # Check whether it is possible to return the p-values from binomial test
     if (isTRUE(plot.SBS12) && IsBinomialTestApplicable(catalog)) {
-      return(list(plot.success = TRUE, strand.bias.statistics = list0))
+      invisible(list(plot.success = TRUE, plot.object = bp, 
+                     strand.bias.statistics = list0))
     } else {
-      return(list(plot.success = TRUE))
+      invisible(list(plot.success = TRUE, plot.object = bp))
     }
 }
 
@@ -608,7 +618,7 @@ PlotCatalogToPdf.SBS192Catalog <-
   function(catalog, file, plot.SBS12 = FALSE, cex = 0.8, 
            grid, upper, xlabels, ylim) {
   # Setting the width and length for A4 size plotting
-  grDevices::cairo_pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
+  grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
   
   opar <- par(no.readonly = TRUE)
   on.exit(par(opar))
@@ -626,9 +636,12 @@ PlotCatalogToPdf.SBS192Catalog <-
       c(strand.bias.statistics, list$strand.bias.statistics)
   }
   grDevices::dev.off()
-  ifelse(is.null(strand.bias.statistics), return(list(plot.success = TRUE)),
-         return(list(plot.success = TRUE, 
-                     strand.bias.statistics = strand.bias.statistics)))
+  if (is.null(strand.bias.statistics)) {
+    invisible(list(plot.success = TRUE))
+  } else {
+    invisible(list(plot.success = TRUE, 
+                   strand.bias.statistics = strand.bias.statistics))
+  }
 }
 
 #' @export
@@ -820,13 +833,13 @@ PlotCatalog.SBS1536Catalog <-
     }
   }
 
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE))
 }
 
 #' @export
 PlotCatalogToPdf.SBS1536Catalog <-
   function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylim) {
-  grDevices::cairo_pdf(file, width = 11.6929, height = 9.2677, onefile = TRUE)
+  grDevices::pdf(file, width = 11.6929, height = 9.2677, onefile = TRUE)
 
   n <- ncol(catalog)
 
@@ -836,7 +849,7 @@ PlotCatalogToPdf.SBS1536Catalog <-
   }
 
   grDevices::dev.off()
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE))
 }
 
 ###############################################################################
@@ -932,14 +945,14 @@ PlotCatalog.DBS78Catalog <- function(catalog, plot.SBS12, cex,
   text(bp, -ymax / 15, labels = substr(rownames(catalog), 3, 3),
        cex = 0.5, srt = 90, adj = 1, xpd = NA)
 
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE, plot.object = bp))
 }
 
 #' @export
 PlotCatalogToPdf.DBS78Catalog <-
   function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylim) {
   # Setting the width and length for A4 size plotting
-  grDevices::cairo_pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
+  grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
 
   # opar <- par(no.readonly = TRUE)
   n <- ncol(catalog)
@@ -952,7 +965,7 @@ PlotCatalogToPdf.DBS78Catalog <-
   }
 
   grDevices::dev.off()
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE))
 }
 
 #' @export
@@ -1068,14 +1081,14 @@ PlotCatalog.DBS144Catalog <- function(catalog, plot.SBS12, cex = par("cex"),
   text(bp[8], ymax, labels = colnames(catalog), xpd = NA,
        font = 2, cex = cex, adj = c(0, 0))
 
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE, plot.object = bp))
 }
 
 #' @export
 PlotCatalogToPdf.DBS144Catalog <-
   function(catalog, file, plot.SBS12, cex = 1, grid, upper, xlabels, ylim) {
     # Setting the width and length for A4 size plotting
-    grDevices::cairo_pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
+    grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
     
     # opar <- par(no.readonly = TRUE)
     n <- ncol(catalog)
@@ -1088,7 +1101,7 @@ PlotCatalogToPdf.DBS144Catalog <-
     }
 
     grDevices::dev.off()
-    return(list(plot.success = TRUE))
+    invisible(list(plot.success = TRUE))
   }
 
 #' @export
@@ -1235,7 +1248,7 @@ PlotCatalog.DBS136Catalog <- function(catalog, plot.SBS12, cex,
   text(rep(0.5, 5), seq(0.7, 0.3, length.out = 5),
        paste(ref[6:10], maxima[6:10], sep = " = "), adj = 0, cex = 1.2, xpd = NA)
   
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE))
 }
 
 #' @export
@@ -1245,7 +1258,7 @@ PlotCatalogToPdf.DBS136Catalog <-
   n <- ncol(catalog)
 
   # Setting the width and length for A4 size plotting
-  grDevices::cairo_pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
+  grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
   opar <- par(no.readonly = TRUE)
   on.exit(par(opar))
   par(oma = c(1, 2, 1, 1))
@@ -1406,7 +1419,7 @@ PlotCatalogToPdf.DBS136Catalog <-
   }
 
   grDevices::dev.off()
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE))
 }
 
 ###############################################################################
@@ -1545,14 +1558,14 @@ PlotCatalog.IndelCatalog <- function(catalog, plot.SBS12, cex,
   text(bp, -ymax * 0.15, labels = mut.type, cex = 0.65, xpd = NA)
   text(bottom.pos, -ymax * 0.27, labels = bottom.lab, cex = 0.75, xpd = NA)
 
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE, plot.object = bp))
 }
 
 #' @export
 PlotCatalogToPdf.IndelCatalog <-
   function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylim = NULL) {
   # Setting the width and length for A4 size plotting
-  grDevices::cairo_pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
+  grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
   
   n <- ncol(catalog)
   opar <- par(mfrow = c(8, 1), mar = c(3, 4, 2.5, 2), oma = c(3, 3, 2, 2))
@@ -1563,7 +1576,7 @@ PlotCatalogToPdf.IndelCatalog <-
     PlotCatalog(cat, ylim = ylim)
   }
   grDevices::dev.off()
-  return(list(plot.success = TRUE))
+  invisible(list(plot.success = TRUE))
 }
 
 
@@ -1609,7 +1622,7 @@ PlotPPM <- function(ppm, title) {
 #' @keywords internal
 PlotPPMToPdf <- function(list.of.ppm, file, titles = names(list.of.ppm)) {
   # Setting the width and length for A4 size plotting
-  grDevices::cairo_pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
+  grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
   
   n <- length(list.of.ppm)
   opar <- par(mfrow = c(4, 2), mar = c(4, 5.5, 2, 1), oma = c(1, 1, 2, 1))
