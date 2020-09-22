@@ -1,6 +1,7 @@
-405922f246c571d2d14dcc792c0b6b80 *DESCRIPTION
+092ecbaaab1dc18dedc9d4a95b9f321c *DESCRIPTION
 e62637ea8a114355b985fd86c9ffbd6e *LICENSE
 01c3dcbb21b69c1d65eb466aa812ecb6 *NAMESPACE
+c8130d5c18d81ccdb62ee96d4e75783e *NEWS.md
 3d689b446b41acbd37b00aebb34d4603 *R/COMPOSITE.R
 2c1fb9f37cb1740d15dc191a241f94fe *R/ICAMS.R
 e9d2c8cdb6240d54867d85dbaaf3b1ff *R/ID_functions.R
@@ -15,7 +16,7 @@ da73b871575566031c50159b0d989812 *R/strandbias_functions.R
 50f56f912a2812979aca8fbcd8b4313f *R/sysdata.rda
 cafd54925c8534a280fdb9760ad0e4a2 *R/test_functions.R
 2e6c2e36d54e1dfd585e3cd43784905a *R/utility_functions.R
-736726bd287693344ee6d4743ad1326b *README.md
+9a6c786a18980a781e184247b58468ec *README.md
 176a25c8e37296cb826c524af81b5749 *data/all.abundance.rda
 c762a2e91d747617498c69cd16ed4a45 *data/catalog.row.order.rda
 ffd914d0cd7fd919967c59c92973a3a7 *data/catalog.row.order.sp.rda
@@ -201,7 +202,7 @@ a68ceb968dc459147c4a79684e911150 *tests/testthat/pdfs-for-comparision-SBS96/prev
 182d134072445bc251f8b96395e65328 *tests/testthat/pdfs-for-comparision-SBS96/prev.PlotCatSBS96.density.test.pdf
 68e04970839713ecc931e45712ab3952 *tests/testthat/test_0TransformCatalogDBS144.R
 0196ace4235c2bc9f30726669e3c4d7b *tests/testthat/test_0TransformCatalogSBS192.R
-75d312f0ada1ff3137fb5abb901debca *tests/testthat/test_1TransformCatalog.R
+61576dbfb570b9f94274c5838fb61705 *tests/testthat/test_1TransformCatalog.R
 1e47858436be5865a72da5de03c284fd *tests/testthat/test_1VCFFilesToZipFile.R
 718aa47bf165882d3e7b2140909d1855 *tests/testthat/test_1strandbias_functions.R
 02c3b027ebb40a13e091c5ab2ca76c9f *tests/testthat/test_AddSeqContext.R
@@ -240,7 +241,7 @@ ad296d3c12f304e25a762adac0f43b2e *tests/testthat/test_Read_and_Split_VCFs.R
 122da03ee50a68aca5640f5887cf9c02 *tests/testthat/test_TransRownames.ID.PCAWG.SigPro.R
 918d4ebbddf2cd1371f88acfe24a4a32 *tests/testthat/test_as.catalog.R
 ea828bef79ead52aa9388bdda5ef18dc *tests/testthat/test_cbind_catalogs.R
-a2e7e8698b17478d25a9cf56eb0fe660 *tests/testthat/test_discarded_variants.R
+dd544d8ce319448a30d52b133ea2594e *tests/testthat/test_discarded_variants.R
 98eced876f516de92ad3189773861879 *tests/testthat/test_extended_seq.context_functions.R
 98f6e81ecca04ff89244fd9f37e2fd83 *tests/testthat/test_methods_for_subsetting_catalogs.R
 6b242b71bc8e2bcbd22cb46f6a680453 *tests/testthat/testdata/BTSG_WGS_PCAWG.dbs.78.csv
