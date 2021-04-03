@@ -1,25 +1,11 @@
 #' @export
-ReadCatalog.COMPOSITECatalog <-
-  function(file, ref.genome = NULL, region = "unknown", 
-           catalog.type = "counts", strict = TRUE)
-    
-  {
-  retval <- read.csv(file, header = T, row.names = 1)
-  return(as.catalog(retval,
-                    ref.genome = ref.genome,
-                    region = region,
-                    catalog.type = catalog.type))
-}
-
-
-#' @export
 WriteCatalog.COMPOSITECatalog <-
   function(catalog, file, strict = TRUE) {
     WriteCat(catalog, file = file, 
              1697,
              ICAMS::catalog.row.order[["COMPOSITE"]],
              # rownames(catalog), 
-             catalog.row.headers.COMPOSITE,
+             catalog.row.headers$COMPOSITE,
              strict = strict)
   }
 

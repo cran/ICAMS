@@ -13,9 +13,8 @@ VAFs, which are added by \code{\link{ReadMutectVCF}}.}
 \item{name.of.VCF}{Name of the VCF file.}
 }
 \value{
-A list with 3 in-memory VCFs and two left-over
-VCF-like data frames with rows that were not incorporated
-into the first 3 VCFs, as follows:
+A list with 3 in-memory VCFs and discarded variants that were not
+  incorporated into the first 3 VCFs:
 
  * \code{SBS}: VCF with only single base substitutions.
 

@@ -2,8 +2,8 @@
 % Please edit documentation in R/VCF_to_catalog_functions.R
 \name{SplitListOfMutectVCFs}
 \alias{SplitListOfMutectVCFs}
-\title{Split each Mutect VCF into SBS, DBS, and ID VCFs (plus two
-VCF-like data frame with left-over rows).}
+\title{Split each Mutect VCF into SBS, DBS, and ID VCFs (plus
+VCF-like data frame with left-over rows)}
 \usage{
 SplitListOfMutectVCFs(
   list.of.vcfs,
@@ -18,8 +18,8 @@ warning messages showing information about the discarded variants. Default
 is TRUE.}
 }
 \description{
-Split each Mutect VCF into SBS, DBS, and ID VCFs (plus two
-VCF-like data frame with left-over rows).
+Split each Mutect VCF into SBS, DBS, and ID VCFs (plus
+VCF-like data frame with left-over rows)
 }
 \section{Value}{
  A list containing the following objects:

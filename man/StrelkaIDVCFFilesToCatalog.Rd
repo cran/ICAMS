@@ -71,8 +71,7 @@ be obtained from \code{ID.class} column.
 
 \section{ID classification}{
 
-See
-\url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
+See \url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
 for additional information on ID (small insertion and deletion) mutation
 classification.
 
@@ -98,6 +97,6 @@ file <- c(system.file("extdata/Strelka-ID-vcf",
                       "Strelka.ID.GRCh37.s1.vcf",
                       package = "ICAMS"))
 if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
-  catID <- StrelkaIDVCFFilesToCatalog(file, ref.genome = "hg19", 
+  catID <- StrelkaIDVCFFilesToCatalog(file, ref.genome = "hg19",
                                       region = "genome")}
 }

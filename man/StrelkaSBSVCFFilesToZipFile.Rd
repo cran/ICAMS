@@ -28,11 +28,11 @@ SBS VCF files. Each Strelka SBS VCF \strong{must} have a file extension
 \code{\link{ICAMS}}.}
 
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
-\code{\link{BSgenome}} object 
+\code{\link{BSgenome}} object
 \enumerate{
-  \item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
-  \item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
-  \item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
+  \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
+  \item \code{BSgenome.Hsapiens.UCSC.hg38}
+  \item \code{BSgenome.Mmusculus.UCSC.mm10}
 }
 then the function will infer \code{trans.ranges} automatically. Otherwise,
 user will need to provide the necessary \code{trans.ranges}. Please refer to
@@ -73,7 +73,7 @@ very similar. The default threshold value for VAF is 0.02.
 \details{
 This function calls \code{\link{StrelkaSBSVCFFilesToCatalog}},
 \code{\link{PlotCatalogToPdf}}, \code{\link{WriteCatalog}} and
-\code{\link[zip]{zipr}}.
+\code{zip::zipr}.
 }
 \section{Value}{
 
@@ -120,10 +120,10 @@ To add or change attributes of the catalog, you can use function
 dir <- c(system.file("extdata/Strelka-SBS-vcf",
                      package = "ICAMS"))
 if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
-  catalogs <- 
-    StrelkaSBSVCFFilesToZipFile(dir, 
+  catalogs <-
+    StrelkaSBSVCFFilesToZipFile(dir,
                                 zipfile = file.path(tempdir(), "test.zip"),
-                                ref.genome = "hg19", 
+                                ref.genome = "hg19",
                                 trans.ranges = trans.ranges.GRCh37,
                                 region = "genome",
                                 base.filename = "Strelka-SBS")

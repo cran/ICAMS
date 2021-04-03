@@ -33,7 +33,11 @@ test_that("ReadAndSplitMutectVCFs", {
     VCFsToDBSCatalogs(list.of.vcfs2$DBS, ref.genome = "hg19",
                       region = "genome", return.annotated.vcfs = TRUE)
   expect_false(is.null(DBS.cats1$annotated.vcfs))
-    
+  
+  # Test for removing duplicate variants
+  file3 <- files[3]
+  list.of.vcfs <- ReadAndSplitMutectVCFs(file3)
+  expect_equal(nrow(list.of.vcfs$discarded.variants[[1]]), 7)
 })
 
 test_that("ReadAndSplitStrelkaSBSVCFs", {
@@ -62,7 +66,7 @@ test_that("ReadStrelkaIDVCFs", {
   expect_null(list.of.vcfs2$discarded.variants)
 })
 
-test_that("MutectVCFFilesToCatalog", {
+test_that("MutectVCFFilesToCatalog and VCFsToCatalog", {
   skip_if("" == system.file(package = "BSgenome.Hsapiens.1000genomes.hs37d5"))
   stopifnot(requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5"))
   files <- list.files(path = "testdata/Mutect-GRCh37/", full.names = TRUE)
@@ -75,6 +79,14 @@ test_that("MutectVCFFilesToCatalog", {
     MutectVCFFilesToCatalog(files, ref.genome = "hg19", 
                             region = "genome", return.annotated.vcfs = TRUE)
   expect_false(is.null(catalogs1$annotated.vcfs))
+  
+  catalogs2 <- VCFsToCatalogs(files, ref.genome = "hg19", 
+                              variant.caller = "mutect", region = "genome")
+  expect_equal(catalogs, catalogs2)
+  catalogs3 <- VCFsToCatalogs(files, ref.genome = "hg19", 
+                              variant.caller = "mutect", region = "genome",
+                              return.annotated.vcfs = TRUE)
+  expect_equal(catalogs1, catalogs3)
 })
 
 test_that("StrelkaSBSVCFFilesToCatalog", {
@@ -90,6 +102,16 @@ test_that("StrelkaSBSVCFFilesToCatalog", {
     StrelkaSBSVCFFilesToCatalog(files, ref.genome = "hg19", 
                                 region = "genome", return.annotated.vcfs = TRUE)
   expect_false(is.null(catalogs1$annotated.vcfs))
+  
+  catalogs2 <- VCFsToCatalogs(files, ref.genome = "hg19", 
+                              variant.caller = "strelka", region = "genome")
+  catalogs2$catID <- NULL
+  expect_equal(catalogs, catalogs2)
+  
+  catalogs3 <- VCFsToCatalogs(files, ref.genome = "hg19", variant.caller = "strelka",
+                              region = "genome", return.annotated.vcfs = TRUE)
+  catalogs3$catID <- catalogs3$annotated.vcfs$ID <- NULL
+  expect_equal(catalogs1, catalogs3)
 })
 
 test_that("StrelkaIDVCFFilesToCatalog", {
@@ -105,4 +127,16 @@ test_that("StrelkaIDVCFFilesToCatalog", {
     StrelkaIDVCFFilesToCatalog(files, ref.genome = "hg19", 
                                region = "genome", return.annotated.vcfs = TRUE)
   expect_false(is.null(catalogs1$annotated.vcfs))
+  
+  catalogs2 <- VCFsToCatalogs(files, ref.genome = "hg19", 
+                              variant.caller = "strelka", region = "genome")
+  expect_equal(catalogs$catalog, catalogs2$catID)        
+  expect_equal(catalogs$discarded.variants, catalogs2$discarded.variants)  
+  
+  catalogs3 <- VCFsToCatalogs(files, ref.genome = "hg19", variant.caller = "strelka",
+                              region = "genome", return.annotated.vcfs = TRUE)
+  expect_equal(catalogs1$catalog, catalogs3$catID)        
+  expect_equal(catalogs1$discarded.variants, catalogs3$discarded.variants)  
+  expect_equal(catalogs1$annotated.vcfs, catalogs3$annotated.vcfs$ID)  
+  
 })

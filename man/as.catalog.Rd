@@ -20,7 +20,7 @@ If a \code{vector}, converted to a 1-column \code{matrix}
 with rownames taken from the element names of the \code{vector}
 and with column name \code{"Unknown"}.
 If argument \code{infer.rownames}
- is \code{FALSE} than this argument must have
+ is \code{FALSE} then this argument must have
   rownames to denote the mutation types. See \code{\link{CatalogRowOrder}}
   for more details.}
 
@@ -29,7 +29,9 @@ If argument \code{infer.rownames}
 
 \item{region}{A character string designating a region, one of
 \code{genome}, \code{transcript}, \code{exome}, \code{unknown};
-see \code{\link{ICAMS}}.}
+see \code{\link{ICAMS}}. If the catalog type is a stranded
+catalog type (SBS192 or DBS144), region = "genome" will
+be silently converted to "transcript".}
 
 \item{catalog.type}{One of "counts", "density", "counts.signature",
 "density.signature".}

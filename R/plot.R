@@ -1,35 +1,45 @@
 #' Plot \strong{one} spectrum or signature
 #'
 #' Plot the spectrum of \strong{one} sample or plot \strong{one} signature. The
-#' type of graph is based on one attribute("catalog.type") of the input catalog.
+#' type of graph is based on \code{attribute("catalog.type")} of the input catalog.
 #' You can first use \code{\link{TransformCatalog}} to get different types of
 #' catalog and then do the plotting.
 #'
-#' @param catalog A catalog as defined in \code{\link{ICAMS}} with attributes added.
-#' See \code{\link{as.catalog}} for more details.
+#' @param catalog A catalog as defined in \code{\link{ICAMS}} with attributes
+#'   added. See \code{\link{as.catalog}} for more details. \code{catalog} can
+#'   also be a numeric \code{matrix}, numeric \code{data.frame}, or a
+#'   \code{vector} denoting the mutation \strong{counts}, but \strong{must} be in the
+#'   correct row order used in \code{\link{ICAMS}}. See
+#'   \code{\link{CatalogRowOrder}} for more details. If \code{catalog} is a
+#'   \code{vector}, it will be converted to a 1-column \code{matrix} with
+#'   rownames taken from the element names of the \code{vector} and with column
+#'   name \code{"Unknown"}.
 #'
 #' @param plot.SBS12 Only meaningful for class \code{SBS192Catalog}; if \code{TRUE},
 #' generate an abbreviated plot of only SBS without context, i.e. 
 #' C>A, C>G, C>T, T>A, T>C, T>G each on transcribed and untranscribed strands,
 #' rather than SBS in trinucleotide context, e.g.
-#' ACA > AAA, ACA > AGA, ..., TCT > TAT, ...
+#' ACA > AAA, ACA > AGA, ..., TCT > TAT, ... There are 12 bars in the graph.
 #'
 #' @param cex Has the usual meaning. Taken from \code{par("cex")} by default.
 #'   Only implemented for SBS96Catalog, SBS192Catalog and DBS144Catalog.
 #'
 #' @param grid A logical value indicating whether to draw grid lines. Only
-#'   implemented for SBS96Catalog.
+#'   implemented for SBS96Catalog, DBS78Catalog, IndelCatalog.
 #'
 #' @param upper A logical value indicating whether to draw horizontal lines and
 #'   the names of major mutation class on top of graph. Only implemented for
-#'   SBS96Catalog.
+#'   SBS96Catalog, DBS78Catalog, IndelCatalog.
 #'
 #' @param ylim Has the usual meaning. Only implemented for SBS96Catalog and
 #'   IndelCatalog.
 #'   
 #' @param xlabels A logical value indicating whether to draw x axis labels. Only
-#'   implemented for \code{SBS96Catalog}. If \code{FALSE} then plot x axis tick marks;
-#'   set \code{par(tck = 0)} to suppress.
+#'   implemented for SBS96Catalog, DBS78Catalog, IndelCatalog. If \code{FALSE} then plot x
+#'   axis tick marks for SBS96Catalog; set \code{par(tck = 0)} to suppress.
+#'   
+#' @param ylabels A logical value indicating whether to draw y axis labels. Only
+#'   implemented for SBS96Catalog, DBS78Catalog, IndelCatalog.
 #'
 #' @import graphics
 #' 
@@ -70,43 +80,97 @@
 #' PlotCatalog(catSBS96)
 PlotCatalog <- function(catalog, plot.SBS12 = NULL, cex = NULL, 
                         grid = NULL , upper = NULL, xlabels = NULL,
+                        ylabels = NULL,
                         ylim = NULL) {
-  UseMethod(generic = "PlotCatalog")
+  if (class(catalog)[1] %in% c("SBS96Catalog", "SBS192Catalog", "SBS1536Catalog",
+                          "DBS78Catalog", "DBS136Catalog", "DBS144Catalog",
+                          "IndelCatalog")) {
+    UseMethod(generic = "PlotCatalog")
+  } else {
+    catalog1 <- as.catalog(object = catalog, infer.rownames = TRUE)
+    num.of.row <- nrow(catalog1)
+    if (num.of.row == 96) {
+      PlotCatalog.SBS96Catalog(catalog = catalog1, 
+                               plot.SBS12 = plot.SBS12, 
+                               cex = ifelse(is.null(cex), par("cex"), cex), 
+                               grid = ifelse(is.null(grid), TRUE, grid),
+                               upper = ifelse(is.null(upper), TRUE, upper), 
+                               xlabels = ifelse(is.null(xlabels), TRUE, xlabels), 
+                               ylabels = ifelse(is.null(ylabels), TRUE, ylabels), 
+                               ylim = ylim)
+    } else if (num.of.row == 192) {
+      PlotCatalog.SBS192Catalog(catalog = catalog1, 
+                                plot.SBS12 = ifelse(is.null(plot.SBS12), FALSE, plot.SBS12), 
+                                cex = ifelse(is.null(cex), par("cex"), cex), 
+                                grid = grid,
+                                upper = upper, 
+                                xlabels = xlabels, 
+                                ylabels = ylabels,
+                                ylim = ylim)
+    } else if (num.of.row == 1536) {
+      PlotCatalog.SBS1536Catalog(catalog = catalog1, 
+                                plot.SBS12 = plot.SBS12, 
+                                cex = cex, 
+                                grid = grid,
+                                upper = upper, 
+                                xlabels = xlabels, 
+                                ylabels = ylabels,
+                                ylim = ylim)
+    } else if (num.of.row == 78) {
+      PlotCatalog.DBS78Catalog(catalog = catalog1, 
+                               plot.SBS12 = plot.SBS12, 
+                               cex = cex, 
+                               grid = ifelse(is.null(grid), TRUE, grid),
+                               upper = ifelse(is.null(upper), TRUE, upper), 
+                               xlabels = ifelse(is.null(xlabels), TRUE, xlabels), 
+                               ylabels = ifelse(is.null(ylabels), TRUE, ylabels), 
+                               ylim = ylim)
+    } else if (num.of.row == 136) {
+      PlotCatalog.DBS136Catalog(catalog = catalog1, 
+                               plot.SBS12 = plot.SBS12, 
+                               cex = cex, 
+                               grid = grid,
+                               upper = upper, 
+                               xlabels = xlabels, 
+                               ylabels = ylabels,
+                               ylim = ylim)
+    } else if (num.of.row == 144) {
+      PlotCatalog.DBS144Catalog(catalog = catalog1, 
+                                plot.SBS12 = plot.SBS12, 
+                                cex = ifelse(is.null(cex), par("cex"), cex), 
+                                grid = grid,
+                                upper = upper, 
+                                xlabels = xlabels, 
+                                ylabels = ylabels,
+                                ylim = ylim)
+    } else if (num.of.row == 83) {
+      PlotCatalog.IndelCatalog(catalog = catalog1, 
+                               plot.SBS12 = plot.SBS12, 
+                               cex = cex, 
+                               grid = ifelse(is.null(grid), TRUE, grid),
+                               upper = ifelse(is.null(upper), TRUE, upper), 
+                               xlabels = ifelse(is.null(xlabels), TRUE, xlabels), 
+                               ylabels = ifelse(is.null(ylabels), TRUE, ylabels), 
+                               ylim = ylim)
+    } 
+  }
 }
 
 #' Plot catalog to a PDF file
 #'
-#' Plot catalog to a PDF file. The type of graph is based on one
-#' attribute("catalog.type") of the input catalog. You can first use
+#' Plot catalog to a PDF file. The type of graph is based on 
+#' \code{attribute("catalog.type")} of the input catalog. You can first use
 #' \code{\link{TransformCatalog}} to get different types of catalog and then do
 #' the plotting.
 #'
-#' @param catalog A catalog as defined in \code{\link{ICAMS}} with attributes added.
-#' See \code{\link{as.catalog}} for more details.
+#' @inheritParams PlotCatalog
 #'
 #' @param file The name of the PDF file to be produced.
-#'
-#' @param plot.SBS12 Only meaningful for class \code{SBS192Catalog}; if \code{TRUE},
-#' generate an abbreviated plot of only SBS without context, i.e. 
-#' C>A, C>G, C>T, T>A, T>C, T>G each on transcribed and untranscribed strands,
-#' rather than SBS in trinucleotide context, e.g.
-#' ACA > AAA, ACA > AGA, ..., TCT > TAT, ... There are 12 bars in the graph.
 #'
 #' @param cex Has the usual meaning. A default value has been used by the
 #'   program internally. Only implemented for SBS96Catalog, SBS192Catalog and
 #'   DBS144Catalog.
 #'   
-#' @param grid A logical value indicating whether to draw grid lines. Only
-#'   implemented for SBS96Catalog.
-#'
-#' @param upper A logical value indicating whether to draw horizontal lines and
-#'   the names of major mutation class on top of graph. Only implemented for
-#'   SBS96Catalog.
-#'
-#' @param xlabels A logical value indicating whether to draw x axis labels. Only
-#'   implemented for \code{SBS96Catalog}. If \code{FALSE} then plot x axis tick marks;
-#'   set \code{par(tck = 0)} to suppress.
-#'
 #' @param ylim Has the usual meaning. Only implemented for SBS96Catalog and
 #'   IndelCatalog.
 #'   
@@ -138,8 +202,88 @@ PlotCatalogToPdf <-
            cex = NULL, grid = NULL, 
            upper = NULL, 
            xlabels = NULL, 
+           ylabels = NULL,
            ylim = NULL) {
-  UseMethod(generic = "PlotCatalogToPdf")
+    
+    if (class(catalog)[1] %in% c("SBS96Catalog", "SBS192Catalog", "SBS1536Catalog",
+                                 "DBS78Catalog", "DBS136Catalog", "DBS144Catalog",
+                                 "IndelCatalog")) {
+      UseMethod(generic = "PlotCatalogToPdf")
+    } else {
+      catalog1 <- as.catalog(object = catalog, infer.rownames = TRUE)
+      num.of.row <- nrow(catalog1)
+      if (num.of.row == 96) {
+        PlotCatalogToPdf.SBS96Catalog(catalog = catalog1, 
+                                      file = file,
+                                      plot.SBS12 = plot.SBS12, 
+                                      cex = ifelse(is.null(cex), 0.8, cex), 
+                                      grid = ifelse(is.null(grid), TRUE, grid),
+                                      upper = ifelse(is.null(upper), TRUE, upper), 
+                                      xlabels = ifelse(is.null(xlabels), TRUE, xlabels), 
+                                      ylabels = ifelse(is.null(ylabels), TRUE, ylabels), 
+                                      ylim = ylim)
+      } else if (num.of.row == 192) {
+        PlotCatalogToPdf.SBS192Catalog(catalog = catalog1, 
+                                       file = file,
+                                       plot.SBS12 = ifelse(is.null(plot.SBS12), FALSE, plot.SBS12), 
+                                       cex = ifelse(is.null(cex), 0.8, cex), 
+                                       grid = grid,
+                                       upper = upper, 
+                                       xlabels = xlabels, 
+                                       ylabels = ylabels,
+                                       ylim = ylim)
+      } else if (num.of.row == 1536) {
+        PlotCatalogToPdf.SBS1536Catalog(catalog = catalog1, 
+                                        file = file,
+                                        plot.SBS12 = plot.SBS12, 
+                                        cex = cex, 
+                                        grid = grid,
+                                        upper = upper, 
+                                        xlabels = xlabels, 
+                                        ylabels = ylabels,
+                                        ylim = ylim)
+      } else if (num.of.row == 78) {
+        PlotCatalogToPdf.DBS78Catalog(catalog = catalog1, 
+                                      file = file,
+                                      plot.SBS12 = plot.SBS12, 
+                                      cex = cex, 
+                                      grid = ifelse(is.null(grid), TRUE, grid),
+                                      upper = ifelse(is.null(upper), TRUE, upper), 
+                                      xlabels = ifelse(is.null(xlabels), TRUE, xlabels), 
+                                      ylabels = ifelse(is.null(ylabels), TRUE, ylabels), 
+                                      ylim = ylim)
+      } else if (num.of.row == 136) {
+        PlotCatalogToPdf.DBS136Catalog(catalog = catalog1, 
+                                       file = file,
+                                       plot.SBS12 = plot.SBS12, 
+                                       cex = cex, 
+                                       grid = grid,
+                                       upper = upper, 
+                                       xlabels = xlabels, 
+                                       ylabels = ylabels,
+                                       ylim = ylim)
+      } else if (num.of.row == 144) {
+        PlotCatalogToPdf.DBS144Catalog(catalog = catalog1, 
+                                       file = file,
+                                       plot.SBS12 = plot.SBS12, 
+                                       cex = ifelse(is.null(cex), 1, cex), 
+                                       grid = grid,
+                                       upper = upper, 
+                                       xlabels = xlabels, 
+                                       ylabels = ylabels,
+                                       ylim = ylim)
+      } else if (num.of.row == 83) {
+        PlotCatalogToPdf.IndelCatalog(catalog = catalog1, 
+                                      file = file,
+                                      plot.SBS12 = plot.SBS12, 
+                                      cex = cex, 
+                                      grid = ifelse(is.null(grid), TRUE, grid),
+                                      upper = ifelse(is.null(upper), TRUE, upper), 
+                                      xlabels = ifelse(is.null(xlabels), TRUE, xlabels), 
+                                      ylabels = ifelse(is.null(ylabels), TRUE, ylabels), 
+                                      ylim = ylim)
+      } 
+    }
 }
 
 ###############################################################################
@@ -149,7 +293,7 @@ PlotCatalogToPdf <-
 #' @export
 PlotCatalog.SBS96Catalog <-
   function(catalog, plot.SBS12, cex = par("cex"), grid = TRUE,
-           upper = TRUE, xlabels = TRUE, ylim = NULL) {
+           upper = TRUE, xlabels = TRUE, ylabels = TRUE, ylim = NULL) {
     # stopifnot(dim(catalog) == c(96, 1))
     stopifnot(rownames(catalog) == ICAMS::catalog.row.order$SBS96)
 
@@ -194,18 +338,27 @@ PlotCatalog.SBS96Catalog <-
     } else {
       ymax <- ylim[2]
     }
-      
-    bp <- barplot(to.plot, xaxt = "n", yaxt = "n", xaxs = "i",
-                  xlim = c(-1, 230),
-                  ylim = ylim, lwd = 3, space = 1.35, border = NA,
-                  col = cols, ylab = ylab, cex.lab = cex * par("cex.lab"))
+    
+    if (ylabels == FALSE) {
+      bp <- barplot(to.plot, xaxt = "n", yaxt = "n", xaxs = "i",
+                    xlim = c(-1, 230),
+                    ylim = ylim, lwd = 3, space = 1.35, border = NA,
+                    col = cols, cex.lab = cex * par("cex.lab"))
+    } else {
+      bp <- barplot(to.plot, xaxt = "n", yaxt = "n", xaxs = "i",
+                    xlim = c(-1, 230),
+                    ylim = ylim, lwd = 3, space = 1.35, border = NA,
+                    col = cols, ylab = ylab, cex.lab = cex * par("cex.lab"))
+    }
 
     # Draw the x axis
     segments(bp[1] - 0.5, 0, bp[num.classes] + 0.5, 0, 
              col = 'grey35', lwd = 0.25)
     
     # Print sample name at top left
-    text(bp[1], ymax * 1.08, 
+    y.pos.sample.name <- 
+      ifelse(catalog.type == "counts", ymax * 1.22, ymax * 1.08)
+    text(bp[1], y.pos.sample.name, 
          labels = colnames(catalog)[ncol(catalog)], 
          xpd = NA,
          cex = cex, font = 2, adj = c(0, 0))
@@ -216,8 +369,9 @@ PlotCatalog.SBS96Catalog <-
       count.cex <- cex
       for (i in 1:6) {
         j <- 16 + 16 * (i - 1)
-        k <- 1 + 16 * (i - 1)
-        text(bp[j], ymax * 1.20, labels = sum(catalog[k:(16 * i), ]),
+        k <- 1 + 16 * (i - 1)    
+        # Round the total mutation counts in case it is a reconstructed catalog
+        text(bp[j], ymax * 1.15, labels = round(sum(catalog[k:(16 * i), ])),
              adj = c(1, 1), xpd = NA, cex = count.cex)
       }
     }
@@ -230,18 +384,22 @@ PlotCatalog.SBS96Catalog <-
       y.axis.labels <- y.axis.values
     }
     
-    if (grid) {
+    if (grid == TRUE) {
       segments(bp[1] - 0.5, seq(ymax/4, ymax, ymax/4), bp[num.classes] + 0.5,
                seq(ymax/4, ymax, ymax/4), col = 'grey35', lwd = 0.25)
-      text(-0.5, y.axis.values, labels = y.axis.labels,
-           las = 1, adj = 1, xpd = NA, cex = cex)
+      if (ylabels == TRUE) {
+        text(-0.5, y.axis.values, labels = y.axis.labels,
+             las = 1, adj = 1, xpd = NA, cex = cex)
+      }
     }  else {
-      Axis(side = 2, at = y.axis.values, las = 1, cex.axis = cex, labels = FALSE)
-      text(-3.5, y.axis.values, labels = y.axis.labels, cex = cex,
-           las = 1, adj = 1, xpd = NA)
+      if (ylabels == TRUE) {
+        Axis(side = 2, at = y.axis.values, las = 1, cex.axis = cex, labels = FALSE)
+        text(-3.5, y.axis.values, labels = y.axis.labels, cex = cex,
+             las = 1, adj = 1, xpd = NA)
+      }
     }
     
-    if (xlabels) {
+    if (xlabels == TRUE) {
       # Draw the labels along bottom of x axis
       # cex.smaller <- cex * 0.8
       cex.xlabel <- cex
@@ -268,17 +426,22 @@ PlotCatalog.SBS96Catalog <-
            pos = 2, xpd = NA, cex = cex.xlabel)
     } else {
       every.fourth <- seq(from = 1, to = length(bp), by = 4)
+      # Add another position for tick marks to cover the whole barplot
+      every.fourth <- c(every.fourth, 96)
       Axis(at = bp[every.fourth], side = 1, labels = FALSE, col = "grey35")
     }
 
-    if (upper) {
+    if (upper == TRUE) {
       # Draw horizontal lines and names of major mutation class on top of graph
       x.left <- bp[seq(1, 81, 16)]
       x.right <- bp[seq(16, 96, 16)]
-      rect(xleft = x.left, ybottom = ymax * 1.28, 
-           xright = x.right, ytop = ymax * 1.3,
+      y.pos.line.top <- ifelse(catalog.type == "counts", ymax * 1.4, ymax * 1.3)
+      y.pos.line.bottom <- ifelse(catalog.type == "counts", ymax * 1.38, ymax * 1.28)
+      rect(xleft = x.left, ybottom = y.pos.line.bottom, 
+           xright = x.right, ytop = y.pos.line.top,
            col = class.col, border = NA, xpd = NA, adj = 0.5)
-      text((x.left + x.right)/2, ymax * 1.38,   
+      y.pos.text <- ifelse(catalog.type == "counts", ymax * 1.48, ymax * 1.38)
+      text((x.left + x.right)/2, y.pos.text,   
            labels = maj.class.names, xpd = NA, cex = cex * 1.25)
     }
 
@@ -288,7 +451,7 @@ PlotCatalog.SBS96Catalog <-
 #' @export
 PlotCatalogToPdf.SBS96Catalog <-
   function(catalog, file, plot.SBS12, cex = 0.8,
-           grid = TRUE, upper = TRUE, xlabels = TRUE,
+           grid = TRUE, upper = TRUE, xlabels = TRUE, ylabels = TRUE,
            ylim = NULL) {
     old.par.tck.value <- par("tck")
     # Setting the width and length for A4 size plotting
@@ -304,7 +467,7 @@ PlotCatalogToPdf.SBS96Catalog <-
     for (i in 1 : n) {
       cat <- catalog[, i, drop = FALSE]
       PlotCatalog(cat, cex = cex, grid = grid, upper = upper, 
-                  xlabels = xlabels, ylim = ylim)
+                  xlabels = xlabels, ylabels = ylabels, ylim = ylim)
     }
     
     grDevices::dev.off()
@@ -314,7 +477,7 @@ PlotCatalogToPdf.SBS96Catalog <-
 #' @export
 PlotCatalog.SBS192Catalog <- 
   function(catalog, plot.SBS12 = FALSE, cex = par("cex"),
-           grid, upper, xlabels, ylim) {
+           grid, upper, xlabels, ylabels, ylim) {
   stopifnot(dim(catalog) == c(192, 1))
 
   if (plot.SBS12 == FALSE) {
@@ -415,7 +578,8 @@ PlotCatalog.SBS192Catalog <-
       for (i in 1 : 6) {
         j <- 32 + 32 * (i - 1)
         k <- 1 + 32 * (i - 1)
-        text(bp[j], ymax * 0.92, labels = sum(cat[k : (32 * i), 1]),
+        # Round the total mutation counts in case it is a reconstructed catalog
+        text(bp[j], ymax * 0.84, labels = round(sum(cat[k : (32 * i), 1])),
              adj = c(1, 1), xpd = NA, cex = cex)
       }
     }
@@ -435,7 +599,12 @@ PlotCatalog.SBS192Catalog <-
          cex = cex.xlabel, srt = 90, adj = 1, xpd = NA)
 
     # Write the name of the sample
-    text(1.5, ymax * 7 / 8, labels = colnames(cat), adj = 0, cex = cex, font = 2)
+    if (attributes(catalog)$catalog.type == "counts") {
+      sample.name.y.pos <- ymax * 7.4 / 8
+    } else {
+      sample.name.y.pos <- ymax * 7 / 8
+    }
+    text(1.5, sample.name.y.pos, labels = colnames(cat), adj = 0, cex = cex, font = 2)
     
     # Add legend
     legend(bp[159], ymax * 1.05, fill = strand.col, border = strand.col,
@@ -616,7 +785,7 @@ PlotCatalog.SBS192Catalog <-
 #' @export
 PlotCatalogToPdf.SBS192Catalog <-
   function(catalog, file, plot.SBS12 = FALSE, cex = 0.8, 
-           grid, upper, xlabels, ylim) {
+           grid, upper, xlabels, ylabels, ylim) {
   # Setting the width and length for A4 size plotting
   grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
   
@@ -646,7 +815,7 @@ PlotCatalogToPdf.SBS192Catalog <-
 
 #' @export
 PlotCatalog.SBS1536Catalog <-
-  function(catalog, plot.SBS12, cex, grid, upper, xlabels, ylim) {
+  function(catalog, plot.SBS12, cex, grid, upper, xlabels, ylabels, ylim) {
   stopifnot(dim(catalog) == c(1536, 1))
 
   # Define the bases and their colors in plot
@@ -838,7 +1007,7 @@ PlotCatalog.SBS1536Catalog <-
 
 #' @export
 PlotCatalogToPdf.SBS1536Catalog <-
-  function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylim) {
+  function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylabels, ylim) {
   grDevices::pdf(file, width = 11.6929, height = 9.2677, onefile = TRUE)
 
   n <- ncol(catalog)
@@ -858,7 +1027,8 @@ PlotCatalogToPdf.SBS1536Catalog <-
 
 #' @export
 PlotCatalog.DBS78Catalog <- function(catalog, plot.SBS12, cex,
-                                     grid, upper, xlabels, ylim) {
+                                     grid = TRUE, upper = TRUE, xlabels = TRUE, 
+                                     ylabels = TRUE, ylim) {
   stopifnot(dim(catalog) == c(78, 1))
   stopifnot(rownames(catalog) == ICAMS::catalog.row.order$DBS78)
 
@@ -874,27 +1044,15 @@ PlotCatalog.DBS78Catalog <- function(catalog, plot.SBS12, cex,
 
     # Get ylim
     ymax <- ifelse(max(rate) * 1.3 > 1, 1, max(rate) * 1.3)
-
-    # Barplot
-    bp <- barplot(rate, ylim = c(0, ymax), xaxt = "n", yaxt = "n", xaxs = "i",
-                  lwd = 3, space = 1.35, border = NA, col = cols,
-                  xpd = NA, ylab = "mut/million", cex.lab = 0.8)
+    
+    ylab <- "mut/million"
+    to.plot <- rate
   } else if (attributes(catalog)$catalog.type == "counts") {
     # Set a minimum value for ymax to make the plot more informative
     ymax <- 4 * ceiling(max(max(catalog[, 1]) * 1.3, 10) / 4)
-
-    # Barplot
-    bp <- barplot(catalog[, 1], xaxt = "n", yaxt = "n", ylim = c(0, ymax),
-                  xaxs = "i", lwd = 3, space = 1.35, border = NA, xaxs = "i",
-                  col = cols, ylab = "counts", cex.lab = 0.8)
-
-    # Write the mutation counts on top of graph
-    for (i in 1 : 10) {
-      j <- c(9, 15, 24, 30, 39, 45, 51, 60, 69, 78)
-      name <- substr(rownames(catalog), 1, 2)
-      text(bp[j[i] + 0.5], ymax * 0.92, xpd = NA, cex = 0.8,
-           adj = c(1, 1), labels = sum(catalog[name == maj.class.names[i], ]))
-    }
+    to.plot <- catalog[, 1]
+    ylab <- "counts"
+    
   } else if (attributes(catalog)$catalog.type %in%
              c("counts.signature", "density.signature")) {
     # Determine the y axis label
@@ -903,54 +1061,92 @@ PlotCatalog.DBS78Catalog <- function(catalog, plot.SBS12, cex,
 
     # Get ylim
     ymax <- ifelse(max(catalog[, 1]) * 1.3 > 1, 1, max(catalog[, 1]) * 1.3)
-
-    # Barplot
-    bp <- barplot(catalog[, 1], xaxt = "n", yaxt = "n", ylim = c(0, ymax),
-                  lwd = 3, space = 1.35, border = NA, xaxs = "i",
-                  col = cols, ylab = yaxislabel, cex.lab = 0.8)
+    
+    to.plot <- catalog[, 1]
+    ylab <- yaxislabel
   }
-
-  # Draw box and grid lines
-  rect(xleft = bp[1] - 1, 0, xright = bp[num.classes] + 1, ymax,
-       border = "grey60", lwd = 0.5, xpd = NA)
-  segments(bp[1] - 1, seq(0, ymax, ymax / 4), bp[num.classes] + 1,
-           seq(0, ymax, ymax / 4), col = "grey60", lwd = 0.5, xpd = NA)
-
-  # Draw lines above each class:
-  x.left <- bp[c(0, 9, 15, 24, 30, 39, 45, 51, 60, 69) + 1] - 0.5
-  x.right <- bp[c(9, 15, 24, 30, 39, 45, 51, 60, 69, 78)] + 0.5
-  rect(xleft = x.left, ymax * 1.01, xright = x.right, ymax * 1.08,
-       col = dinuc.class.col, border = NA, xpd = NA)
-
-  # Draw mutation class labels at the top of the graph
-  text((x.left + x.right) / 2, ymax * 1.123,
-       labels = paste(maj.class.names, "NN", sep = ">"), cex = 0.7, xpd = NA)
+  
+  # Barplot
+  if (ylabels == TRUE) {
+    bp <- barplot(to.plot, xaxt = "n", yaxt = "n", ylim = c(0, ymax),
+                  lwd = 3, space = 1.35, border = NA, xaxs = "i",
+                  col = cols, ylab = ylab, cex.lab = 0.8)
+  } else {
+    bp <- barplot(to.plot, xaxt = "n", yaxt = "n", ylim = c(0, ymax),
+                  lwd = 3, space = 1.35, border = NA, xaxs = "i",
+                  col = cols, cex.lab = 0.8)
+  }
+  
+  if (attributes(catalog)$catalog.type == "counts") {
+    # Write the mutation counts on top of graph
+    for (i in 1 : 10) {
+      j <- c(9, 15, 24, 30, 39, 45, 51, 60, 69, 78)
+      name <- substr(rownames(catalog), 1, 2)
+      # Round the total mutation counts in case it is a reconstructed catalog
+      text(bp[j[i] + 0.5], ymax * 0.84, xpd = NA, cex = 0.8,
+           adj = c(1, 1), labels = round(sum(catalog[name == maj.class.names[i], ])))
+    }
+  }
+  
+  if (grid == TRUE) {
+    # Draw box and grid lines
+    rect(xleft = bp[1] - 1, 0, xright = bp[num.classes] + 1, ymax,
+         border = "grey60", lwd = 0.5, xpd = NA)
+    segments(bp[1] - 1, seq(0, ymax, ymax / 4), bp[num.classes] + 1,
+             seq(0, ymax, ymax / 4), col = "grey60", lwd = 0.5, xpd = NA)
+  }
+  
+  if (upper == TRUE) {
+    # Draw lines above each class:
+    x.left <- bp[c(0, 9, 15, 24, 30, 39, 45, 51, 60, 69) + 1] - 0.5
+    x.right <- bp[c(9, 15, 24, 30, 39, 45, 51, 60, 69, 78)] + 0.5
+    rect(xleft = x.left, ymax * 1.01, xright = x.right, ymax * 1.08,
+         col = dinuc.class.col, border = NA, xpd = NA)
+    
+    # Draw mutation class labels at the top of the graph
+    text((x.left + x.right) / 2, ymax * 1.123,
+         labels = paste(maj.class.names, "NN", sep = ">"), cex = 0.7, xpd = NA)
+  }
 
   # Draw the sample name information on top of graph
-  text(1.5, ymax * 7 / 8, labels = colnames(catalog), adj = 0, cex = 0.8, font = 2)
-
-  # Draw y axis
-  y.axis.values <- seq(0, ymax, ymax / 4)
-  if (attributes(catalog)$catalog.type != "counts") {
-    y.axis.labels <- format(round(y.axis.values, 2), nsmall = 2)
+  if (attributes(catalog)$catalog.type == "counts") {
+    sample.name.y.pos <- ymax * 7.4 / 8
   } else {
-    y.axis.labels <- y.axis.values
+    sample.name.y.pos <- ymax * 7 / 8
   }
-  text(0.35, y.axis.values, labels = y.axis.labels,
-       las = 1, adj = 1, xpd = NA, cex = 0.75)
-
-  # Draw x axis labels
-  text(bp, -ymax / 80, labels = substr(rownames(catalog), 4, 4),
-       cex = 0.5, srt = 90, adj = 1, xpd = NA)
-  text(bp, -ymax / 15, labels = substr(rownames(catalog), 3, 3),
-       cex = 0.5, srt = 90, adj = 1, xpd = NA)
-
+  text(1.5, sample.name.y.pos, labels = colnames(catalog), adj = 0, cex = 0.8, font = 2)
+  
+  if (ylabels == TRUE) {
+    # Draw y axis
+    y.axis.values <- seq(0, ymax, ymax / 4)
+    if (attributes(catalog)$catalog.type != "counts") {
+      y.axis.labels <- format(round(y.axis.values, 2), nsmall = 2)
+    } else {
+      y.axis.labels <- y.axis.values
+    }
+    text(0.35, y.axis.values, labels = y.axis.labels,
+         las = 1, adj = 1, xpd = NA, cex = 0.75)
+  }
+  
+  if (xlabels == TRUE) {
+    # Draw x axis labels
+    text(bp, -ymax / 80, labels = substr(rownames(catalog), 4, 4),
+         cex = 0.5, srt = 90, adj = 1, xpd = NA)
+    text(bp, -ymax / 15, labels = substr(rownames(catalog), 3, 3),
+         cex = 0.5, srt = 90, adj = 1, xpd = NA)
+  } else {
+    segments(bp[1] - 1, 0, bp[num.classes] + 1, 0, 
+             col = "grey35", lwd = 0.5, xpd = NA)
+  }
+ 
   invisible(list(plot.success = TRUE, plot.object = bp))
 }
 
 #' @export
 PlotCatalogToPdf.DBS78Catalog <-
-  function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylim) {
+  function(catalog, file, plot.SBS12, cex, 
+           grid = TRUE, upper = TRUE, xlabels = TRUE, ylabels = TRUE,
+           ylim) {
   # Setting the width and length for A4 size plotting
   grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
 
@@ -961,7 +1157,8 @@ PlotCatalogToPdf.DBS78Catalog <-
   
   for (i in 1 : n) {
     cat <- catalog[, i, drop = FALSE]
-    PlotCatalog(cat)
+    PlotCatalog(cat, grid = grid, upper = upper, xlabels = xlabels, 
+                ylabels = ylabels)
   }
 
   grDevices::dev.off()
@@ -970,7 +1167,7 @@ PlotCatalogToPdf.DBS78Catalog <-
 
 #' @export
 PlotCatalog.DBS144Catalog <- function(catalog, plot.SBS12, cex = par("cex"),
-                                      grid, upper, xlabels, ylim) {
+                                      grid, upper, xlabels, ylabels, ylim) {
   stopifnot(dim(catalog) == c(144, 1))
   strand.col <- c('#394398',
                   '#e83020')
@@ -1073,9 +1270,9 @@ PlotCatalog.DBS144Catalog <- function(catalog, plot.SBS12, cex = par("cex"),
        labels = xlabel, xpd = NA, cex = cex)
 
   # Add legend
-  legend(bp[10], ymax * 0.95, fill = strand.col, border = "white",
+  legend(bp[7], ymax * 0.95, fill = strand.col, border = "white",
          xpd = NA, bty = "n",
-         legend = c("Transcribed", "Untranscribed"), cex = cex)
+         legend = c("Transcribed strand", "Untranscribed strand"), cex = cex)
 
   # Draw the sample name information on top of graph
   text(bp[8], ymax, labels = colnames(catalog), xpd = NA,
@@ -1086,7 +1283,7 @@ PlotCatalog.DBS144Catalog <- function(catalog, plot.SBS12, cex = par("cex"),
 
 #' @export
 PlotCatalogToPdf.DBS144Catalog <-
-  function(catalog, file, plot.SBS12, cex = 1, grid, upper, xlabels, ylim) {
+  function(catalog, file, plot.SBS12, cex = 1, grid, upper, xlabels, ylabels, ylim) {
     # Setting the width and length for A4 size plotting
     grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
     
@@ -1106,7 +1303,7 @@ PlotCatalogToPdf.DBS144Catalog <-
 
 #' @export
 PlotCatalog.DBS136Catalog <- function(catalog, plot.SBS12, cex,
-                                      grid, upper, xlabels, ylim) {
+                                      grid, upper, xlabels, ylabels, ylim) {
   stopifnot(dim(catalog) == c(136, 1))
 
   # Specify the layout of the plotting
@@ -1253,7 +1450,7 @@ PlotCatalog.DBS136Catalog <- function(catalog, plot.SBS12, cex,
 
 #' @export
 PlotCatalogToPdf.DBS136Catalog <-
-  function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylim) {
+  function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylabels, ylim) {
   stopifnot(nrow(catalog) == 136)
   n <- ncol(catalog)
 
@@ -1428,7 +1625,9 @@ PlotCatalogToPdf.DBS136Catalog <-
 
 #' @export
 PlotCatalog.IndelCatalog <- function(catalog, plot.SBS12, cex,
-                                     grid, upper, xlabels, ylim = NULL){
+                                     grid = TRUE, upper = TRUE, 
+                                     xlabels = TRUE, ylabels = TRUE,
+                                     ylim = NULL){
   stopifnot(dim(catalog) == c(83, 1))
 
   indel.class.col <- c("#fdbe6f",
@@ -1489,17 +1688,20 @@ PlotCatalog.IndelCatalog <- function(catalog, plot.SBS12, cex,
       } else {
         counts[i] <- sum(catalog[(idx[i - 1] + 1):idx[i], 1])
       }
-      text(idx2[i], ymax * 0.6, labels = counts[i],
+      # Round the total mutation counts in case it is a reconstructed catalog
+      text(idx2[i], ymax * 0.8, labels = round(counts[i]),
            cex = 0.68, adj = 1, xpd = NA)
     }
   } 
-
-  # Draw box and grid lines
-  rect(xleft = bp[1] - 1.5, 0, xright = bp[num.classes] + 1, ymax, col = NA,
-       border = "grey60", lwd = 0.5, xpd = NA)
-  segments(bp[1] - 1.5, seq(0, ymax, ymax / 4), bp[num.classes] + 1,
-           seq(0, ymax, ymax / 4), col = "grey60", lwd = 0.5, xpd = NA)
-
+ 
+  if (grid == TRUE) {
+    # Draw box and grid lines
+    rect(xleft = bp[1] - 1.5, 0, xright = bp[num.classes] + 1, ymax, col = NA,
+         border = "grey60", lwd = 0.5, xpd = NA)
+    segments(bp[1] - 1.5, seq(0, ymax, ymax / 4), bp[num.classes] + 1,
+             seq(0, ymax, ymax / 4), col = "grey60", lwd = 0.5, xpd = NA)
+  }
+  
   # Draw mutation class labels and lines above each class
   maj.class.names <- c("1bp deletion", "1bp insertion",
                        ">1bp deletions at repeats\n(Deletion length)",
@@ -1513,35 +1715,42 @@ PlotCatalog.IndelCatalog <- function(catalog, plot.SBS12, cex,
   category.lab <- c(rep(c("C", "T"), 2), rep(c("2", "3", "4", "5+"), 3))
   category.col <- c(rep(c("black", "white"), 2),
                     rep(c("black", "black", "black", "white"), 3))
-
-  # Draw lines above each class
-  rect(xleft = x.left, ymax * 1.02, xright = x.right, ymax * 1.11,
-       col = indel.class.col, border = NA, xpd = NA)
-  text((x.left + x.right) / 2, ymax * 1.06, labels = category.lab,
-       cex = 0.65, col = category.col, xpd = NA)
-
-  # Draw mutation class labels at the top of the figure
-  text(class.pos, ymax * 1.27, labels = maj.class.names, cex = 0.75, xpd = NA)
-
+  
+  if (upper == TRUE) {
+    # Draw lines above each class
+    rect(xleft = x.left, ymax * 1.02, xright = x.right, ymax * 1.11,
+         col = indel.class.col, border = NA, xpd = NA)
+    text((x.left + x.right) / 2, ymax * 1.06, labels = category.lab,
+         cex = 0.65, col = category.col, xpd = NA)
+    # Draw mutation class labels at the top of the figure
+    text(class.pos, ymax * 1.27, labels = maj.class.names, cex = 0.75, xpd = NA)
+  }
+  
   # Draw the sample name information of the sample
-  text(1.5, ymax * 7 / 8, labels = colnames(catalog),
-       adj = 0, cex = 0.8, font = 2)
+  if (attributes(catalog)$catalog.type == "counts") {
+    sample.name.y.pos <- ymax * 7.4 / 8
+  } else {
+    sample.name.y.pos <- ymax * 7.4 / 8
+  }
+  text(1.5, sample.name.y.pos, labels = colnames(catalog),
+       adj = 0, cex = 0.7, font = 2)
 
   # Draw y axis
-  y.axis.values <- seq(0, ymax, ymax / 4)
-  if (attributes(catalog)$catalog.type != "counts") {
-    y.axis.labels <- format(round(y.axis.values, 2), nsmall = 2)
-    text(-9, ymax / 2, labels = "counts proportion",
-         srt = 90, xpd = NA, cex = 0.8)
-  } else {
-    y.axis.labels <- y.axis.values
-    text(-9, ymax / 2, labels = "counts",
-         srt = 90, xpd = NA, cex = 0.8)
+  if (ylabels == TRUE) {
+    y.axis.values <- seq(0, ymax, ymax / 4)
+    if (attributes(catalog)$catalog.type != "counts") {
+      y.axis.labels <- format(round(y.axis.values, 2), nsmall = 2)
+      text(-9, ymax / 2, labels = "counts proportion",
+           srt = 90, xpd = NA, cex = 0.8)
+    } else {
+      y.axis.labels <- y.axis.values
+      text(-9, ymax / 2, labels = "counts",
+           srt = 90, xpd = NA, cex = 0.8)
+    }
+    text(0, y.axis.values, labels = y.axis.labels,
+         las = 1, adj = 1, xpd = NA, cex = 0.75)
   }
-  text(0, y.axis.values, labels = y.axis.labels,
-       las = 1, adj = 1, xpd = NA, cex = 0.75)
-
-
+  
   # Draw x axis labels
   mut.type <- c(rep(c("1", "2", "3", "4", "5", "6+"), 2),
                 rep(c("0", "1", "2", "3", "4", "5+"), 2),
@@ -1553,27 +1762,34 @@ PlotCatalog.IndelCatalog <- function(catalog, plot.SBS12, cex,
   bottom.lab <- c("Homopolymer length", "Homopolymer length",
                   "Number of repeat units", "Number of repeat units",
                   "Microhomology length")
-  rect(xleft = x.left, -ymax * 0.09, xright = x.right, -ymax * 0.01,
-       col = indel.class.col, border = NA, xpd = NA)
-  text(bp, -ymax * 0.15, labels = mut.type, cex = 0.65, xpd = NA)
-  text(bottom.pos, -ymax * 0.27, labels = bottom.lab, cex = 0.75, xpd = NA)
-
+  if (xlabels == TRUE) {
+    rect(xleft = x.left, -ymax * 0.09, xright = x.right, -ymax * 0.01,
+         col = indel.class.col, border = NA, xpd = NA)
+    text(bp, -ymax * 0.15, labels = mut.type, cex = 0.65, xpd = NA)
+    text(bottom.pos, -ymax * 0.27, labels = bottom.lab, cex = 0.75, xpd = NA)
+  } else {
+    segments(bp[1] - 1.5, 0, bp[num.classes] + 1, 0, 
+             col = "grey35", lwd = 0.5, xpd = NA)
+  }
+  
   invisible(list(plot.success = TRUE, plot.object = bp))
 }
 
 #' @export
 PlotCatalogToPdf.IndelCatalog <-
-  function(catalog, file, plot.SBS12, cex, grid, upper, xlabels, ylim = NULL) {
+  function(catalog, file, plot.SBS12, cex, grid = TRUE, 
+           upper = TRUE, xlabels = TRUE, ylabels = TRUE, ylim = NULL) {
   # Setting the width and length for A4 size plotting
   grDevices::pdf(file, width = 8.2677, height = 11.6929, onefile = TRUE)
   
   n <- ncol(catalog)
-  opar <- par(mfrow = c(8, 1), mar = c(3, 4, 2.5, 2), oma = c(3, 3, 2, 2))
+  opar <- par(mfrow = c(8, 1), mar = c(2.5, 4, 2.5, 2), oma = c(2, 2, 2, 2))
   on.exit(par(opar))
   
   for (i in 1 : n) {
     cat <- catalog[, i, drop = FALSE]
-    PlotCatalog(cat, ylim = ylim)
+    PlotCatalog(cat, grid= grid, upper = upper, xlabels = xlabels, 
+                ylabels = ylabels, ylim = ylim)
   }
   grDevices::dev.off()
   invisible(list(plot.success = TRUE))

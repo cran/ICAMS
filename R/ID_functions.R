@@ -55,6 +55,10 @@
 AnnotateIDVCF <- 
   function(ID.vcf, ref.genome, flag.mismatches = 0, name.of.VCF = NULL,
            suppress.discarded.variants.warnings = TRUE) {
+    if (nrow(ID.vcf) == 0) {
+      return(list(annotated.vcf = ID.vcf))
+    }
+    
     # Create an empty data frame for discarded variants
     discarded.variants <- ID.vcf[0, ]
     
@@ -565,10 +569,8 @@ FindMaxRepeatIns <- function(context, rep.unit.seq, pos) {
 #' This function is primarily for internal use, but we export it
 #' to document the underlying logic.
 #' 
-#' See 
-#' \url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
-#' for additional information on deletion 
-#' mutation classification.
+#' See \url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
+#' for additional information on deletion mutation classification.
 #' 
 #' This function first handles deletions in homopolymers, then
 #' handles deletions in simple repeats with
@@ -825,15 +827,26 @@ CheckAndReturnIDMatrix <-
 #' @keywords internal
 CreateOneColIDMatrix <- function(ID.vcf, SBS.vcf = NULL, sample.id = "count",
                                  return.annotated.vcf = FALSE) {
-  if (nrow(ID.vcf) == 0) {
-    # Create 1-column matrix with all values being 0 and the correct row labels.
-    catID <- matrix(0, nrow = length(ICAMS::catalog.row.order$ID), ncol = 1,
-                    dimnames = list(ICAMS::catalog.row.order$ID, sample.id))
-    if (return.annotated.vcf == FALSE) {
-      return(list(catalog = catID))
+  
+  CheckForEmptyIDVCF <- function(ID.vcf, return.annotated.vcf) {
+    if (nrow(ID.vcf) == 0) {
+      # Create 1-column matrix with all values being 0 and the correct row labels.
+      catID <- matrix(0, nrow = length(ICAMS::catalog.row.order$ID), ncol = 1,
+                      dimnames = list(ICAMS::catalog.row.order$ID, sample.id))
+      if (return.annotated.vcf == FALSE) {
+        return(list(catalog = catID))
+      } else {
+        return(list(catalog = catID, annotated.vcf = ID.vcf))
+      }
     } else {
-      return(list(catalog = catID, annotated.VCF = ID.vcf))
+      return(FALSE)
     }
+  }
+  
+  ret1 <- CheckForEmptyIDVCF(ID.vcf = ID.vcf, 
+                             return.annotated.vcf = return.annotated.vcf)
+  if (!is.logical(ret1)) {
+    return(ret1)
   }
   
   # Create an empty data frame for discarded variants
@@ -874,6 +887,12 @@ CreateOneColIDMatrix <- function(ID.vcf, SBS.vcf = NULL, sample.id = "count",
     discarded.variants <- 
       dplyr::bind_rows(discarded.variants, out.ID.vcf.to.remove)
     out.ID.vcf <- out.ID.vcf[-idx1, ]
+  }
+  
+  ret2 <- CheckForEmptyIDVCF(ID.vcf = out.ID.vcf, 
+                             return.annotated.vcf = return.annotated.vcf)
+  if (!is.logical(ret2)) {
+    return(ret2)
   }
   
   # Create the ID catalog matrix

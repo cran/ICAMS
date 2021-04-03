@@ -1,11 +1,299 @@
-# ICAMS 2.2.4 
+# ICAMS 2.3.10
+## Added
+* Added tolerance when using `expect_equal` for comparing numerical values
+
+<br/>
+
+# ICAMS 2.3.9
+## Fixed 
+* Updated some tests for `TransformCatalog` in case R was configured and built in a way that did not support long double.
+
+## Added
+* Added back URLs for information regarding ID classification and SigProfiler catalog format.
+<br/>
+
+# ICAMS 2.3.8
+## Fixed 
+* Removed some URLs in README.md and some function documentations as they
+were identified as (possibly) invalid URLs by CRAN.
+
+## Changed
+* Updated documentation of  `ReadCatalog` and `ReadCatalogInternal` as there are no ID96 catalogs in COSMIC v3.2.
+
+* Changed the URL of COSMIC mutational signatures page to the redirected URL.
+
+<br/>
+
+# ICAMS 2.3.7
+## Fixed 
+* Removed some URLs in README.md and some function documentations as they
+were identified as (possibly) invalid URLs by CRAN.
+
+<br/>
+
+# ICAMS 2.3.6
+## Fixed 
+* Updated some tests for `TransformCatalog` in case R was configured and built in a way that did not support long double.
+
+* Added the argument `strict` back to `ReadCatalog` for backward compatibility;
+`strict` is now ignored and deprecated.
+
+* Robustified function `StandardChromNameNew` to select the column which
+contains chromosome names by name instead of column index.
+
+* Fixed a bug in function `CheckSeqContextInVCF`.
+
+* Fixed a bug in function `PlotCatalog.SBS96Catalog` when plotting the X axis
+after setting `par(tck) = 0`.
+
+## Changed
+* Changed `PlotCatalog` to round the mutation counts for each main type for
+SBS96, SBS192, DBS78 and ID counts catalog in case the input is reconstructed
+counts catalog.
+
+* Updated function `AdjustNumberOfCores` not to throw a message on MS Windows machine.
+
+## Added
+* Added an additional argument `ylabels` to `PlotCatalog` and `PlotCatalogToPdf`. 
+When `ylabels = FALSE`, don't plot the y axis labels. Implemented for SBS96Catalog, DBS78Catalog, IndelCatalog.
+
+* Enabled argument `grid`, `uppder`, `xlabels` in `PlotCatalog` and `PlotCatalogToPdf`
+for DBS78Catalog, IndelCatalog.
+
+<br/>
+
+# ICAMS 2.3.5
+## Added
+* Enabled function `ReadCatalog` to import files with:  
+  * SigProfiler-formatted SBS96, DBS78, ID83 and ID96 catalogs.
+  * COSMIC-formatted SBS96, SBS192 (a.k.a. TSB192), DBS78, ID83 and 
+  ID96 catalogs.
+  * ID96 catalog files in SigProfiler/COSMIC format will be pruned to
+  ID83 catalogs by removing mutation types not in ID83 catalogs. 
+
+## Deprecated
+* Deprecated internal methods of `ReadCatalog` function, e.g. 
+`ReadCatalog.SBS96Catalog`. Now they are in 
+`data-raw/obsolete-files/ReadCatalogMethods.R`.
+* Deprecated function `ConvCatalogToICAMS` to convert SigProfiler/COSMIC-formatted
+catalog files into ICAMS catalog objects. Now these functions are in 
+`data-raw/obsolete-files/ConvCatalogToICAMS.R`, and their functionalities are 
+integrated into `ReadCatalog`.
+
+<br/>
+
+# ICAMS 2.3.4
+## Fixed 
+* Robustified function `ReadCatalog` to remove rows which have NA in the data table read in. Otherwise
+the number of rows will not be accurate to infer the correct catalog type.
+
+## Added
+* Added new COSMIC catalog in testdata.
+
+## Removed
+* Removed internal function `InferClassOfCatalogForRead` to `data-raw/obsolete-files/InferClassOfCatalogForRead.R`.
+
+<br/>
+
+# ICAMS 2.3.3
+## Fixed 
+* Fixed a bug in function `CreateOneColDBSMatrix` when returning 1-column
+DBS144 matrix with all values being 0 and the correct row labels.
+
+## Changed
+* Increased sample name y axis position for plotting ID counts signature.
+
+<br/>
+
+# ICAMS 2.3.2
+## Added
+* Added an additional argument `tmpdir` in function `AddRunInformation`.
+
+* Updated function `CheckAndRemoveDiscardedVariants` and `MakeDataFrameFromVCF` to check
+for variants that have same REF and ALT.
+
+## Fixed 
+* Create new temp directory when generating zip archive from VCFs to
+avoid zipping unnecessary files in the output.
+
+* Fixed a bug in function `AddRunInformation` for allowing `ref.genome` to be a
+Bioconductor package.
+
+* Fixed bugs in function `CreateOneColSBSMatrix`, `CreateOneColDBSMatrix` and
+`CreateOneColIDMatrix` when the variants in the input vcfs should all be
+discarded.
+
+## Changed
+* Updated function `CheckAndFixChrNames` to give a warning instead of an error
+when "23" and "X" or "24" and "Y" appear on the chromosome names on the VCF at
+the same time. `CheckAndFixChrNames` will change "23" to "X" or "24" to "Y"
+internally for downstream processing.
+
+* Changed some code in function `AddTranscript`, `CreateOneColSBSMatrix`,
+`CreateOneColDBSMatrix` to use functions from package `dplyr` instead of
+`data.table` due to segfault error.
+
+## Updated
+* Updated function `RemoveRowsWithDuplicatedCHROMAndPOSNew` to remove variants
+that have same CHROM, POS, REF.
+
+<br/>
+
+# ICAMS 2.3.1
+## Added
+* Added an optional argument `files` in function `VCFsToZipFile`.
+
+## Fixed
+* Fixed a bug in `ReadAndSplitVCFs` for merging adjacent SBSs into DBS when `variant.caller` is `mutect`.
+
+* Fixed a bug in`CheckAndRemoveDiscardedVariants` for removing wrong DBS variants.
+
+## Updated
+* Updated function `CheckAndRemoveDiscardedVariants` to remove wrong DBS variants that have same base in the same position in REF and ALT (e.g. TA > TT or GT > CT).
+
+## Changed
+* Changed plotting function for IndelCatalog to adjust the sample
+name position when the catalog type is counts.
+
+<br/>
+
+# ICAMS 2.3.0
+## Added
+* Added an additional argument `name.of.VCF` in function `MakeDataFrameFromVCF`
+for better error reporting.
+
+## Changed
+* Changed plotting function for DBS78Catalog, SBS192Catalog to adjust the sample
+name position when the catalog type is counts.
+
+## Updated
+* Updated function `MakeDataFrameFromVCF` for better error reporting when reading
+in files that are actually not VCFs.
+
+* Updated function `ReadVCFs` to automatically change the number of cores to 1 on 
+Windows instead of throwing an error.
+
+## Fixed
+* Fixed a bug in `CheckAndFixChrNames` for returning the correct number of chromosome names.
+
+## Removed
+* Removed argument `stop.on.error` and code `tryCatch` in function
+`VCFsToCatalogs` for better tracing if the function stops on error.
+
+<br/>
+
+# ICAMS 2.2.8
+
+## Added
+* Added argument `stop.on.error` to `VCFsToCatalogs`; if false, return
+  list with single element named error.
+
+* Added new internal function `CheckAndFixChrNamesForTransRanges`. The
+chromosome names in exported data `TranscriptRanges` don't have "chr". ICAMS now
+will check for the chromosome names format in input vcf and update the
+trans.ranges chromosome names in function `AddTranscript` if needed.
+
+* Added new argument `name.of.VCF` in function `AnnotateSBSVCF` and
+`AnnotateDBSVCF` for better error reporting.
+
+* Changed return from `ReadCatalog` to include possible
+  attribute "error" and allow for not calling stop() on
+  error.
+  
+* For a stranded catalog, `as.catalog` and `ReadCatalog` will silently convert
+  region = "genome" to "transcript".
+  
+## Updated
+* Updated function `AddTranscript` to check whether the format of VCF chromosome
+names is consistent with that in `trans.ranges` used.
+
+* Removed documentation warnings related to \link{BSgenome...}
+  
+* Some file reorganization.
+
+## Fixed
+* Fixed a bug in `CreateOneColSBSMatrix` for showing message that SBS variant
+whose reference base in ref.genome does not match the reference base in the VCF
+file.
+
+<br/>
+
+# ICAMS 2.2.7
+## Added
+* Enabled functions `PlotCatalog` and `PlotCatalogToPdf` to plot a numeric
+matrix, numeric data.frame, or a vector denoting the mutation **counts**.
+
+* Added new internal function `AdjustNumberOfCores` to change the number of cores
+automatically to 1 if the operating system is Windows.
+
+* Added test processing VCF with unknown variant caller.
+
+## Changed
+* Updated plotting function for SBS96Catalog to adjust the sample name position
+when the catalog type is counts.
+
+<br/>
+
+# ICAMS 2.2.6
+## Added
+* Added new internal function `SplitSBSVCF`, `SplitOneVCF`, `SplitListOfVCFs` and `VCFsToZipFileXtra`, `WriteSBS96CatalogAsTsv`,
+`ReadSBS96CatalogFromTsv`, `GetConsensusVAF`.
+
+* Added new *exported* function `ReadAndSplitVCFs`, `VCFsToCatalogs`, `VCFsToCatalogsAndPlotToPdf` and `VCFsToZipFile`.
+
+* Added new argument `filter.status` and `get.vaf.function` in functions `ReadVCF`, 
+`ReadVCFs`, `ReadAndSplitVCFs`, `VCFsToCatalogs`, `VCFsToCatalogsAndPlotToPdf`
+and `VCFsToZipFile`.
+
+* Added a new internal data `catalog.row.headers.SBS.96.v1`.
+
+* Added new argument `max.vaf.diff` in internal functions `SplitOneVCF`, `SplitListOfVCFs` and exported functions `ReadAndSplitVCFs`, `VCFsToCatalogs`,
+`VCFsToCatalogsAndPlotToPdf` and `VCFsToZipFile`.
+
+* Added new dependency package `parallel`.
+
+* Added new dependency package `R.utils` for `data.table::fread` to read gz and bz2 files directly.
+
+* Added new argument `num.of.cores` in internal functions `ReadVCFs`, `SplitListOfVCFs` and exported functions `ReadAndSplitVCFs`, `VCFsToCatalogsAndPlotToPdf`, `VCFsToCatalogs`, `VCFsToZipFile`, `VCFsToIDCatalogs`, `VCFsToSBSCatalogs`, `VCFsToDBSCatalogs`.
+
+* Added new argument `...` in internal functions `ReadVCF`, `ReadVCFs` and exported functions `ReadAndSplitVCFs`, `VCFsToCatalogsAndPlotToPdf`, `VCFsToCatalogs`, `VCFsToZipFile`.
+
+* Added new argument `mc.cores` in internal functions `GetConsensusVAF`.
+
+## Changed
+* Updated function `MakeDataFrameFromVCF` to use `data.table::fread` instead of 
+`read.csv`.
+
+## Fixed
+* Fixed bug in `MakeDataFrameFromVCF` when reading in VCF from URL.
+
+<br/>
+
+# ICAMS 2.2.5 
+## Changed
+* Updated function `CreateOneColSBSMatrix` to throw a message instead of an error when there are SBS variant whose reference base in ref.genome does not match the reference base in the VCF file.
+
+* Updated function `MakeVCFDBSdf` to inherit column information from original SBS VCF.
+
+* Changed the words in legend for DBS144 plot from "Transcribed", "Untranscribed" to "Transcribed strand" and "Untranscribed strand".
+
+* Updated the documentation for exported data all.abundance.
+
+* Updated function `ReadCatalog.COMPOSITECatalog` not to convert "::" to ".." in the column names.
+
+* Updated various functions in ICAMS to generate catalogs with zero mutation counts
+from empty vcfs.
+
+<br/>
+
+# ICAMS 2.2.4 (submitted to CRAN)
 ## Changed
 * Updated the code in automated tests to use packages in Suggests conditionally
 as required by CRAN.
 
 <br/>
 
-# ICAMS 2.2.3
+# ICAMS 2.2.3 (submitted to CRAN)
 ## Added
 * Added a section "ID classification" in the documentation for exported data `catalog.row.order`.
 

@@ -64,7 +64,7 @@ generate a zip archive of all the output files.
 \details{
 This function calls \code{\link{StrelkaIDVCFFilesToCatalog}},
 \code{\link{PlotCatalogToPdf}}, \code{\link{WriteCatalog}} and
-\code{\link[zip]{zipr}}.
+\code{zip::zipr}.
 }
 \section{Value}{
 
@@ -86,8 +86,7 @@ be obtained from \code{ID.class} column.
 
 \section{ID classification}{
 
-See
-\url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
+See \url{https://github.com/steverozen/ICAMS/raw/master/data-raw/PCAWG7_indel_classification_2017_12_08.xlsx}
 for additional information on ID (small insertion and deletion) mutation
 classification.
 
@@ -109,14 +108,13 @@ sizes range from 1 to 6+.
 }
 
 \examples{
- 
 dir <- c(system.file("extdata/Strelka-ID-vcf",
                      package = "ICAMS"))
 if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
-  catalogs <- 
-    StrelkaIDVCFFilesToZipFile(dir, 
+  catalogs <-
+    StrelkaIDVCFFilesToZipFile(dir,
                                zipfile = file.path(tempdir(), "test.zip"),
-                               ref.genome = "hg19", 
+                               ref.genome = "hg19",
                                region = "genome",
                                base.filename = "Strelka-ID")
   unlink(file.path(tempdir(), "test.zip"))}

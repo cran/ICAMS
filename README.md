@@ -5,11 +5,12 @@
 
 <!-- badges: start -->
 
-[![Travis build
-status](https://travis-ci.com/steverozen/ICAMS.svg?branch=master)](https://travis-ci.com/steverozen/ICAMS)
+![R build
+status](https://github.com/steverozen/ICAMS/workflows/R-CMD-check/badge.svg)
+![AppVeyor build
+status](https://ci.appveyor.com/api/projects/status/github/steverozen/ICAMS?branch=master&svg=true)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/ICAMS)](https://cran.r-project.org/package=ICAMS)
-[![License: GPL
-v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
 <!-- badges: end -->
 
@@ -35,15 +36,19 @@ signatures.
 
 ## Installation
 
-To begin with, install the necessary dependency package from
-[Bioconductor](https://www.bioconductor.org/) for ICAMS:
+### Get the stable version
+
+*IMPORTANT* Install the [Bioconductor](https://www.bioconductor.org/)
+dependencies first:
 
 ``` r
-install.packages("BiocManager")
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
 BiocManager::install("BSgenome")
 ```
 
-For first time installation, it may take a long time, please be patient.
+This may be slow; please be patient.
 
 Afterwards, install the stable version of ICAMS from
 [CRAN](https://cran.r-project.org/) with the R command line:
@@ -54,32 +59,32 @@ install.packages("ICAMS")
 
 ### Get the development version
 
-To use features in the development version, you can install ICAMS from
-the master branch on [GitHub](https://github.com/), which may not be
-stable:
+To use new features in the development version, you can install ICAMS
+from the master branch on [GitHub](https://github.com/), which may not
+be stable:
 
 ``` r
-install.packages("remotes")
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
 remotes::install_github(repo = "steverozen/ICAMS", ref = "master")
 ```
 
-Binaries of recent stable development versions are at [Windows
-binary](https://raw.githubusercontent.com/steverozen/ICAMS/master/data-raw/source-file/Windows-binary/ICAMS_2.2.4.zip)
-or [macOS
-binary](https://raw.githubusercontent.com/steverozen/ICAMS/master/data-raw/source-file/macOS-binary/ICAMS_2.2.4.tgz)
-These are for users who cannot install from source because they do not
-have Rtools (Windows) or XCode (Mac). To use these binaries, download
-the .zip (Windows) or .tgz (Mac) file for your operating system.
-
-Then do:
+Alternatively, you can download the [package
+source](https://raw.githubusercontent.com/steverozen/ICAMS/master/data-raw/source-file/ICAMS_2.3.10.tar.gz)
+of recent *stable development* version of ICAMS to your computer, then
+do:
 
 ``` r
-install.packages(pkgs = "path-to-binary-file-on-your-computer", repos = NULL)
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+remotes::install_local(path = "path-to-package-source-file-on-your-computer")
 ```
 
 ## Reference manual
 
-<https://github.com/steverozen/ICAMS/blob/master/data-raw/ICAMS_2.2.4.pdf>
+<https://github.com/steverozen/ICAMS/blob/master/data-raw/ICAMS_2.3.10.pdf>
 
 ## Frequently asked questions
 
@@ -88,3 +93,11 @@ install.packages(pkgs = "path-to-binary-file-on-your-computer", repos = NULL)
 You can use *exported* function `TransformCatalog` in ICAMS to normalize
 the data. Please refer to the documentation and example of
 `TransformCatalog` for more details.
+
+## Citing ICAMS
+
+If you use ICAMS in your work, please cite:
+
+> Rozen SG, Jiang NH, Boot A, Liu M, Wu Y (2021). ICAMS:In-depth
+> Characterization and Analysis of Mutational Signatures. R package
+> version 2.3.10, <https://CRAN.R-project.org/package=ICAMS>.

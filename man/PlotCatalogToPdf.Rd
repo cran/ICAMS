@@ -12,12 +12,20 @@ PlotCatalogToPdf(
   grid = NULL,
   upper = NULL,
   xlabels = NULL,
+  ylabels = NULL,
   ylim = NULL
 )
 }
 \arguments{
-\item{catalog}{A catalog as defined in \code{\link{ICAMS}} with attributes added.
-See \code{\link{as.catalog}} for more details.}
+\item{catalog}{A catalog as defined in \code{\link{ICAMS}} with attributes
+added. See \code{\link{as.catalog}} for more details. \code{catalog} can
+also be a numeric \code{matrix}, numeric \code{data.frame}, or a
+\code{vector} denoting the mutation \strong{counts}, but \strong{must} be in the
+correct row order used in \code{\link{ICAMS}}. See
+\code{\link{CatalogRowOrder}} for more details. If \code{catalog} is a
+\code{vector}, it will be converted to a 1-column \code{matrix} with
+rownames taken from the element names of the \code{vector} and with column
+name \code{"Unknown"}.}
 
 \item{file}{The name of the PDF file to be produced.}
 
@@ -32,15 +40,18 @@ program internally. Only implemented for SBS96Catalog, SBS192Catalog and
 DBS144Catalog.}
 
 \item{grid}{A logical value indicating whether to draw grid lines. Only
-implemented for SBS96Catalog.}
+implemented for SBS96Catalog, DBS78Catalog, IndelCatalog.}
 
 \item{upper}{A logical value indicating whether to draw horizontal lines and
 the names of major mutation class on top of graph. Only implemented for
-SBS96Catalog.}
+SBS96Catalog, DBS78Catalog, IndelCatalog.}
 
 \item{xlabels}{A logical value indicating whether to draw x axis labels. Only
-implemented for \code{SBS96Catalog}. If \code{FALSE} then plot x axis tick marks;
-set \code{par(tck = 0)} to suppress.}
+implemented for SBS96Catalog, DBS78Catalog, IndelCatalog. If \code{FALSE} then plot x
+axis tick marks for SBS96Catalog; set \code{par(tck = 0)} to suppress.}
+
+\item{ylabels}{A logical value indicating whether to draw y axis labels. Only
+implemented for SBS96Catalog, DBS78Catalog, IndelCatalog.}
 
 \item{ylim}{Has the usual meaning. Only implemented for SBS96Catalog and
 IndelCatalog.}
@@ -53,8 +64,8 @@ An \strong{invisible} list whose first element is a logic value
   bias statistics.
 }
 \description{
-Plot catalog to a PDF file. The type of graph is based on one
-attribute("catalog.type") of the input catalog. You can first use
+Plot catalog to a PDF file. The type of graph is based on 
+\code{attribute("catalog.type")} of the input catalog. You can first use
 \code{\link{TransformCatalog}} to get different types of catalog and then do
 the plotting.
 }

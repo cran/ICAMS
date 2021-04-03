@@ -23,19 +23,10 @@
 #' # "ACAA" "ACCA" "ACGA" "ACTA" "CCAA" "CCCA" "CCGA" "CCTA" ...
 #' # There are altogether 96 row names to denote the mutation types
 #' # in SBS96 catalog.
-#' 
-#' catalog.row.order.sp$ID83
-#' # "DEL:C:1:0" "DEL:C:1:1" "DEL:C:1:2" "DEL:C:1:3" ...
-#' # There are altogether 83 row names to denote the mutation types
-#' # in ID83 catalog.
 NULL
 
 #' @rdname CatalogRowOrder
 "catalog.row.order"
-
-#' @rdname CatalogRowOrder
-"catalog.row.order.sp"
-
 
 #' Transcript ranges data
 #'
@@ -112,7 +103,7 @@ NULL
 #'  and 1536 (\code{SBS1536Catalog}). So, for example to get the exome
 #'  abundances for SBS96 catalogs for \code{BSgenome.Hsapiens.UCSC.hg38} exomes
 #'  one would reference \cr
-#'  \code{all.abundance[["BSgenome.Hsapiens.UCSC.hg38"]][["exome"]]["96"]} \cr
+#'  \code{all.abundance[["BSgenome.Hsapiens.UCSC.hg38"]][["exome"]][["96"]]} \cr
 #'  or \code{all.abundance$BSgenome.Hsapiens.UCSC.hg38$exome$"96"}.
 #'  The value of the abundance is an integer vector with the K-mers
 #'  as names and each value being the count of that K-mer.
@@ -168,7 +159,8 @@ if(getRversion() >= "2.15.1") {
                            "plus2bs", "POS.plus.one", "HIGH", "POS.y", "VAF.x",
                            "VAF.y", "delete.flag", "trans.ranges.GRCh37", "cols",
                            "Ensembl.gene.ID", "readthrough", "exp.value", 
-                           "trans.end.pos", "trans.start.pos", "DP.x", "DP.y",
-                           "TUMOR.x", "TUMOR.y", "read.depth", "VAF",
-                           "exp.level", "trans.Ensembl.gene.ID"))
+                           "trans.end.pos", "trans.start.pos", "read.depth", "VAF", 
+                           "read.depth.x", "read.depth.y","exp.level", "FILTER",
+                           "trans.Ensembl.gene.ID", "..col.names.order", "remark.for.DBS",
+                           "..column.to.use"))
 }

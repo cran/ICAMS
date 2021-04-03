@@ -7,6 +7,7 @@
 VCFsToDBSCatalogs(
   list.of.DBS.vcfs,
   ref.genome,
+  num.of.cores = 1,
   trans.ranges = NULL,
   region = "unknown",
   return.annotated.vcfs = FALSE,
@@ -21,12 +22,15 @@ output catalog.}
 \item{ref.genome}{A \code{ref.genome} argument as described in
 \code{\link{ICAMS}}.}
 
+\item{num.of.cores}{The number of cores to use. Not available on Windows
+unless \code{num.of.cores = 1}.}
+
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
 \code{\link{BSgenome}} object
 \enumerate{
-\item \code{\link[BSgenome.Hsapiens.1000genomes.hs37d5]{BSgenome.Hsapiens.1000genomes.hs37d5}}
-\item \code{\link[BSgenome.Hsapiens.UCSC.hg38]{BSgenome.Hsapiens.UCSC.hg38}}
-\item \code{\link[BSgenome.Mmusculus.UCSC.mm10]{BSgenome.Mmusculus.UCSC.mm10}}
+\item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
+\item \code{BSgenome.Hsapiens.UCSC.hg38}
+\item \code{BSgenome.Mmusculus.UCSC.mm10}
 }
 then the function will infer \code{trans.ranges} automatically. Otherwise,
 user will need to provide the necessary \code{trans.ranges}. Please refer to
