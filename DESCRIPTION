@@ -2,7 +2,7 @@ Package: ICAMS
 Type: Package
 Title: In-Depth Characterization and Analysis of Mutational Signatures
         ('ICAMS')
-Version: 2.3.10
+Version: 2.3.12
 Author: Steve Rozen, Nanhai Jiang, Arnoud Boot, Mo Liu, Yang Wu
 Maintainer: Steve Rozen <steverozen@gmail.com>
 Description: Analysis and visualization of experimentally elucidated mutational
@@ -17,8 +17,8 @@ Description: Analysis and visualization of experimentally elucidated mutational
     and Analysis of Mutational Signatures. 'ICAMS' has functions to read in 
     variant call files (VCFs) and to collate the corresponding catalogs of 
     mutational spectra and to analyze and plot catalogs of mutational spectra
-    and signatures. Handles both "counts-based" and "density-based" catalogs
-    of mutational spectra or signatures.
+    and signatures. Handles both "counts-based" and "density-based" (i.e.
+    representation as mutations per megabase) mutational spectra or signatures.
 License: GPL-3 | file LICENSE
 URL: https://github.com/steverozen/ICAMS
 BugReports: https://github.com/steverozen/ICAMS/issues
@@ -30,11 +30,11 @@ Imports: Biostrings, BSgenome, data.table, dplyr, GenomeInfoDb,
         GenomicRanges, graphics, grDevices, IRanges, RColorBrewer,
         stats, stringi, utils, zip
 Depends: R (>= 3.5),
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 Suggests: BSgenome.Hsapiens.1000genomes.hs37d5,
         BSgenome.Hsapiens.UCSC.hg38, BSgenome.Mmusculus.UCSC.mm10,
         testthat
 NeedsCompilation: no
-Packaged: 2021-03-31 01:16:32 UTC; e0012078
+Packaged: 2024-02-08 11:48:14 UTC; User
 Repository: CRAN
-Date/Publication: 2021-04-03 13:50:31 UTC
+Date/Publication: 2024-02-09 15:20:08 UTC

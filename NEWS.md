@@ -1,3 +1,16 @@
+# ICAMS 2.3.12
+## Updated
+* Changed citation file according to new style
+* Updated URLs used in documentation 
+
+<br/>
+
+# ICAMS 2.3.11
+## Updated
+* Corrected documentation of some functions
+
+<br/>
+
 # ICAMS 2.3.10
 ## Added
 * Added tolerance when using `expect_equal` for comparing numerical values
