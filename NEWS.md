@@ -1,17 +1,227 @@
-# ICAMS 2.3.12
+# 3.0.11
 ## Updated
-* Changed citation file according to new style
-* Updated URLs used in documentation 
+* Minor changes to tests
+
+# 3.0.10
+## Updated
+* Updated some examples that took too long to run.
+
+# 3.0.9
+## Updated
+* Corrected URL pointing to indel classification file.
+* Provide package anchors for all Rd \link{} targets not in the package itself and 
+the base packages
+
+# 3.0.8
+## Updated
+* Exported function `ConvertCatalogToSigProfilerFormat` and added example.
+
+# 3.0.7
+## Added
+* Added new argument `trans.ranges` in exported function `AnnotateIDVCF`.
+
+# 3.0.6
+## Updated
+* Updated method functions for plotting SBS96, SBS192, DBS78 and ID counts
+catalog; the counts shown on the plot are sum of **absolute** value of each
+peak.
+
+* Updated internal function `ConvertCatalogToSigProfilerFormat` to support
+conversion from ICAMS SBS192 and SBS1536 catalog to SigPro format.
+
+* Updated exported function `ReadCatalog` to support reading in SBS1536 catalog
+in SigPro format.
+
+# 3.0.5
+## Updated
+* Updated `catalog.row.order$ID166` and `catalog.row.headers$ID166` 
+for genic-intergenic indel catalog (ID166).
+
+## Added
+* Added new exported function `IsICAMSCatalog` to check whether an R object
+contains one of the ICAMS catalog classes.
+
+* Added new internal function `SelectVariantsByChromName`.
+
+* Added new argument `chr.names.to.process` to exported functions
+`VCFsToCatalogs`, `ReadAndSplitVCFs`, `SplitListOfVCFs`, `VCFsToCatalogsAndPlotToPdf` and
+`VCFsToZipFile` that allow users to only select and process variants from
+specified chromosome names.
+
+* Added a section `Subscripting catalogs` in ICAMS package documentation.
+
+# 3.0.4
+## Changed
+* Changed the legend of ID166 plot from `Nongenic region` to `Intergenic region`.
+
+# 3.0.3
+## Added
+* Added new data `catalog.row.order$ID166` and `catalog.row.headers$ID166` 
+for genic-intergenic indel catalog.
+
+* Added functionality for `ReadCatalog` to read in genic-intergenic indel
+catalog (ID166).
+
+* Added functionality for `WriteCatalog` to write genic-intergenic indel
+catalog (ID166) to CSV file.
+
+* Added `cbind` and `[` method for `ID166Catalog`.
+
+* Added functionality for `PlotCatalog` and `PlotCatalogToPdf` to plot
+genic-intergenic indel catalog (ID166).
+
+## Updated
+* Updated function `PlotCatalog` to change `options("digits")` temporarily to
+prevent weird y axis labels.
+
+* Updated function `AnnotateSBSVCF` not to call `CheckSeqContextInVCF` as this
+check will done later at function `CreateOneColSBSMatrix`.
+
+# 3.0.2
+## Updated
+* Updated exported functions' examples not to use deprecated functions.
+
+* Updated internal function `StandardChromNameNew` to also discard variants
+whose chromosome names contain "fix" or "alt".
+
+* Updated internal function `ReadVCF` not to calculate VAF for multiple
+alternative variants in freebayes VCF to avoid warning messages.
+
+* Updated code in exported function `GetFreebayesVAF` to improve time
+performance dramatically (about 5 times faster) by using regular expressions for
+pattern matching and retrieving.
+
+* Updated documentation of argument `max.vaf.diff` in various functions
+informing users that they can specify a negative value (e.g. -1) to suppress
+merging adjacent SBSs to DBS.
+
+## Added
+* Added a new dependency package `fuzzyjoin`.
+
+* Added new internal function `DefaultFilterStatus` to automatically infer
+`filter.status` according to `variant.caller`.
+
+## Fixed
+* Fixed a bug in internal function `AddTranscript` caused by `data.table::foverlaps`
+producing memory errors when the input VCF has many variants (e.g. >70000 lines).
+Used `fuzzyjoin::genome_left_join` instead.
+
+* Fixed a bug in internal function `MakeDataFrameFromVCF` when renaming column
+`#CHROM` to `CHROM`.
+
+* Fixed a bug in internal function `CheckAndRemoveDiscardedVariants` to remove
+variants with ambiguous REF bases (not A, C, G, T).
+
+* Fixed a bug in exported function `TransformCatalog` when user specifies
+`ref.genome` as a character string. No longer raise an error when user did not
+install the BSgenome package.
+    + Created new internal function `InferRefGenomeName` to infer reference genome
+      name from a character string.
+    + Created new internal function `IsRefGenomeInstalled` to check whether the
+      BSgenome package is installed. If not, the returned catalog will have 
+      NULL ref.genome attribute.
+      
+* Fixed a bug in internal function `AddTranscript` when setting the data table
+new names.
+
+# 3.0.1
+* Updated two internal functions `GeneratePCAWGAliquotID` and
+`GeneratePCAWGAliquotID2`.
+
+* Corrected error in the original Excel file showing PCAWG7 indel classification. Updated
+the links in documentation pointing to the correct Excel file. Added a new column showing
+the ICAMS ID catalog row name.
+
+* Set a minimum value of 21 for `seq.context.width` in function `AnnotateIDVCF` to facilitate
+extended sequence context analysis.
+
+* Added examples to two new exported functions `SymmetricalContextsFor1BPIndel` 
+and `GeneratePlotPFMmatrix`.
+
+* Added new exported function `HaplotypePlot`.
+
+* Added two new internal functions `RenameColumnsWithNameStart` and
+`RenameColumnsWithNameEnd` to check whether there are column names `start` and
+`end` in the original VCF. This is to avoid breaking the code in function
+`AddTranscript`.
+
+# 3.0.0
+* Added two new dependency packages lifecycle and rlang.
+
+* Soft deprecated several exported functions  
+   * `MutectVCFFilesToCatalog`, `StrelkaIDVCFFilesToCatalog`, `StrelkaSBSVCFFilesToCatalog` 
+   * `MutectVCFFilesToCatalogAndPlotToPdf`, `StrelkaIDVCFFilesToCatalogAndPlotToPdf`, `StrelkaSBSVCFFilesToCatalogAndPlotToPdf`
+   * `MutectVCFFilesToZipFile`, `StrelkaIDVCFFilesToZipFile`, `StrelkaSBSVCFFilesToZipFile`
+   * `ReadAndSplitMutectVCFs`, `ReadAndSplitStrelkaSBSVCFs`, `ReadStrelkaIDVCFs`
+         
+# 2.3.18
+* Fixed a bug in internal function `ReadVCF` when the VCF does not have column `FILTER`.
+
+* Updated documentation for `ID` that refers to small insertions and deletions.
+
+* Updated documentation for ICAMS.R that is no longer referring to some deprecated functions.
+
+# 2.3.17
+* Added internal function `GenerateVCFsFromIndelSimpleFiles` to generate reconstructed VCFs from
+indel simple files.
+
+* Updated internal function `ReadVCF` to check whether VCF has column `FILTER`. If VCF
+does not have `FILTER` column, raise a warning and all variants will be retained.
+
+# 2.3.16
+* Exported two functions `ReadVCFs` and `SplitListOfVCFs` and added examples.
+
+* Updated code in function `ReadVCF` for filtering out variants that do not have the value of `filter.status` to avoid segfaults error.
+
+# 2.3.15
+* Added default value `PASS` to argument `filter.status` in several exported and internal functions.
+
+# 2.3.14
+* Added deprecated information to the titles of several exported functions.
+
+# 2.3.13
+* Fixed a bug in internal function `CheckAndNormalizeTranCatArgs` for
+transforming catalog. If the `target.abundance` can be inferred and is different
+from a supplied non-NULL value of `target.abundance`, **no longer** raise an
+error. Use the supplied non-NULL value of `target.abundance` instead.
+
+* Updated internal function `ReadBedRanges` to only keep entries that are from
+chromosomes 1-22 and X and Y.
+
+# 2.3.12
+* Added exported function `SimpleReadVCF`; some code simplification.
+
+# 2.3.11
+* Added backward compatible new argument `always.merge.SBS` to several functions.
+
+# 2.3.10.90xx
+## Added
+* Added new internal function `RetrieveNonEmptySamples` to retrieve non empty samples from a catalog.
+
+* Added new internal function `ConvertCatalogToSigProfilerFormat` to convert ICAMS SBS96, DBS78 and ID catalog to SigProfiler format.
+
+## Updated
+* Updated function `StandardChromName` and `StandardChromNameNew` to remove variants
+whose chromosome names contain "JH".
+
+* Updated functions `VCFsToCatalogsAndPlotToPdf` and `VCFsToZipFile` to only plot samples
+that have mutations for a specific mutation class.
+
+* Enabled argument `tumor.col.name` and `tumor.col.names` in various functions to also take
+in numbers as column indices.
+
+* Updated internal function `MakeDataFrameFromVCF` to use argument `file` instead of `name.of.VCF` to report error when the input file is not a VCF file.
+
+* Updated internal data `catalog.row.headers.sp$ID83` and `ICAMS.to.SigPro.ID`.
+
+## Fixed
+* Fixed bugs in internal functions `MakeSBS96CatalogFromSigPro` and
+`MakeDBS78CatalogFromSigPro` for missing argument `drop = FALSE` when reordering
+a one-column catalog.
 
 <br/>
 
-# ICAMS 2.3.11
-## Updated
-* Corrected documentation of some functions
-
-<br/>
-
-# ICAMS 2.3.10
+# ICAMS 2.3.10 (submitted to CRAN)
 ## Added
 * Added tolerance when using `expect_equal` for comparing numerical values
 

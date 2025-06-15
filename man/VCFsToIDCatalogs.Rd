@@ -2,12 +2,13 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{VCFsToIDCatalogs}
 \alias{VCFsToIDCatalogs}
-\title{Create ID (small insertion and deletion) catalog from ID VCFs}
+\title{Create ID (small insertions and deletions) catalog from ID VCFs}
 \usage{
 VCFsToIDCatalogs(
   list.of.vcfs,
   ref.genome,
   num.of.cores = 1,
+  trans.ranges = NULL,
   region = "unknown",
   flag.mismatches = 0,
   return.annotated.vcfs = FALSE,
@@ -23,6 +24,19 @@ the sample ids in the output catalog.}
 
 \item{num.of.cores}{The number of cores to use. Not available on Windows
 unless \code{num.of.cores = 1}.}
+
+\item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
+\code{\link[BSgenome]{BSgenome}} object
+\enumerate{
+\item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
+\item \code{BSgenome.Hsapiens.UCSC.hg38}
+\item \code{BSgenome.Mmusculus.UCSC.mm10}
+}
+then the function will infer \code{trans.ranges} automatically. Otherwise,
+user will need to provide the necessary \code{trans.ranges}. Please refer to
+\code{\link{TranscriptRanges}} for more details.
+If \code{is.null(trans.ranges)} do not add transcript range
+information.}
 
 \item{region}{A character string acting as a region identifier, one of
 "genome", "exome".}
@@ -42,13 +56,13 @@ warning messages showing information about the discarded variants. Default
 is TRUE.}
 }
 \description{
-Create ID (small insertion and deletion) catalog from ID VCFs
+Create ID (small insertions and deletions) catalog from ID VCFs
 }
 \section{Value}{
 
 A \strong{list} of elements:
 \itemize{
-\item \code{catalog}: The ID (small insertion and deletion) catalog with
+\item \code{catalog}: The ID (small insertions and deletions) catalog with
 attributes added. See \code{\link{as.catalog}} for details.
 \item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
 that were excluded from the analysis. See the added extra column
@@ -64,15 +78,15 @@ be obtained from \code{ID.class} column.
 
 \section{Note}{
 
-In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+In ID (small insertions and deletions) catalogs, deletion repeat sizes range
 from 0 to 5+, but for plotting and end-user documentation deletion repeat
 sizes range from 1 to 6+.
 }
 
 \section{ID classification}{
 
-See \url{https://github.com/steverozen/ICAMS/blob/master/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
-for additional information on ID (small insertion and deletion) mutation
+See \url{https://github.com/steverozen/ICAMS/blob/v3.0.9-branch/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
+for additional information on ID (small insertions and deletions) mutation
 classification.
 
 See the documentation for \code{\link{Canonicalize1Del}} which first handles
@@ -89,7 +103,7 @@ and the functions it calls for handling of insertions.
 file <- c(system.file("extdata/Strelka-ID-vcf/",
                       "Strelka.ID.GRCh37.s1.vcf",
                       package = "ICAMS"))
-list.of.ID.vcfs <- ReadStrelkaIDVCFs(file)
+list.of.ID.vcfs <- ReadAndSplitVCFs(file, variant.caller = "strelka")$ID
 if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5",
  quietly = TRUE)) {
   catID <- VCFsToIDCatalogs(list.of.ID.vcfs, ref.genome = "hg19",

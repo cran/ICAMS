@@ -10,7 +10,7 @@ ReadVCFs(
   num.of.cores = 1,
   names.of.VCFs = NULL,
   tumor.col.names = NA,
-  filter.status = NULL,
+  filter.status = DefaultFilterStatus(variant.caller),
   get.vaf.function = NULL,
   ...
 )
@@ -28,25 +28,32 @@ variant caller is \code{"mutect"}, do \strong{not} merge SBSs into DBS.}
 \item{num.of.cores}{The number of cores to use. Not available on Windows
 unless \code{num.of.cores = 1}.}
 
-\item{names.of.VCFs}{Character vector of names of the VCF files. The order
-of names in \code{names.of.VCFs} should match the order of VCF file paths
-in \code{files}. If \code{NULL}(default), this function will remove all of
-the path up to and including the last path separator (if any) and file
-paths without extensions (and the leading dot) will be used as the names of
-the VCF files.}
+\item{names.of.VCFs}{Optional. Character vector of names of the VCF files.
+The order of names in \code{names.of.VCFs} should match the order of VCF
+file paths in \code{files}. If \code{NULL}(default), this function will
+remove all of the path up to and including the last path separator (if any)
+in \code{files} and file paths without extensions (and the leading dot)
+will be used as the names of the VCF files.}
 
 \item{tumor.col.names}{Optional. Only applicable to \strong{Mutect} VCFs.
-Character vector of column names in \strong{Mutect} VCFs which contain the
-tumor sample information. The order of names in \code{tumor.col.names}
-should match the order of \strong{Mutect} VCFs specified in \code{files}.
-If \code{tumor.col.names} is equal to \code{NA}(default), this function
-will use the 10th column in all the \strong{Mutect} VCFs to calculate VAFs.
-See \code{\link{GetMutectVAF}} for more details.}
+Vector of column names or column indices in \strong{Mutect} VCFs which
+contain the tumor sample information. The order of elements in
+\code{tumor.col.names} should match the order of \strong{Mutect} VCFs
+specified in \code{files}. If \code{tumor.col.names} is equal to
+\code{NA}(default), this function will use the 10th column in all the
+\strong{Mutect} VCFs to calculate VAFs. See \code{\link{GetMutectVAF}} for
+more details.}
 
-\item{filter.status}{The status indicating a variant has passed all filters.
-An example would be \code{"PASS"}. Variants which don't have the specified
-\code{filter.status} in the \code{FILTER} column in VCF will be removed. If
-\code{NULL}(default), no variants will be removed from the original VCF.}
+\item{filter.status}{The character string in column \code{FILTER} of the VCF
+that indicates that a variant has passed all the variant caller's filters.
+Variants (lines in the VCF) for which the value in column \code{FILTER}
+does not equal \code{filter.status} are silently excluded from the output.
+The internal function \code{DefaultFilterStatus} tries to infer
+\code{filter.status} based on \code{variant.caller}. If
+\code{variant.caller} is "unknown", user must specify \code{filter.status}
+explicitly. If \code{filter.status = NULL}, all variants are retained. If
+there is no \code{FILTER} column in the VCF, all variants are retained with
+a warning.}
 
 \item{get.vaf.function}{Optional. Only applicable when \code{variant.caller} is
 \strong{"unknown"}. Function to calculate VAF(variant allele frequency) and read
@@ -64,4 +71,9 @@ A list of data frames storing data lines of the VCF files with two
 \description{
 Read VCF files
 }
-\keyword{internal}
+\examples{
+file <- c(system.file("extdata/Mutect-vcf",
+                      "Mutect.GRCh37.s1.vcf",
+                      package = "ICAMS"))
+list.of.vcfs <- ReadVCFs(file, variant.caller = "mutect")
+}

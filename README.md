@@ -6,12 +6,11 @@
 <!-- badges: start -->
 
 ![R build
-status](https://github.com/steverozen/ICAMS/workflows/R-CMD-check/badge.svg?branch=v2.3.12-branch-cran)
+status](https://github.com/steverozen/ICAMS/workflows/R-CMD-check/badge.svg)
 ![AppVeyor build
 status](https://ci.appveyor.com/api/projects/status/github/steverozen/ICAMS?branch=master&svg=true)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/ICAMS)](https://cran.r-project.org/package=ICAMS)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
-
 <!-- badges: end -->
 
 In-depth Characterization and Analysis of Mutational Signatures
@@ -31,12 +30,12 @@ Characterization and Analysis of Mutational Signatures. ‘ICAMS’ has
 functions to read in variant call files (VCFs) and to collate the
 corresponding catalogs of mutational spectra and to analyze and plot
 catalogs of mutational spectra and signatures. Handles both
-“counts-based” and “density-based” (i.e. representation as mutations per
-megabase) mutational spectra or signatures.
+“counts-based” and “density-based” (i.e. representation as mutuations
+per megabase) mutational spectra or signatures.
 
 ## Installation
 
-### Get the stable version
+### To install the stable version from [CRAN](https://CRAN.R-project.org/package=ICAMS):
 
 *IMPORTANT* Install the [Bioconductor](https://www.bioconductor.org/)
 dependencies first:
@@ -50,41 +49,25 @@ BiocManager::install("BSgenome")
 
 This may be slow; please be patient.
 
-Afterwards, install the stable version of ICAMS from
-[CRAN](https://cran.r-project.org/) with the R command line:
+Afterwards, install the latest release version of ICAMS with the R
+command line:
 
 ``` r
 install.packages("ICAMS")
 ```
 
-### Get the development version
-
-To use new features in the development version, you can install ICAMS
-from the master branch on [GitHub](https://github.com/), which may not
-be stable:
+### To install the latest stable version from [GitHub](https://github.com/steverozen/ICAMS):
 
 ``` r
 if (!requireNamespace("remotes", quietly = TRUE)) {
   install.packages("remotes")
 }
-remotes::install_github(repo = "steverozen/ICAMS", ref = "master")
-```
-
-Alternatively, you can download the [package
-source](https://github.com/steverozen/ICAMS/blob/v2.3.12-branch-cran/data-raw/source-file/ICAMS_2.3.12.tar.gz?raw=true)
-of recent *stable development* version of ICAMS to your computer, then
-do:
-
-``` r
-if (!requireNamespace("remotes", quietly = TRUE)) {
-  install.packages("remotes")
-}
-remotes::install_local(path = "path-to-package-source-file-on-your-computer")
+remotes::install_github(repo = "steverozen/ICAMS")
 ```
 
 ## Reference manual
 
-<https://github.com/steverozen/ICAMS/blob/v2.3.12-branch-cran/data-raw/ICAMS_2.3.12.pdf>
+<https://github.com/steverozen/ICAMS/blob/v3.0.9-branch/data-raw/ICAMS_3.0.9.pdf>
 
 ## Frequently asked questions
 
@@ -98,6 +81,6 @@ the data. Please refer to the documentation and example of
 
 If you use ICAMS in your work, please cite:
 
-> Rozen SG, Jiang NH, Boot A, Liu M, Wu Y (2024). ICAMS:In-depth
-> Characterization and Analysis of Mutational Signatures. R package
-> version 2.3.12, <https://CRAN.R-project.org/package=ICAMS>.
+> Rozen SG, Jiang NH, Boot A, Liu M, Wu Y, Huang MN, Chang JG (2025).
+> ICAMS:In-depth Characterization and Analysis of Mutational Signatures.
+> R package version 3.0.9, <https://CRAN.R-project.org/package=ICAMS>.

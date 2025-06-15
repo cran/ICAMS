@@ -29,11 +29,14 @@ InferCatalogInfo <- function(object) {
   if (nrow == 83)  {
     return(MakeID83Catalog(object))
   }
+  if (nrow == 166)  {
+    return(MakeID166Catalog(object))
+  }
   if (nrow == 1697){ # TODO(Wuyang)
     return(MakeCOMPOSITECatalog(object))
   }  
   stop("\nThe number of rows in the input object must be one of\n",
-       "96 192 1536 78 144 136 83 1697\ngot ", nrow)
+       "96 192 1536 78 144 136 83 166 1697\ngot ", nrow)
   
 }
 
@@ -52,10 +55,11 @@ InferCatalogClassPrefix <- function(object) {
   if (nrow == 144)  return("DBS144")
   if (nrow == 136)  return("DBS136")
   if (nrow == 83)   return("ID")
+  if (nrow == 166)   return("ID166")
   if (nrow == 1697) return("COMPOSITE")
   
   stop("\nThe number of rows in the input object must be one of\n",
-       "96 192 1536 78 144 136 83 1697\ngot ", nrow)
+       "96 192 1536 78 144 136 83 166 1697\ngot ", nrow)
   
 }
 
@@ -67,7 +71,114 @@ InferCatalogClassString <- function(object) {
   return(paste0(prefix, "Catalog"))
 }
 
+#' Check whether an R object contains one of the ICAMS catalog classes 
+#'
+#' @param object An R object.
+#'
+#' @return A logical value.
+#' 
+#' @export
+#'
+#' @examples
+#' # Create a matrix with all values being 1
+#' object <- matrix(1, nrow = 96, ncol = 1, 
+#'                  dimnames = list(catalog.row.order$SBS96))
+#' IsICAMSCatalog(object) # FALSE
+#' 
+#' # Use as.catalog to add class attribute to object
+#' catalog <- as.catalog(object)
+#' IsICAMSCatalog(catalog) # TRUE      
+IsICAMSCatalog <- function(object) {
+  supported.num.rows <- 
+    c(96, 192, 1536, 78, 136, 144, 83, 166, 1697)
+  supported.type <- 
+    c(paste0("SBS", c(96, 192, 1536)),
+      paste0("DBS", c(78, 136, 144)),
+      "ID", "ID166", "COMPOSITE")
+  supported.classes <-
+    paste0(supported.type, "Catalog")
+  
+  # Change "IDCatalog" class to "IndelCatalog"
+  supported.classes[supported.classes == "IDCatalog"] <-
+    "IndelCatalog"
+  
+  if (!nrow(object) %in% supported.num.rows) {
+    return(FALSE)
+  } 
+  
+  if (!inherits(x = object, what = supported.classes)) {
+    return(FALSE)
+  } 
+  
+  if (!is.null(rownames(object))) {
+    index <- which(nrow(object) == supported.num.rows)
+    type <- supported.type[index]
+    if (all(rownames(object) == ICAMS::catalog.row.order[[type]])) {
+      return(TRUE)
+    } else {
+      message("The rownames of the input object do not match the catalog row ",
+              "order used in ICAMS exactly. See ICAMS::catalog.row.order for details")
+      return(FALSE)
+    }
+  }
+  
+  return(TRUE)
+}
 
+
+#' Check whether an R object contains one of the ICAMS catalog classes 
+#'
+#' @param object An R object.
+#'
+#' @return A logical value.
+#' 
+#' @export
+#'
+#' @examples
+#' # Create a matrix with all values being 1
+#' object <- matrix(1, nrow = 96, ncol = 1, 
+#'                  dimnames = list(catalog.row.order$SBS96))
+#' IsICAMSCatalog(object) # FALSE
+#' 
+#' # Use as.catalog to add class attribute to object
+#' catalog <- as.catalog(object)
+#' IsICAMSCatalog(catalog) # TRUE      
+IsICAMSCatalog <- function(object) {
+  supported.num.rows <- 
+    c(96, 192, 1536, 78, 136, 144, 83, 166, 1697)
+  supported.type <- 
+    c(paste0("SBS", c(96, 192, 1536)),
+      paste0("DBS", c(78, 136, 144)),
+      "ID", "ID166", "COMPOSITE")
+  supported.classes <-
+    paste0(supported.type, "Catalog")
+  
+  # Change "IDCatalog" class to "IndelCatalog"
+  supported.classes[supported.classes == "IDCatalog"] <-
+    "IndelCatalog"
+  
+  if (!nrow(object) %in% supported.num.rows) {
+    return(FALSE)
+  } 
+  
+  if (!inherits(x = object, what = supported.classes)) {
+    return(FALSE)
+  } 
+  
+  if (!is.null(rownames(object))) {
+    index <- which(nrow(object) == supported.num.rows)
+    type <- supported.type[index]
+    if (all(rownames(object) == ICAMS::catalog.row.order[[type]])) {
+      return(TRUE)
+    } else {
+      message("The rownames of the input object do not match the catalog row ",
+      "order used in ICAMS exactly. See ICAMS::catalog.row.order for details")
+      return(FALSE)
+    }
+  }
+  
+  return(TRUE)
+}
 
 ## Convert external catalog files with 96 rows into ICAMS internal catalog format.
 #' @keywords internal
@@ -120,7 +231,7 @@ MakeSBS96CatalogFromSigPro <- function(cos) {
     stop("The mutation types in this SBS96 catalog is not in correct ICAMS format",
       " check ICAMS::catalog.row.order$SBS96 for more details.")
   }
-  out <- out[ICAMS::catalog.row.order$SBS96, ]
+  out <- out[ICAMS::catalog.row.order$SBS96, , drop = FALSE]
   class(out) <- c("SBS96Catalog", class(out))
   return(out)
 }
@@ -210,6 +321,12 @@ MakeSBS1536Catalog <- function(object) {
     # Convert ICAMS / COSMIC csv into ICAMS internal format
     return(MakeSBS1536CatalogFromICAMSExt(object))
   }
+  
+  ## SigPro SBS1536 txt format
+  if("AA[C>A]AA" %in% unlist(object[,1])) {
+    return(MakeSBS1536CatalogFromSigPro(object))
+  }
+  
   stop("1536 mutation types, but not an SBS1536 catalog in",
        " ICAMS format")
 }
@@ -234,6 +351,19 @@ MakeSBS1536CatalogFromICAMSExt <- function(cos) {
   return(out)
 }
 
+MakeSBS1536CatalogFromSigPro <- function(cos) {
+  rownames <- Unstaple1536(unlist(cos[ , 1]))
+  cos <- cos[ , -1]
+  out <- as.matrix(cos)
+  rownames(out) <- rownames
+  if(!setequal(rownames(out), ICAMS::catalog.row.order$SBS1536)){
+    stop("The mutation types in this SBS1536 catalog is not in correct ICAMS format",
+         " check ICAMS::catalog.row.order$SBS1536 for more details.")
+  }
+  out <- out[ICAMS::catalog.row.order$SBS1536, , drop = FALSE]
+  class(out) <- c("SBS1536Catalog", class(out))
+  return(out)
+}
 
 ## Convert external catalog files with 78 rows into ICAMS DBS78 internal catalog format.
 MakeDBS78Catalog <- function(object) {
@@ -279,7 +409,7 @@ MakeDBS78CatalogFromSigPro <- function(cos) {
     stop("The mutation types in this DBS78 catalog is not in correct ICAMS format",
       " check ICAMS::catalog.row.order$DBS78 for more details.")
   }
-  out <- out[ICAMS::catalog.row.order$DBS78, ]
+  out <- out[ICAMS::catalog.row.order$DBS78, , drop = FALSE]
   class(out) <- c("DBS78Catalog", class(out))
   return(out)
 }
@@ -358,6 +488,33 @@ MakeID83Catalog <- function(object) {
   stop("83 mutation types, but not a ID83 catalog in",
        " ICAMS, COSMIC, or SigProfiler format")
 }
+
+# Convert external catalog files with 166 rows into ICAMS ID166 internal catalog format
+# ID166 is genic-intergenic indel catalog, there is an additional first column "Region" added
+# to the canonical ID83 catalog CSV file
+# "G" stands for "Genic", indicating the indel happens on genic region
+# "I" stands for "Intergenic", indicating the indel happens on Intergenic region
+MakeID166Catalog <- function(cos) {
+  cn <- names(cos)
+  ex.cn <- c("Region", "Type", "Subtype", "Indel_size", "Repeat_MH_size")
+  names(cos)[1:5] <- ex.cn
+  rn <- apply(cos[ , 1:5], MARGIN = 1, paste, collapse = ":")
+  out <- as.matrix(cos[ , -(1:5), drop = FALSE])
+  
+  if (!setequal(rn, ICAMS::catalog.row.order$ID166)) {
+    msg <- 
+      paste("The row names are not correct:\n",
+            "got", paste(rn, collapse = ", "),
+            "\nexpected", paste(ICAMS::catalog.row.order$ID166,
+                                collapse = ", "))
+    stop(msg)
+  }
+  
+  rownames(out) <- rn
+  out <- out[ICAMS::catalog.row.order$ID166, , drop = FALSE]
+  return(out)
+}
+
 ## Type Subtype Indel_size Repeat_MH_size
 ## INS/DEL C/T/repeats/MH 1~5+ 0~5+
 MakeID83CatalogFromICAMSExt <- function(cos) {

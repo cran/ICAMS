@@ -1,15 +1,14 @@
-#' Extract the VAFs (variant allele frequencies) and read depth information from
-#' a VCF file
+#' Extract the VAFs (variant allele frequencies) and read depth information from a VCF file
 #'
 #' @param vcf Said VCF as a data.frame.
 #'
 #' @param name.of.VCF Name of the VCF file.
 #'
 #' @param tumor.col.name Optional. Only applicable to \strong{Mutect} VCF. Name
-#'   of the column in \strong{Mutect} VCF which contains the tumor sample
-#'   information. It \strong{must} have quotation marks. If
-#'   \code{tumor.col.name} is equal to \code{NA}(default), this function will
-#'   use the 10th column to calculate VAFs.
+#'   or index of the column in \strong{Mutect} VCF which contains the tumor
+#'   sample information. It \strong{must} have quotation marks if specifying the
+#'   column name. If \code{tumor.col.name} is equal to \code{NA}(default), this
+#'   function will use the 10th column to calculate VAFs.
 #'
 #' @return The original \code{vcf} with two additional columns added which
 #'   contain the VAF(variant allele frequency) and read depth information.
@@ -75,7 +74,7 @@ RemoveRowsWithDuplicatedCHROMAndPOSNew <- function(df, name.of.VCF = NULL) {
   discarded.variants <- df[0, ]
   # Find out variants which have the same "CHROM", "POS", "REF", "ALT"
   dups <- which(duplicated(df[, c("CHROM", "POS", "REF", "ALT")]))
-  
+
   if (length(dups) > 0) {
     warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
             " ", 2 * length(dups), " row out of ",
@@ -89,10 +88,10 @@ RemoveRowsWithDuplicatedCHROMAndPOSNew <- function(df, name.of.VCF = NULL) {
   } else {
     df1 <- df
   }
-  
+
   # Find out variants which have the same "CHROM", "POS", "REF" but different "ALT"
   dups2 <- which(duplicated(df1[, c("CHROM", "POS", "REF")]))
-  
+
   if (length(dups2) > 0) {
     warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
             " ", 2 * length(dups2), " row out of ",
@@ -107,7 +106,7 @@ RemoveRowsWithDuplicatedCHROMAndPOSNew <- function(df, name.of.VCF = NULL) {
   } else {
     df2 <- df1
   }
-  
+
   if (nrow(discarded.variants) > 0) {
     return(list(df = df2, discarded.variants = discarded.variants))
   } else {
@@ -123,14 +122,14 @@ RemoveRowsWithDuplicatedCHROMAndPOSNew <- function(df, name.of.VCF = NULL) {
 RenameColumnsWithNameStrand <- function(df) {
   if ("strand" %in% colnames(df)) {
     colnames(df)[which(colnames(df) == "strand")] <- "strand_old"
-    warning('There is column in VCF which has name "strand", ',
-            'it has been renamed to "strand_old" so as ',
-            'not to conflict with code in other parts of ICAMS package.')
+    warning('A column named "strand" in the VCF ',
+            'was renamed to "strand_old" to ',
+            'avoid conflict with a newly added column named "strand".')
   }
   return(df)
 }
 
-#' Is there any column in df1 with name "VAF"?
+#' Is there any column in \code{df} with name "VAF"?
 #' If there is, change its name to "VAF_old" so that it will
 #' conflict with code in other parts of ICAMS package.
 #'
@@ -138,9 +137,39 @@ RenameColumnsWithNameStrand <- function(df) {
 RenameColumnsWithNameVAF <- function(df) {
   if ("VAF" %in% colnames(df)) {
     colnames(df)[which(colnames(df) == "VAF")] <- "VAF_old"
-    warning('There is column in VCF which has name "VAF", ',
-            'it has been renamed to "VAF_old" so as ',
-            'not to conflict with code in other parts of ICAMS package.')
+    warning('A column named "VAF" in the VCF ',
+            'was renamed to "VAF_old" to ',
+            'avoid conflict with a newly added column named "VAF".')
+  }
+  return(df)
+}
+
+#' Is there any column in \code{df} with name "start"?
+#' If there is, change its name to "start_old" so that it will
+#' conflict with code in other parts of ICAMS package.
+#'
+#' @keywords internal
+RenameColumnsWithNameStart <- function(df) {
+  if ("start" %in% colnames(df)) {
+    colnames(df)[which(colnames(df) == "start")] <- "start_old"
+    warning('A column named "start" in the VCF ',
+            'was renamed to "start_old" to ',
+            'avoid conflict with a newly added column named "start".')
+  }
+  return(df)
+}
+
+#' Is there any column in \code{df} with name "end"?
+#' If there is, change its name to "end_old" so that it will
+#' conflict with code in other parts of ICAMS package.
+#'
+#' @keywords internal
+RenameColumnsWithNameEnd <- function(df) {
+  if ("end" %in% colnames(df)) {
+    colnames(df)[which(colnames(df) == "end")] <- "end_old"
+    warning('A column named "end" in the VCF ',
+            'was renamed to "end_old" to ',
+            'avoid conflict with a newly added column named "end".')
   }
   return(df)
 }
@@ -177,57 +206,68 @@ ReadStrelkaSBSVCF <- function(file, name.of.VCF = NULL) {
   }
 }
 
-#' Read in the data lines of a Variant Call Format (VCF) file
+#' Read a VCF file into a data frame with minimal processing.
 #'
-#' @importFrom data.table fread
+#' @details Header lines beginning "##" are removed, and column
+#'   "#CHROM" is renamed to "CHROM". Other column names are
+#'   unchanged. Columns "#CHROM", "POS", "REF", and "ALT" must
+#'   be in the input.
+#'
+#' @param file The name/path of the VCF file, or a complete URL.
+#'
+#' @export
+#'
+#' @return A data frame storing mutation records of a VCF file.
+#'
+#' @examples
+#' file <- c(system.file("extdata/Strelka-SBS-vcf",
+#'                       "Strelka.SBS.GRCh37.s1.vcf",
+#'                       package = "ICAMS"))
+#' df <- SimpleReadVCF(file)
+SimpleReadVCF <- function(file) {
+  return(MakeDataFrameFromVCF(file = file))
+}
+
+#' Read in the data lines of a Variant Call Format (VCF) file
 #'
 #' @param file The name/path of the VCF file, or a complete URL.
 #'
 #' @return A data frame storing mutation records of a VCF file.
 #'
 #' @keywords internal
-MakeDataFrameFromVCF <- function(file, name.of.VCF = NULL) {
-  if (is.null(name.of.VCF)) {
-    vcf.name <- basename(file)
-  } else {
-    vcf.name <- name.of.VCF
-  }
-  
+MakeDataFrameFromVCF <- function(file) { # name.of.VCF = NULL) {
+
   # Suppress the warning when the VCF is totally empty
   tryCatch({
     df1 <-
       suppressWarnings(data.table::fread(file, na.strings = "",
                                          skip = "#CHROM", fill = TRUE))
-    
+
     if (nrow(df1) == 0) {
       return(df1)
     }
-    
+
     required.col.names <- c("#CHROM", "POS", "REF", "ALT")
     col.names.exist <- required.col.names %in% colnames(df1)
     col.names.not.available <- required.col.names[!col.names.exist]
-    
+
     if (!all(col.names.exist)) {
-      stop("some columns required in VCF are not available ", 
+      stop("some columns required in VCF are not available ",
            paste(col.names.not.available, collapse = " "))
     }
-    
+
     },
     error = function(err.info) {
       if (!is.null(err.info$message)) {
-      stop(vcf.name, " does not appear to be a VCF file.\nDetails: ",
+      stop(file, " does not appear to be a VCF file.\nDetails: ",
            err.info$message)
       }
     })
-  
-  # Extract the names of columns in the VCF file
-  names <- c("CHROM", colnames(df1)[-1])
-  colnames(df1) <- names
-  
-  df1$CHROM <- as.character(df1$CHROM)
 
-  df1 <- RenameColumnsWithNameStrand(df1)
-  df1 <- RenameColumnsWithNameVAF(df1)
+  # Rename column name #CHROM in df1 to CHROM 
+  data.table::setnames(df1, old = "#CHROM", new = "CHROM")
+
+  df1$CHROM <- as.character(df1$CHROM)
 
   return(df1)
 }
@@ -296,6 +336,8 @@ GetStrelkaVAF <-function(vcf, name.of.VCF = NULL) {
          paste(colnames(vcf), collapse=" "))
   }
 
+  vcf <- RenameColumnsWithNameVAF(vcf)
+
   TUMOR <- vcf[["TUMOR"]]
   control <- unique(vcf[["FORMAT"]])
   alt     <- vcf[["ALT"]]
@@ -342,11 +384,11 @@ GetStrelkaVAF <-function(vcf, name.of.VCF = NULL) {
 #'   separator (if any) in \code{file} and file path without extensions (and the
 #'   leading dot) will be used as the name of the VCF file.
 #'
-#' @param tumor.col.name Name of the column in VCF which contains the tumor
-#'   sample information. It \strong{must} have quotation marks. If
-#'   \code{tumor.col.name} is equal to \code{NA}(default), this function will
-#'   use the 10th column to calculate VAFs. See \code{\link{GetMutectVAF}} for
-#'   more details.
+#' @param tumor.col.name Name or index of the column in VCF which contains the
+#'   tumor sample information. It \strong{must} have quotation marks if
+#'   specifying the column name. If \code{tumor.col.name} is equal to
+#'   \code{NA}(default), this function will use the 10th column to calculate
+#'   VAFs. See \code{\link{GetMutectVAF}} for more details.
 #'
 #' @section Value: A data frame storing data lines of a VCF file with two
 #'   additional columns added which contain the VAF(variant allele frequency)
@@ -383,6 +425,8 @@ GetMutectVAF <- function(vcf, name.of.VCF = NULL, tumor.col.name = NA) {
     return(vcf)
   }
 
+  vcf <- RenameColumnsWithNameVAF(vcf)
+
   # Specify the possible variable names in Mutect VCF that stores count of reads
   # information
 
@@ -408,9 +452,21 @@ GetMutectVAF <- function(vcf, name.of.VCF = NULL, tumor.col.name = NA) {
   }
 
   if (!is.na(tumor.col.name)) {
-    if (!tumor.col.name %in% colnames(vcf)) {
-      stop("\n", dQuote(tumor.col.name),
-           " is not one of the column names in vcf ",
+    if (is.character(tumor.col.name)) {
+      if (!tumor.col.name %in% colnames(vcf)) {
+        stop("\n", dQuote(tumor.col.name),
+             " is not one of the column names in vcf ",
+             ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)))
+      }
+    } else if (is.numeric(tumor.col.name)) {
+        if (!tumor.col.name %in% 1:ncol(vcf)) {
+          stop("\n", tumor.col.name,
+               " is not one of the column indices in vcf ",
+               ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)))
+        }
+    } else {
+      stop("\n",
+           "tumor.col.name should either be the colname name or column index in vcf ",
            ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)))
     }
   }
@@ -487,29 +543,31 @@ GetFreebayesVAF <- function(vcf, name.of.VCF = NULL) {
          " does not appear to be a freebayes VCF, please check the data")
   }
 
-  info.list <- strsplit(vcf$INFO, split = ";")
-  CalculateVAF <- function(vector, key.words) {
-    # Get the index of those items in vector that contain key.words
-    idx <- sapply(key.words, FUN = grep, x = vector)
+  vcf <- RenameColumnsWithNameVAF(vcf)
 
-    # Get the necessary information for calculating VAF
-    info <- vector[idx]
-    info1 <- unlist(strsplit(info, split = "="))
-    info2 <- as.integer(info1[c(2, 4, 6, 8)])
-    names(info2) <- key.words
-
-    return(data.frame(VAF = sum(info2[3:4]) / sum(info2),
-                      read.depth = sum(info2)))
-  }
-
-  list1 <- lapply(info.list, FUN = CalculateVAF, key.words = key.words)
-  vafs <- do.call("rbind", list1)
-  return(cbind(vcf, vafs))
+  info.list <- stringi::stri_split_fixed(vcf$INFO, ";")
+  read.counts.info <- lapply(info.list, FUN = function(info) {
+    # Use sort to make sure the read count number are in this alphabetical order
+    # SAF, SAR, SRF, SRR
+    sort(grep(pattern = paste(key.words, collapse = "|"), x = info, value = TRUE))
+  })
+  
+  read.counts.info2 <- lapply(read.counts.info, FUN = function(read.counts) {
+    as.numeric(gsub(pattern = ".*=([0-9]+).*", replacement = "\\1", x = read.counts))
+  })
+  
+  read.depths <- sapply(read.counts.info2, FUN = sum)
+  alt.read.counts <- sapply(read.counts.info2, FUN = function(x) {
+    sum(x[1:2])
+  })
+  vafs <- alt.read.counts / read.depths
+  
+  vcf$VAF <- vafs
+  vcf$read.depth <- read.depths
+  return(vcf)
 }
 
-#' Analogous to \code{\link{GetMutectVAF}}, calculating VAF and read depth
-#' from PCAWG7 consensus vcfs
-#'
+
 #' @param vcf An in-memory VCF data frame.
 #'
 #' @param mc.cores The number of cores to use. Not available on Windows
@@ -517,8 +575,18 @@ GetFreebayesVAF <- function(vcf, name.of.VCF = NULL) {
 #'
 #' @importFrom parallel mclapply
 #'
-#' @keywords internal
-GetConsensusVAF <- function(vcf, mc.cores = 1) {
+#' @export
+#' 
+#' @note 
+#' \code{\link{GetPCAWGConsensusVAF}} is analogous to \code{\link{GetMutectVAF}},
+#' calculating VAF and read depth from PCAWG7 consensus vcfs
+#' 
+#' @rdname GetVAF
+#'
+GetPCAWGConsensusVAF <- function(vcf, mc.cores = 1) {
+
+  vcf <- RenameColumnsWithNameVAF(vcf)
+
   info <- vcf$INFO
   tmp <- stringi::stri_split_fixed(info, ";")
   alt.counts <- parallel::mclapply(tmp, FUN = function(x) {
@@ -552,6 +620,20 @@ GetConsensusVAF <- function(vcf, mc.cores = 1) {
   return(vcf)
 }
 
+#' @keywords internal
+DefaultFilterStatus <- function(variant.caller) {
+  
+  if (variant.caller %in% c("strelka", "mutect")) {
+    return("PASS")
+  } else if (variant.caller == "freebayes") {
+    return(".")
+  } else if (variant.caller == "unknown") {
+    stop ('\nUser must specify the value of filter.status explicitly when variant.caller is "unknown"')
+  } else {
+    stop("\nValue of variant.caller not recognized: ", variant.caller, "; do you want to use \"unknown\"?")
+  }
+}
+
 #' Read in the data lines of a Variant Call Format (VCF) file
 #'
 #' @importFrom utils read.csv
@@ -570,16 +652,22 @@ GetConsensusVAF <- function(vcf, mc.cores = 1) {
 #'   leading dot) will be used as the name of the VCF file.
 #'
 #' @param tumor.col.name Optional. Only applicable to \strong{Mutect} VCF. Name
-#'   of the column in \strong{Mutect} VCF which contains the tumor sample
-#'   information. It \strong{must} have quotation marks. If
-#'   \code{tumor.col.name} is equal to \code{NA}(default), this function will
-#'   use the 10th column to calculate VAFs. See \code{\link{GetMutectVAF}} for
-#'   more details.
+#'   or index of the column in \strong{Mutect} VCF which contains the tumor
+#'   sample information. It \strong{must} have quotation marks if specifying the
+#'   column name. If \code{tumor.col.name} is equal to \code{NA}(default), this
+#'   function will use the 10th column to calculate VAFs. See
+#'   \code{\link{GetMutectVAF}} for more details.
 #'
-#' @param filter.status The status indicating a variant has passed all filters.
-#'   An example would be \code{"PASS"}. Variants which don't have the specified
-#'   \code{filter.status} in the \code{FILTER} column in VCF will be removed. If
-#'   \code{NULL}(default), no variants will be removed from the original VCF.
+#' @param filter.status The character string in column \code{FILTER} of the VCF
+#'   that indicates that a variant has passed all the variant caller's filters.
+#'   Variants (lines in the VCF) for which the value in column \code{FILTER}
+#'   does not equal \code{filter.status} are silently excluded from the output.
+#'   The internal function \code{DefaultFilterStatus} tries to infer
+#'   \code{filter.status} based on \code{variant.caller}. If
+#'   \code{variant.caller} is "unknown", user must specify \code{filter.status}
+#'   explicitly. If \code{filter.status = NULL}, all variants are retained. If
+#'   there is no \code{FILTER} column in the VCF, all variants are retained with
+#'   a warning.
 #'
 #' @param get.vaf.function Optional. Only applicable when \code{variant.caller} is
 #' \strong{"unknown"}. Function to calculate VAF(variant allele frequency) and read
@@ -596,8 +684,9 @@ GetConsensusVAF <- function(vcf, mc.cores = 1) {
 #' @keywords internal
 ReadVCF <-
   function(file, variant.caller = "unknown", name.of.VCF = NULL, tumor.col.name = NA,
-           filter.status = NULL, get.vaf.function = NULL, ...) {
-    df0 <- MakeDataFrameFromVCF(file, name.of.VCF = name.of.VCF)
+           filter.status = DefaultFilterStatus(variant.caller), 
+           get.vaf.function = NULL, ...) {
+    df0 <- MakeDataFrameFromVCF(file) 
 
     if (nrow(df0) == 0) {
       return(df0)
@@ -605,15 +694,24 @@ ReadVCF <-
 
     # Remove rows that don't have the specified filter status
     if (is.null(filter.status)) {
-      df1 <- df <- df0
+      df <- df0
     } else {
-      df1 <- df <- df0[FILTER == filter.status]
+      # Check whether df0 has column name "FILTER"
+      if (!"FILTER" %in% colnames(df0)) {
+        warning("\nThere is no column FILTER in the file ", file,
+                "\nargument filter.status is ignored and all variants will be retained")
+        df <- df0
+      } else {
+        df <- dplyr::filter(df0, FILTER == filter.status)
+      }
     }
+    rm(filter.status)
 
     if (nrow(df) == 0) {
       return(df)
     }
 
+    df1 <- df
     df1$VAF <- as.numeric(NA)
     df1$read.depth <- as.numeric(NA)
 
@@ -628,7 +726,7 @@ ReadVCF <-
 
     # Check whether the variant caller is supported by ICAMS
     if (!variant.caller %in% c("strelka", "mutect", "freebayes")) {
-      stop(paste0("\nVariant caller", variant.caller, "is not supported by",
+      stop(paste0("\nVariant caller ", variant.caller, " is not supported by",
                   " ICAMS, please specify either ", dQuote("strelka"), ", ",
                   dQuote("mutect"), " or ", dQuote("freebayes")))
     }
@@ -649,7 +747,7 @@ ReadVCF <-
              paste(colnames(df), collapse=" "))
       }
 
-      # Check for any SBS in df and only calcuate VAF for those SBS variants
+      # Check for any SBS in df and only calculate VAF for those SBS variants
       SBS.idx0 <- which(nchar(df$REF) == 1 & nchar(df$ALT) == 1)
       SBS.multiple.alt <-
         which(nchar(df$REF) == 1 & grepl(",", df$ALT, fixed = TRUE))
@@ -672,11 +770,18 @@ ReadVCF <-
     }
 
     if (variant.caller == "freebayes") {
-      # Check for any SBS in df and only calcuate VAF for those SBS variants
+      # Check for any SBS in df and only calculate VAF for SBS variants
       SBS.idx0 <- which(nchar(df$REF) == 1 & nchar(df$ALT) == 1)
-      SBS.multiple.alt <-
-        which(nchar(df$REF) == 1 & grepl(",", df$ALT, fixed = TRUE))
-      SBS.idx <- c(SBS.idx0, SBS.multiple.alt)
+      
+      # Do not calculate VAF for multiple alternative variants as the 
+      # SAF (Number of alternate observations on the forward strand) 
+      # and SAR (Number of alternate observations on the reverse strand) 
+      # will have two numbers (e.g. 2,3)
+      
+      #SBS.multiple.alt <-
+      #  which(nchar(df$REF) == 1 & grepl(",", df$ALT, fixed = TRUE))
+      #SBS.idx <- c(SBS.idx0, SBS.multiple.alt)
+      SBS.idx <- SBS.idx0
       if (length(SBS.idx) == 0) {
         return(df)
       } else {
@@ -699,13 +804,20 @@ ReadVCF <-
 #'   additional columns added which contain the VAF(variant allele frequency)
 #'   and read depth information.
 #'
-#' @keywords internal
+#' @export
+#'
+#' @examples
+#' file <- c(system.file("extdata/Mutect-vcf",
+#'                       "Mutect.GRCh37.s1.vcf",
+#'                       package = "ICAMS"))
+#' list.of.vcfs <- ReadVCFs(file, variant.caller = "mutect")
 ReadVCFs <- function(files, variant.caller = "unknown", num.of.cores = 1,
                      names.of.VCFs = NULL,
-                     tumor.col.names = NA, filter.status = NULL,
+                     tumor.col.names = NA, 
+                     filter.status = DefaultFilterStatus(variant.caller),
                      get.vaf.function = NULL, ...) {
   num.of.cores <- AdjustNumberOfCores(num.of.cores)
-  
+
   if (is.null(names.of.VCFs)) {
     vcfs.names <- tools::file_path_sans_ext(basename(files))
   } else {
@@ -721,10 +833,13 @@ ReadVCFs <- function(files, variant.caller = "unknown", num.of.cores = 1,
   }
 
   ReadVCF1 <- function(idx, files, variant.caller, vector1, vector2) {
-    ReadVCF(file = files[idx], variant.caller = variant.caller,
-            name.of.VCF = vector1[idx], tumor.col.name = vector2[idx],
-            filter.status = filter.status, get.vaf.function = get.vaf.function,
-            ...)
+    ReadVCF(file = files[idx],
+            variant.caller = variant.caller,
+            name.of.VCF = vector1[idx],
+            tumor.col.name = vector2[idx],
+            filter.status = filter.status,
+            get.vaf.function = get.vaf.function,
+            ... = ...)
   }
 
   vcfs <- parallel::mclapply(1:num.of.files, FUN = ReadVCF1, files = files,
@@ -736,14 +851,15 @@ ReadVCFs <- function(files, variant.caller = "unknown", num.of.cores = 1,
 }
 
 #' @keywords internal
-CheckAndRemoveDiscardedVariants <- function(vcf, name.of.VCF = NULL) {
+CheckAndRemoveDiscardedVariants <- function(vcf, name.of.VCF = NULL,
+                                            chr.names.to.process = NULL) {
   if (nrow(vcf) == 0) {
     return(list(df = vcf))
   }
 
   # Create an empty data frame for discarded variants
   discarded.variants <- vcf[0, ]
-  
+
   # Remove rows with same REF and ALT
   idx <- which(vcf$REF == vcf$ALT)
   if (length(idx) > 0) {
@@ -766,12 +882,24 @@ CheckAndRemoveDiscardedVariants <- function(vcf, name.of.VCF = NULL) {
   df2 <- retval1$df
   discarded.variants <-
     dplyr::bind_rows(discarded.variants, retval1$discarded.variants)
-
-  # Remove rows with unstandardized chromosome names
-  retval2 <- StandardChromNameNew(df = df2, name.of.VCF = name.of.VCF)
-  df3 <- retval2$df
-  discarded.variants <-
-    dplyr::bind_rows(discarded.variants, retval2$discarded.variants)
+   
+  if (is.null(chr.names.to.process)) {
+    # Remove rows with unstandardized chromosome names
+    retval2 <- StandardChromNameNew(df = df2, name.of.VCF = name.of.VCF)
+    df3 <- retval2$df
+    discarded.variants <-
+      dplyr::bind_rows(discarded.variants, retval2$discarded.variants)
+  } else {
+    # Only keep variants that are specified by chr.names.to.process
+    retval2 <- 
+      SelectVariantsByChromName(df = df2, 
+                                chr.names.to.process = chr.names.to.process,
+                                name.of.VCF = name.of.VCF)
+    df3 <- retval2$df
+    discarded.variants <-
+      dplyr::bind_rows(discarded.variants, retval2$discarded.variants)
+  }
+  
 
   # VCFs can represent multiple non-reference alleles at the
   # same site; the alleles are separated by commas in the ALT columm;
@@ -790,7 +918,7 @@ CheckAndRemoveDiscardedVariants <- function(vcf, name.of.VCF = NULL) {
   } else {
     df4 <- df3
   }
-  
+
   # Remove variants involving three or more nucleotides
   # (e.g. ACT > TGA or AACT > GGTA)
   other.df <- which(nchar(df4$REF) > 2 & nchar(df4$ALT) == nchar(df4$REF))
@@ -824,15 +952,15 @@ CheckAndRemoveDiscardedVariants <- function(vcf, name.of.VCF = NULL) {
   } else {
     df6 <- df5
   }
-  
+
   # Remove wrong DBS variants that have same base in the same position in REF and ALT
   # (e.g. TA > TT or GT > CT)
-  wrong.DBS.type1 <- dplyr::filter(df6, nchar(REF) == 2, nchar(ALT) == 2, 
+  wrong.DBS.type1 <- dplyr::filter(df6, nchar(REF) == 2, nchar(ALT) == 2,
                                    substr(REF, 1, 1) == substr(ALT, 1, 1))
-  wrong.DBS.type2 <- dplyr::filter(df6, nchar(REF) == 2, nchar(ALT) == 2, 
+  wrong.DBS.type2 <- dplyr::filter(df6, nchar(REF) == 2, nchar(ALT) == 2,
                                    substr(REF, 2, 2) == substr(ALT, 2, 2))
   wrong.DBS <- dplyr::bind_rows(wrong.DBS.type1, wrong.DBS.type2)
-  
+
   if (nrow(wrong.DBS) > 0) {
     warning("VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
             " has wrong DBS variants and were discarded. See discarded.variants ",
@@ -845,11 +973,26 @@ CheckAndRemoveDiscardedVariants <- function(vcf, name.of.VCF = NULL) {
   } else {
     df7 <- df6
   }
+  
+  # Remove variants which have ambiguous REF bases (not A, C, G, T)
+  ambiguous.refs <- which(!substr(df7$REF, 1, 1) %in% c("A", "C", "G", "T"))
+  if (length(ambiguous.refs) > 0) {
+    warning("VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
+            " has ambiguous REF bases and were discarded. See discarded.variants ",
+            "in the return value for more details.")
+    df8 <- df7[-ambiguous.refs, ]
+    df8.to.remove <- df7[ambiguous.refs, ]
+    df8.to.remove$discarded.reason <- "Variant has ambiguous REF base"
+    discarded.variants <-
+      dplyr::bind_rows(discarded.variants, df8.to.remove)
+  } else {
+    df8 <- df7
+  }
 
   if (nrow(discarded.variants) == 0) {
-    return(list(df = df7))
+    return(list(df = df8))
   } else {
-    return(list(df = df7, discarded.variants = discarded.variants))
+    return(list(df = df8, discarded.variants = discarded.variants))
   }
 }
 
@@ -857,8 +1000,8 @@ CheckAndRemoveDiscardedVariants <- function(vcf, name.of.VCF = NULL) {
 #'
 #' @param vcf.df An in-memory data.frame representing a Mutect VCF, including
 #'  VAFs, which are added by \code{\link{ReadMutectVCF}}.
-#'
-#' @param name.of.VCF Name of the VCF file.
+#' 
+#' @inheritParams SplitOneVCF
 #'
 #' @return A list with 3 in-memory VCFs and discarded variants that were not
 #'   incorporated into the first 3 VCFs:
@@ -876,7 +1019,8 @@ CheckAndRemoveDiscardedVariants <- function(vcf, name.of.VCF = NULL) {
 #'  @md
 #'
 #' @keywords internal
-SplitOneMutectVCF <- function(vcf.df, name.of.VCF = NULL) {
+SplitOneMutectVCF <- function(vcf.df, name.of.VCF = NULL,
+                              chr.names.to.process = NULL) {
   if (nrow(vcf.df) == 0) {
     return(list(SBS = vcf.df, DBS = vcf.df, ID = vcf.df))
   }
@@ -886,7 +1030,8 @@ SplitOneMutectVCF <- function(vcf.df, name.of.VCF = NULL) {
 
   # Check and remove discarded variants
   retval <-
-    CheckAndRemoveDiscardedVariants(vcf = vcf.df, name.of.VCF = name.of.VCF)
+    CheckAndRemoveDiscardedVariants(vcf = vcf.df, name.of.VCF = name.of.VCF,
+                                    chr.names.to.process = chr.names.to.process)
   df <- retval$df
   discarded.variants <-
     dplyr::bind_rows(discarded.variants, retval$discarded.variants)
@@ -959,13 +1104,12 @@ SplitListOfMutectVCFs <-
 #'
 #' @param vcf.df An in-memory data frame containing an SBS VCF file contents.
 #'
-#' @param max.vaf.diff The maximum difference of VAF, default value is 0.02. If
-#'   the absolute difference of VAFs for adjacent SBSs is bigger than
-#'   \code{max.vaf.diff}, then these adjacent SBSs are likely to be "merely"
-#'   asynchronous single base mutations, opposed to a simultaneous doublet
-#'   mutation or variants involving more than two consecutive bases.
-#'
 #' @param name.of.VCF Name of the VCF file.
+#'
+#' @param always.merge.SBS If \code{TRUE} merge adjacent SBSs as DBSs
+#'   regardless of VAFs and regardless of the value of \code{max.vaf.diff}.
+#'   
+#' @inheritParams SplitOneVCF
 #'
 #' @import data.table
 #'
@@ -991,7 +1135,10 @@ SplitListOfMutectVCFs <-
 #'    }
 #'
 #' @keywords internal
-SplitSBSVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
+SplitSBSVCF <- function(vcf.df,
+                        max.vaf.diff = 0.02,
+                        name.of.VCF = NULL,
+                        always.merge.SBS) {
   stopifnot("data.frame" %in% class(vcf.df))
 
   if (nrow(vcf.df) == 0) {
@@ -1043,12 +1190,15 @@ SplitSBSVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
   dt2[, HIGH := POS]
   dt2[, LOW := POS.y]
 
-  # Keep only SBS pairs that have very similar VAFs (variant allele frequencies).
-  # If VAFs are not similar, the adjacent SBSs are likely to be "merely"
-  # asynchronous single base mutations, opposed to a simultaneous doublet mutation.
-  non.SBS <- dt2[abs(VAF.x - VAF.y) <= max.vaf.diff]
-  # TODO: if (any(is.na(VAF.x)) || any(is.na(VAF.y)))
-  # If VAF.x or VAF.y is NA the row will not go into non.SBS.
+  if (!always.merge.SBS) {
+    # Keep only SBS pairs that have very similar VAFs (variant allele
+    # frequencies). If VAFs are not similar, the adjacent SBSs are likely to be
+    # "merely" asynchronous single base mutations, opposed to a simultaneous
+    # doublet mutation.
+    non.SBS <- dt2[abs(VAF.x - VAF.y) <= max.vaf.diff]
+  } else {
+    non.SBS <-dt2
+  }
   rm(dt2)
 
   if (nrow(non.SBS) == 0) {
@@ -1137,17 +1287,26 @@ SplitSBSVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
 #'   the absolute difference of VAFs for adjacent SBSs is bigger than
 #'   \code{max.vaf.diff}, then these adjacent SBSs are likely to be "merely"
 #'   asynchronous single base mutations, opposed to a simultaneous doublet
-#'   mutation or variants involving more than two consecutive bases.
+#'   mutation or variants involving more than two consecutive bases. Use negative
+#'   value (e.g. -1) to suppress merging adjacent SBSs to DBS.
 #'
 #' @param name.of.VCF Name of the VCF file.
+#'
+#' @param always.merge.SBS If \code{TRUE} merge adjacent SBSs as DBSs
+#'   regardless of VAFs and regardless of the value of \code{max.vaf.diff}.
+#'
+#' @param chr.names.to.process A character vector specifying the chromosome
+#'   names in VCF whose variants will be kept and processed, other chromosome
+#'   variants will be discarded. If \code{NULL}(default), all variants will be kept
+#'   except those on chromosomes with names that contain strings "GL", "KI",
+#'   "random", "Hs", "M", "JH", "fix", "alt".
 #'
 #' @return A list with 3 in-memory VCFs and discarded variants that were not
 #'   incorporated into the first 3 VCFs:
 #'
 #'  * \code{SBS}: VCF with only single base substitutions.
 #'
-#'  * \code{DBS}: VCF with only doublet base substitutions
-#'   as called by Mutect.
+#'  * \code{DBS}: VCF with only doublet base substitutions.
 #'
 #'  * \code{ID}: VCF with only small insertions and deletions.
 #'
@@ -1157,7 +1316,11 @@ SplitSBSVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
 #'  @md
 #'
 #' @keywords internal
-SplitOneVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
+SplitOneVCF <- function(vcf.df,
+                        max.vaf.diff         = 0.02,
+                        name.of.VCF          = NULL,
+                        always.merge.SBS     = FALSE,
+                        chr.names.to.process = NULL) {
   if (nrow(vcf.df) == 0) {
     return(list(SBS = vcf.df, DBS = vcf.df, ID = vcf.df))
   }
@@ -1167,7 +1330,8 @@ SplitOneVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
 
   # Check and remove discarded variants
   retval <-
-    CheckAndRemoveDiscardedVariants(vcf = vcf.df, name.of.VCF = name.of.VCF)
+    CheckAndRemoveDiscardedVariants(vcf = vcf.df, name.of.VCF = name.of.VCF,
+                                    chr.names.to.process = chr.names.to.process)
   df <- retval$df
   discarded.variants <-
     dplyr::bind_rows(discarded.variants, retval$discarded.variants)
@@ -1175,8 +1339,11 @@ SplitOneVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
   SBS.df0 <- df[nchar(df$REF) == 1 & nchar(df$ALT) == 1, ]
 
   # Try to get DBS from adjacent SBSs according to similar VAFs
-  split.dfs <- SplitSBSVCF(vcf.df = SBS.df0, max.vaf.diff = max.vaf.diff,
-                           name.of.VCF = name.of.VCF)
+  split.dfs <- SplitSBSVCF(vcf.df           = SBS.df0,
+                           max.vaf.diff     = max.vaf.diff,
+                           name.of.VCF      = name.of.VCF,
+                           always.merge.SBS = always.merge.SBS
+                           )
   SBS.df <- split.dfs$SBS.vcf
   DBS.df0 <- split.dfs$DBS.vcf
   discarded.variants <-
@@ -1197,44 +1364,61 @@ SplitOneVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
 #' Split each VCF into SBS, DBS, and ID VCFs (plus
 #' VCF-like data frame with left-over rows)
 #'
-#' @param list.of.vcfs List of VCFs as in-memory data.frames.
-#' 
+#' @param list.of.vcfs List of VCFs as in-memory data frames. The VCFs should
+#'   have \code{VAF} and \code{read.depth} information added. See
+#'   \code{ReadVCFs} for more details.
+#'
 #' @param variant.caller Name of the variant caller that produces the VCF, can
 #'   be either \code{"strelka"}, \code{"mutect"}, \code{"freebayes"} or
 #'   \code{"unknown"}. If variant caller is \code{"mutect"}, do \strong{not} merge
 #'   SBSs into DBS.
 #'
-#' @param max.vaf.diff The maximum difference of VAF, default value is 0.02. If
-#'   the absolute difference of VAFs for adjacent SBSs is bigger than
-#'   \code{max.vaf.diff}, then these adjacent SBSs are likely to be "merely"
-#'   asynchronous single base mutations, opposed to a simultaneous doublet
-#'   mutation or variants involving more than two consecutive bases.
-#'
 #' @param num.of.cores The number of cores to use. Not available on Windows
 #'   unless \code{num.of.cores = 1}.
 #'
+#' @param always.merge.SBS If \code{TRUE} merge adjacent SBSs as DBSs regardless
+#'   of VAFs and regardless of the value of \code{max.vaf.diff}. It is an error
+#'   to set this to \code{TRUE} when \code{variant.caller = "mutect"}.
+#'   
 #' @inheritParams ReadAndSplitMutectVCFs
+#' 
+#' @inheritParams SplitOneVCF
 #'
 #' @inheritSection ReadAndSplitMutectVCFs Value
 #'
-#' @keywords internal
-SplitListOfVCFs <-function(list.of.vcfs, 
-                           variant.caller, 
-                           max.vaf.diff = 0.02, 
+#' @export
+#'
+#' @examples
+#' file <- c(system.file("extdata/Mutect-vcf",
+#'                       "Mutect.GRCh37.s1.vcf",
+#'                       package = "ICAMS"))
+#' list.of.vcfs <- ReadVCFs(file, variant.caller = "mutect")
+#' split.vcfs <- SplitListOfVCFs(list.of.vcfs, variant.caller = "mutect")
+SplitListOfVCFs <-function(list.of.vcfs,
+                           variant.caller,
+                           max.vaf.diff = 0.02,
                            num.of.cores = 1,
-                           suppress.discarded.variants.warnings = TRUE) {
+                           suppress.discarded.variants.warnings = TRUE,
+                           always.merge.SBS                     = FALSE,
+                           chr.names.to.process                 = NULL) {
   names.of.VCFs <- names(list.of.vcfs)
-  
+
   GetSplitVCFs <- function(idx, list.of.vcfs, variant.caller) {
     if (variant.caller == "mutect") {
+      if (always.merge.SBS) {
+        stop("always.merge.SBS must be FALSE when variant.caller = \"mutect\"")
+      }
       split.vcfs <- SplitOneMutectVCF(vcf.df = list.of.vcfs[[idx]],
-                                      name.of.VCF = names(list.of.vcfs)[idx])
-    } else {
-      split.vcfs <- SplitOneVCF(list.of.vcfs[[idx]],
-                                max.vaf.diff = max.vaf.diff,
-                                name.of.VCF = names(list.of.vcfs)[idx])
+                                      name.of.VCF = names(list.of.vcfs)[idx],
+                                      chr.names.to.process = chr.names.to.process)
+    } else {   
+      split.vcfs <- SplitOneVCF(vcf.df               = list.of.vcfs[[idx]],
+                                max.vaf.diff         = max.vaf.diff,
+                                name.of.VCF          = names(list.of.vcfs)[idx],
+                                always.merge.SBS     = always.merge.SBS, 
+                                chr.names.to.process = chr.names.to.process)
     }
-   
+
     return(split.vcfs)
   }
   num.of.vcfs <- length(list.of.vcfs)
@@ -1254,10 +1438,10 @@ SplitListOfVCFs <-function(list.of.vcfs,
   DBS <- lapply(v1, function(x) x$DBS)
   ID  <- lapply(v1, function(x) x$ID)
   discarded.variants <- lapply(v1, function(x) x$discarded.variants)
-  
+
   # Remove NULL elements from discarded.variants
   discarded.variants1 <- Filter(Negate(is.null), discarded.variants)
-  
+
   if (length(discarded.variants1) == 0) {
     return(list(SBS = SBS, DBS = DBS, ID = ID))
   } else {
@@ -1320,14 +1504,14 @@ AddSeqContext <-
 #' @param trans.ranges A \code{\link[data.table]{data.table}} which contains
 #'   transcript range and strand information. Please refer to
 #'   \code{\link{TranscriptRanges}} for more details.
-#'   
+#'
 #' @param ref.genome A \code{ref.genome} argument as described in
 #'   \code{\link{ICAMS}}.
-#'   
+#'
 #' @param name.of.VCF Name of the VCF file.
 #'
 #' @import data.table
-#' 
+#'
 #' @importFrom dplyr %>% group_by mutate
 #'
 #' @return A data frame with new columns added to the input data frame,
@@ -1336,72 +1520,92 @@ AddSeqContext <-
 #' @keywords internal
 AddTranscript <-
   function(df, trans.ranges = NULL, ref.genome, name.of.VCF = NULL) {
-  if (nrow(df) == 0) {
-    return(df)
+    if (nrow(df) == 0) {
+      return(df)
+    }
+
+    # Sometimes CHROM is numeric, but this breaks foverlaps, below.
+    df$CHROM <- as.character(df$CHROM)
+
+    if (is.null(trans.ranges)) {
+      return(data.table(df))
+    }
+
+    df <- RenameColumnsWithNameStrand(df)
+    df <- RenameColumnsWithNameStart(df)
+    df <- RenameColumnsWithNameEnd(df)
+
+    ref.genome <- NormalizeGenomeArg(ref.genome = ref.genome)
+
+    # Check whether the chromosome name format of trans.ranges matches with that
+    # in df. If not, change chromosome name format in trans.ranges
+    new.chr.names <-
+      CheckAndFixChrNamesForTransRanges(trans.ranges = trans.ranges,
+                                        vcf.df = df,
+                                        ref.genome = ref.genome,
+                                        name.of.VCF = name.of.VCF)
+    trans.ranges$chrom <- new.chr.names
+    
+    
+    # We need to set key for trans.ranges for using data.table::foverlaps
+    #if (!data.table::haskey(trans.ranges)) {
+    #  data.table::setkeyv(trans.ranges, c("chrom", "start", "end"))
+    #}
+
+    # Find range overlaps between the df and trans.ranges
+    #df1 <- data.table(df)
+    #df1[, POS2 := POS]
+    #dt <- data.table::foverlaps(df1, trans.ranges,
+    #                            by.x = c("CHROM", "POS", "POS2"),
+    #                            type = "within", mult = "all")
+    
+    # No longer using data.table::foverlaps as it will cause memory usage error
+    # when df has many rows (e.g. >70000)
+    df2 <- df
+    df2$POS2 <- df2$POS
+    data.table::setnames(df2, old = c("CHROM", "POS", "POS2"), 
+                         new = c("chrom", "start", "end"))
+    dt <- fuzzyjoin::genome_left_join(x = df2, y = trans.ranges,
+                                      by = c("chrom", "start", "end"))
+    data.table::setnames(dt, old = c("chrom.x", "start.x", "end.x", "start.y", "end.y"), 
+                         new = c("CHROM", "POS", "POS2", "start", "end"))
+
+    # Find out mutations that fall on transcripts on both strands
+    #dt1 <- dt[, bothstrand := "+" %in% strand && "-" %in% strand,
+    #          by = .(CHROM, ALT, POS)] # Note that is important to have
+    # ALT in the by list because in a few cases
+    # there are multiple ALT alleles at one POS.
+
+    dt1 <- dt %>% dplyr::group_by(CHROM, ALT, POS) %>%
+      dplyr::mutate(bothstrand = "+" %in% strand && "-" %in% strand)
+    data.table::setDT(dt1)
+
+    # Count the number of transcript ranges where a particular mutation
+    # falls into
+    dt2 <- dt1 %>% dplyr::group_by(CHROM, ALT, POS) %>% dplyr::mutate(count = dplyr::n())
+    #dt2 <- dt1[, count := .N, by = .(CHROM, ALT, POS)]
+    data.table::setDT(dt2)
+
+    # Swap gene location according to strand information
+    dt3 <- dt2[strand == "-", c("end", "start") := .(start, end)]
+
+    # Reorder the columns of dt3
+    df.colnames <- colnames(df)
+    trans.ranges.colnames <- colnames(trans.ranges)[-1]
+    data.table::setcolorder(dt3, neworder = c(df.colnames, trans.ranges.colnames))
+
+    # Rename some of the columns in dt3
+    data.table::setnames(dt3,
+                         old = c("start", "end", "strand", "Ensembl.gene.ID", "gene.symbol"),
+                         new = c("trans.start.pos", "trans.end.pos", "trans.strand",
+                                 "trans.Ensembl.gene.ID", "trans.gene.symbol"))
+
+    # Delete redundant column in dt3
+    dt4 <- dt3[, chrom.y := NULL]
+    
+    rm(df)
+    return(dt4)
   }
-
-  if (is.null(trans.ranges)) {
-    return(data.table(df))
-  }
-
-  ref.genome <- NormalizeGenomeArg(ref.genome = ref.genome)
-
-  # Check whether the chromosome name format of trans.ranges matches with that
-  # in df. If not, change chromosome name format in trans.ranges
-  new.chr.names <-
-    CheckAndFixChrNamesForTransRanges(trans.ranges = trans.ranges,
-                                      vcf.df = df,
-                                      ref.genome = ref.genome,
-                                      name.of.VCF = name.of.VCF)
-  trans.ranges$chrom <- new.chr.names
-
-  # We need to set key for trans.ranges for using data.table::foverlaps
-  if (!data.table::haskey(trans.ranges)) {
-    data.table::setkeyv(trans.ranges, c("chrom", "start", "end"))
-  }
-
-  # Find range overlaps between the df and trans.ranges
-  df1 <- data.table(df)
-  df1[, POS2 := POS]
-  dt <- data.table::foverlaps(df1, trans.ranges,
-                              by.x = c("CHROM", "POS", "POS2"),
-                              type = "within", mult = "all")
-
-  # Find out mutations that fall on transcripts on both strands
-  #dt1 <- dt[, bothstrand := "+" %in% strand && "-" %in% strand,
-  #          by = .(CHROM, ALT, POS)] # Note that is important to have
-  # ALT in the by list because in a few cases
-  # there are multiple ALT alleles at one POS.
-  
-  dt1 <- dt %>% dplyr::group_by(CHROM, ALT, POS) %>% 
-    dplyr::mutate(bothstrand = "+" %in% strand && "-" %in% strand)
-  data.table::setDT(dt1)
-
-  # Count the number of transcript ranges where a particular mutation
-  # falls into
-  dt2 <- dt1 %>% dplyr::group_by(CHROM, ALT, POS) %>% dplyr::mutate(count = dplyr::n())
-  #dt2 <- dt1[, count := .N, by = .(CHROM, ALT, POS)]
-  data.table::setDT(dt2)
-
-  # Swap gene location according to strand information
-  dt3 <- dt2[strand == "-", c("end", "start") := .(start, end)]
-
-  # Reorder the columns of dt3
-  df.colnames <- colnames(df)
-  trans.ranges.colnames <- colnames(trans.ranges)[-1]
-  data.table::setcolorder(dt3, neworder = c(df.colnames, trans.ranges.colnames))
-  
-  # Rename some of the columns in dt3
-  data.table::setnames(dt3,
-                       old = c("start", "end", "strand", "Ensembl.gene.ID", "gene.symbol"),
-                       new = c("trans.start.pos", "trans.end.pos", "trans.strand",
-                               "trans.Ensembl.gene.ID", "trans.gene.symbol"))
-
-  # Delete redundant column in dt3
-  dt4 <- dt3[, POS2 := NULL]
-
-  return(dt4)
-}
 
 #' MakeVCFDBSdf Take DBS ranges and the original VCF and generate a VCF with
 #' dinucleotide REF and ALT alleles.
@@ -1481,13 +1685,9 @@ MakeVCFDBSdf <- function(DBS.range.df, SBS.vcf.dt) {
 #'
 #' @param vcf.df An in-memory data frame containing a Strelka VCF file contents.
 #'
-#' @param max.vaf.diff The maximum difference of VAF, default value is 0.02. If
-#'   the absolute difference of VAFs for adjacent SBSs is bigger than
-#'   \code{max.vaf.diff}, then these adjacent SBSs are likely to be "merely"
-#'   asynchronous single base mutations, opposed to a simultaneous doublet
-#'   mutation or variants involving more than two consecutive bases.
-#'
 #' @param name.of.VCF Name of the VCF file.
+#' 
+#' @inheritParams SplitOneVCF
 #'
 #' @import data.table
 #'
@@ -1513,141 +1713,14 @@ MakeVCFDBSdf <- function(DBS.range.df, SBS.vcf.dt) {
 #'    }
 #'
 #' @keywords internal
-SplitStrelkaSBSVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL) {
+SplitStrelkaSBSVCF <- function(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL, always.merge.SBS = FALSE) {
   stopifnot("data.frame" %in% class(vcf.df))
 
-  if (nrow(vcf.df) == 0) {
-    return(list(SBS.vcf = vcf.df, DBS.vcf = vcf.df))
-  }
-
-  # Create an empty data frame for discarded variants
-  discarded.variants <- vcf.df[0, ]
-
-  # Check and remove discarded variants
-  retval <-
-    CheckAndRemoveDiscardedVariants(vcf = vcf.df, name.of.VCF = name.of.VCF)
-  vcf.df <- retval$df
-  discarded.variants <-
-    dplyr::bind_rows(discarded.variants, retval$discarded.variants)
-
-  # Record the total number of input variants for later sanity checking.
-  num.in <- nrow(vcf.df)
-
-  # First we look for pairs of rows where the POS of one of the
-  # rows is at POS + 1 of the other row. For example
-  #
-  # 1   200   foo    A    G
-  # 1   201   foo    C    G
-  #
-  # Reprsents AC > GG
-  #
-  # But there could also be situations like this
-  #
-  # X   300  foo   C  T
-  # X   301  foo   C  T
-  # X   302  foo   A  G
-  #
-  # which represents CCA > TTG
-  #
-  # But first we just find pairs, so the
-  # X chromosome example will appear as 2
-  # pairs CC > TT and CA > TG (more below).
-
-  vcf.dt <- data.table(vcf.df)
-  vcf.dt[, POS.plus.one := POS + 1]
-  dt2 <- merge(vcf.dt, vcf.dt,
-               by.x = c("CHROM", "POS"),
-               by.y = c("CHROM", "POS.plus.one"))
-
-  # After this merge, each row contains one *pair*.
-  # In each row, POS.y == POS - 1, and the neighboring SBS
-  # are at postions POS and POS.y.
-  dt2[, HIGH := POS]
-  dt2[, LOW := POS.y]
-
-  # Keep only SBS pairs that have very similar VAFs (variant allele frequencies).
-  # If VAFs are not similar, the adjacent SBSs are likely to be "merely"
-  # asynchronous single base mutations, opposed to a simultaneous doublet mutation.
-  non.SBS <- dt2[abs(VAF.x - VAF.y) <= max.vaf.diff]
-  # TODO: if (any(is.na(VAF.x)) || any(is.na(VAF.y)))
-  # If VAF.x or VAF.y is NA the row will not go into non.SBS.
-  rm(dt2)
-
-  if (nrow(non.SBS) == 0) {
-    # There are no non.SBS mutations in the input.
-    # Everything in vcf.df is an SBS. We are finished.
-    empty <- vcf.df[-(1:nrow(vcf.df)), ]
-    if (nrow(discarded.variants) == 0) {
-      return(list(SBS.vcf = vcf.df, DBS.vcf = empty))
-    } else {
-      return(list(SBS.vcf = vcf.df, DBS.vcf = empty,
-                  discarded.variants = discarded.variants))
-    }
-
-  }
-
-  # Remove non SBS rows from the output VCF for the SBSs
-  pairs.to.remove <-
-    data.frame(non.SBS[, .(CHROM, POS = HIGH)])
-  pairs.to.remove <-
-    rbind(pairs.to.remove,
-          data.frame(non.SBS[, .(CHROM, POS = LOW)]))
-  dt.rm <- data.table(pairs.to.remove)
-  dt.rm$delete.flag = TRUE
-  out.SBS.dt <- merge(vcf.dt, dt.rm, by = c("CHROM", "POS"), all.x = TRUE)
-  out.SBS.dt2 <- out.SBS.dt[is.na(delete.flag)]
-  out.SBS.df <-
-    as.data.frame(out.SBS.dt2[, c("POS.plus.one", "delete.flag") := NULL])
-  num.SBS.out <- nrow(out.SBS.df)
-
-  # Now separate doublets (DBSs) from triplet and above base substitutions.
-  # For ease of testing, keep only the genomic range information.
-  non.SBS <- non.SBS[, c("CHROM", "LOW", "HIGH")]
-  ranges <-
-    GenomicRanges::GRanges(non.SBS$CHROM,
-                           IRanges::IRanges(start = non.SBS$LOW, end = non.SBS$HIGH))
-  rranges <- GenomicRanges::reduce(ranges) # Merge overlapping ranges
-  DBS.plus <- as.data.frame(rranges)
-  if ((sum(DBS.plus$width) + num.SBS.out) != num.in) {
-    if ((sum(DBS.plus$width) + num.SBS.out) > num.in) {
-      stop("Possible programming error or input problem: too many SBS")
-    } else {
-      warning("Possible site with multiple variant alleles involved in a DBS\n")
-    }
-  }
-  DBSx <- DBS.plus[DBS.plus$width == 2, c("seqnames", "start", "end"), ]
-  colnames(DBSx) <- c("CHROM", "LOW", "HIGH")
-  DBSx$CHROM <- as.character(DBSx$CHROM)
-  DBS.vcf.df <- MakeVCFDBSdf(DBSx, vcf.dt)
-  num.DBS.out <- nrow(DBS.vcf.df)
-
-  other.ranges <- DBS.plus[DBS.plus$width > 2, ]
-  if (nrow(other.ranges) > 0) {
-    colnames(other.ranges)[1:3] <- c("CHROM", "LOW.POS", "HIGH.POS")
-    other.ranges$discarded.reason <- "Variants that do not represent SBS or DBS"
-    if (nrow(discarded.variants) == 0) {
-      discarded.variants <- other.ranges
-    } else {
-      discarded.variants <- dplyr::bind_rows(discarded.variants, other.ranges)
-    }
-    warning("VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
-            " has variants involving three or more nucleotides and were ",
-            "discarded. See discarded.variants in the return value for more ",
-            "details.")
-  }
-
-  num.other <- sum(other.ranges$width)
-
-  if ((num.SBS.out + 2 * num.DBS.out + num.other) != num.in) {
-    warning("Counts are off:", num.SBS.out, 2*num.DBS.out, num.other, "vs", num.in, "\n")
-  }
-
-  if (nrow(discarded.variants) == 0) {
-    return(list(SBS.vcf = out.SBS.df, DBS.vcf = DBS.vcf.df))
-  } else {
-    return(list(SBS.vcf = out.SBS.df, DBS.vcf = DBS.vcf.df,
-                discarded.variants = discarded.variants))
-  }
+  retval <- SplitSBSVCF(vcf.df = vcf.df,
+                        max.vaf.diff = max.vaf.diff,
+                        name.of.VCF = name.of.VCF,
+                        always.merge.SBS = always.merge.SBS)
+  return(retval)
 }
 
 #' Split a list of in-memory Strelka SBS VCF into SBS, DBS, and variants involving
@@ -1724,9 +1797,9 @@ CheckSeqContextInVCF <- function(vcf, column.to.use) {
   stopifnot(nchar(vcf$REF) == nchar(vcf$ALT))
   stopifnot(!any(vcf$REF == '-'))
   stopifnot(!any(vcf$ALT == '-'))
-  
+
   vcf <- data.table::as.data.table(vcf)
-  # use .. notation to find column.to.use as a vector of column positions, 
+  # use .. notation to find column.to.use as a vector of column positions,
   # like it would work in data.frame
   cut.pos <- 1 + (nchar(unlist(vcf[, ..column.to.use])) - 1) / 2
   stopifnot(cut.pos == round(cut.pos))
@@ -1776,11 +1849,11 @@ ReadStrelkaSBSVCFs <- function(files, names.of.VCFs = NULL) {
 #'   and file paths without extensions (and the leading dot) will be used as the
 #'   names of the VCF files.
 #'
-#' @param tumor.col.names Character vector of column names in VCFs which contain
-#'   the tumor sample information. The order of names in \code{tumor.col.names}
-#'   should match the order of VCFs specified in \code{files}. If
-#'   \code{tumor.col.names} is equal to \code{NA}(default), this function will
-#'   use the 10th column in all the VCFs to calculate VAFs.
+#' @param tumor.col.names Vector of column names or column indices in VCFs which
+#'   contain the tumor sample information. The order of elements in
+#'   \code{tumor.col.names} should match the order of VCFs specified in
+#'   \code{files}. If \code{tumor.col.names} is equal to \code{NA}(default),
+#'   this function will use the 10th column in all the VCFs to calculate VAFs.
 #'   See \code{\link{GetMutectVAF}} for more details.
 #'
 #' @section Value: A list of data frames which store data lines of VCF files
@@ -1824,7 +1897,7 @@ ReadMutectVCFs <-
 #'   \code{\link{ICAMS}}.
 #'
 #' @param trans.ranges Optional. If \code{ref.genome} specifies one of the
-#'   \code{\link{BSgenome}} object
+#'   \code{\link[BSgenome]{BSgenome}} object
 #'   \enumerate{
 #'     \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
 #'     \item \code{BSgenome.Hsapiens.UCSC.hg38}
@@ -1852,8 +1925,8 @@ ReadMutectVCFs <-
 #' file <- c(system.file("extdata/Strelka-SBS-vcf",
 #'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
-#' list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
-#' SBS.vcf <- list.of.vcfs$SBS.vcfs[[1]]
+#' list.of.vcfs <- ReadAndSplitVCFs(file, variant.caller = "strelka")
+#' SBS.vcf <- list.of.vcfs$SBS[[1]]
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
 #'   annotated.SBS.vcf <- AnnotateSBSVCF(SBS.vcf, ref.genome = "hg19",
 #'                                       trans.ranges = trans.ranges.GRCh37)}
@@ -1861,7 +1934,16 @@ AnnotateSBSVCF <- function(SBS.vcf, ref.genome,
                            trans.ranges = NULL, name.of.VCF = NULL) {
   SBS.vcf <- AddSeqContext(df = SBS.vcf, ref.genome = ref.genome,
                            name.of.VCF = name.of.VCF)
-  CheckSeqContextInVCF(SBS.vcf, "seq.21bases")
+  
+  # CheckSeqContextInVCF() will just stop if there are variants whose reference
+  # base in ref.genome does not match the reference base in the VCF file. This
+  # is very annoying when processing many VCFs at one time.
+  # We disable this check as later when creating SBS catalogs in function
+  # CreateOneColSBSMatrix(), there is check for this and variants which do not
+  # pass the check will be moved to "discarded.variants" in the return value
+  
+  #CheckSeqContextInVCF(SBS.vcf, "seq.21bases")
+  
   trans.ranges <- InferTransRanges(ref.genome, trans.ranges)
   if (!is.null(trans.ranges)) {
     SBS.vcf <- AddTranscript(df = SBS.vcf, trans.ranges = trans.ranges,
@@ -2060,7 +2142,7 @@ CheckAndReturnSBSMatrix <-
 #'   FALSE.
 #'
 #' @import data.table
-#' 
+#'
 #' @importFrom dplyr %>% group_by summarize
 #'
 #' @section Value: A list of three 1-column matrices with the names
@@ -2082,8 +2164,9 @@ CreateOneColSBSMatrix <- function(vcf, sample.id = "count",
   # This function cannot handle insertion, deletions, or complex indels,
   # Therefore we check for this problem; but we need to exclude DBSs
   # before calling the function. This function does not detect DBSs.
-   
-  CheckForEmptySBSVCF <- function(vcf, return.annotated.vcf) {
+
+  CheckForEmptySBSVCF <- function(vcf, return.annotated.vcf, 
+                                  discarded.variants = NULL) {
     if (0 == nrow(vcf)) {
       # Create 1-column matrix with all values being 0 and the correct row and
       # column labels.
@@ -2096,20 +2179,26 @@ CreateOneColSBSMatrix <- function(vcf, sample.id = "count",
       catSBS1536 <-
         matrix(0, nrow = length(ICAMS::catalog.row.order$SBS1536), ncol = 1,
                dimnames = list(ICAMS::catalog.row.order$SBS1536, sample.id))
-      
+
       if (return.annotated.vcf == FALSE) {
-        return(list(catSBS96 = catSBS96, catSBS192 = catSBS192,
-                    catSBS1536 = catSBS1536))
+        list.to.return <- 
+          list(catSBS96 = catSBS96, catSBS192 = catSBS192,
+               catSBS1536 = catSBS1536, discarded.variants = discarded.variants)
       } else {
-        return(list(catSBS96 = catSBS96, catSBS192 = catSBS192,
-                    catSBS1536 = catSBS1536, annotated.vcf = vcf))
+        list.to.return <- 
+          list(catSBS96 = catSBS96, catSBS192 = catSBS192,
+               catSBS1536 = catSBS1536, annotated.vcf = vcf,
+               discarded.variants = discarded.variants)
       }
+      # If discarded.variants is NULL, then remove this element
+      list.to.return <- Filter(Negate(is.null), list.to.return)
+      return(list.to.return)
     } else {
       return(FALSE)
     }
   }
-  
-  ret1 <- CheckForEmptySBSVCF(vcf = vcf, 
+
+  ret1 <- CheckForEmptySBSVCF(vcf = vcf,
                               return.annotated.vcf = return.annotated.vcf)
   if (!is.logical(ret1)) {
     return(ret1)
@@ -2147,13 +2236,14 @@ CreateOneColSBSMatrix <- function(vcf, sample.id = "count",
         'have been deleted so as not to conflict with downstream processing. ',
         'See discarded.variants in the return value for more details.')
     }
-  
-  ret2 <- CheckForEmptySBSVCF(vcf = vcf, 
-                              return.annotated.vcf = return.annotated.vcf)
+
+  ret2 <- CheckForEmptySBSVCF(vcf = vcf,
+                              return.annotated.vcf = return.annotated.vcf,
+                              discarded.variants = discarded.variants)
   if (!is.logical(ret2)) {
     return(ret2)
   }
-  
+
   # Keep a copy of the original vcf
   vcf0 <- vcf
 
@@ -2171,7 +2261,7 @@ CreateOneColSBSMatrix <- function(vcf, sample.id = "count",
   # we only need to count these mutations once.
   #vcf1 <- vcf[, .(REF = REF[1], pyr.mut = pyr.mut[1]),
   #            by = .(CHROM, ALT, POS)]
-  vcf1 <- vcf %>% dplyr::group_by(CHROM, ALT, POS) %>% 
+  vcf1 <- vcf %>% dplyr::group_by(CHROM, ALT, POS) %>%
     dplyr::summarise(REF = REF[1], pyr.mut = pyr.mut[1])
 
   # Create part of the 1536 catalog matrix but missing mutation
@@ -2221,7 +2311,7 @@ CreateOneColSBSMatrix <- function(vcf, sample.id = "count",
   # vcf3 <- vcf2[, .(REF = REF[1], mutation = mutation[1],
   #                 trans.strand = trans.strand[1]),
   #             by = .(CHROM, ALT, POS)]
-  vcf3 <- vcf2 %>% dplyr::group_by(CHROM, ALT, POS) %>% 
+  vcf3 <- vcf2 %>% dplyr::group_by(CHROM, ALT, POS) %>%
     dplyr::summarise(REF = REF[1], mutation = mutation[1], trans.strand = trans.strand[1])
 
   # If vcf3 has empty rows, we will return 1-column SBS192 matrix with all
@@ -2283,8 +2373,8 @@ CreateOneColSBSMatrix <- function(vcf, sample.id = "count",
 #' file <- c(system.file("extdata/Strelka-SBS-vcf",
 #'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
-#' list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
-#' DBS.vcf <- list.of.vcfs$DBS.vcfs[[1]]
+#' list.of.vcfs <- ReadAndSplitVCFs(file, variant.caller = "strelka")
+#' DBS.vcf <- list.of.vcfs$DBS[[1]]
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
 #'   annotated.DBS.vcf <- AnnotateDBSVCF(DBS.vcf, ref.genome = "hg19",
 #'                                       trans.ranges = trans.ranges.GRCh37)}
@@ -2475,7 +2565,7 @@ CheckAndReturnDBSMatrix <-
 #' @param sample.id Usually the sample id, but defaults to "count".
 #'
 #' @import data.table
-#' 
+#'
 #' @importFrom dplyr %>% group_by summarize
 #'
 #' @section Value: A list of three 1-column matrices with the names \code{catDBS78},
@@ -2496,8 +2586,9 @@ CreateOneColDBSMatrix <- function(vcf, sample.id = "count",
   # This function cannot handle insertion, deletions, or complex indels,
   # Therefore we check for this problem; but we need to exclude SBSs
   # before calling the function. This function does not detect SBSs.
-   
-  CheckForEmptyDBSVCF <- function(vcf, return.annotated.vcf) {
+
+  CheckForEmptyDBSVCF <- function(vcf, return.annotated.vcf, 
+                                  discarded.variants = NULL) {
     if (0 == nrow(vcf)) {
       # Create 1-column matrix with all values being 0 and the correct row labels.
       catDBS78 <-
@@ -2510,18 +2601,24 @@ CreateOneColDBSMatrix <- function(vcf, sample.id = "count",
         matrix(0, nrow = length(ICAMS::catalog.row.order$DBS144), ncol = 1,
                dimnames = list(ICAMS::catalog.row.order$DBS144, sample.id))
       if (return.annotated.vcf == FALSE) {
-        return(list(catDBS78 = catDBS78, catDBS136 = catDBS136,
-                    catDBS144 = catDBS144))
+        list.to.return <- 
+          list(catDBS78 = catDBS78, catDBS136 = catDBS136,
+               catDBS144 = catDBS144, discarded.variants = discarded.variants)
       } else {
-        return(list(catDBS78 = catDBS78, catDBS136 = catDBS136,
-                    catDBS144 = catDBS144, annotated.vcf = vcf))
+        list.to.return <- 
+          list(catDBS78 = catDBS78, catDBS136 = catDBS136,
+               catDBS144 = catDBS144, annotated.vcf = vcf,
+               discarded.variants = discarded.variants)
       }
+      # Remove element discarded variants if it is NULL
+      list.to.return <- Filter(Negate(is.null), list.to.return)
+      return(list.to.return)
     } else {
       return(FALSE)
     }
   }
-  
-  ret1 <- CheckForEmptyDBSVCF(vcf = vcf, 
+
+  ret1 <- CheckForEmptyDBSVCF(vcf = vcf,
                               return.annotated.vcf = return.annotated.vcf)
   if (!is.logical(ret1)) {
     return(ret1)
@@ -2544,9 +2641,10 @@ CreateOneColDBSMatrix <- function(vcf, sample.id = "count",
       'have been deleted so as not to conflict with downstream processing. ',
       'See discarded.variants in the return value for more details.')
   }
-  
-  ret2 <- CheckForEmptyDBSVCF(vcf = vcf, 
-                              return.annotated.vcf = return.annotated.vcf)
+
+  ret2 <- CheckForEmptyDBSVCF(vcf = vcf,
+                              return.annotated.vcf = return.annotated.vcf,
+                              discarded.variants = discarded.variants)
   if (!is.logical(ret2)) {
     return(ret2)
   }
@@ -2557,7 +2655,7 @@ CreateOneColDBSMatrix <- function(vcf, sample.id = "count",
   # count these mutations once.
   # vcf1 <- vcf[, .(REF = REF[1], seq.21bases = seq.21bases[1]),
   #            by = .(CHROM, ALT, POS)]
-  vcf1 <- vcf %>% dplyr::group_by(CHROM, ALT, POS) %>% 
+  vcf1 <- vcf %>% dplyr::group_by(CHROM, ALT, POS) %>%
     dplyr::summarise(REF = REF[1], seq.21bases = seq.21bases[1])
 
   # Create the 78 DBS catalog matrix
@@ -2613,7 +2711,7 @@ CreateOneColDBSMatrix <- function(vcf, sample.id = "count",
   # 144 catalog, we only need to count these mutations once.
   # vcf3 <- vcf2[, .(REF = REF[1], trans.strand = trans.strand[1]),
   #              by = .(CHROM, ALT, POS)]
-  vcf3 <- vcf2 %>% dplyr::group_by(CHROM, ALT, POS) %>% 
+  vcf3 <- vcf2 %>% dplyr::group_by(CHROM, ALT, POS) %>%
     dplyr::summarise(REF = REF[1], trans.strand = trans.strand[1])
 
   # If vcf3 has empty rows, we will return 1-column DBS144 matrix with all
@@ -2659,8 +2757,10 @@ CreateOneColDBSMatrix <- function(vcf, sample.id = "count",
                           sample.id = sample.id)
 }
 
+#' \strong{\[Deprecated, use VCFsToCatalogsAndPlotToPdf(variant.caller = "strelka") instead\]}
 #' Create SBS and DBS catalogs from Strelka SBS VCF files and plot them to PDF
 #'
+#' \strong{\[Deprecated, use VCFsToCatalogsAndPlotToPdf(variant.caller = "strelka") instead\]}
 #' Create 3 SBS catalogs (96, 192, 1536) and 3 DBS catalogs (78, 136, 144) from
 #' the Strelka SBS VCFs specified by \code{files} and plot them to PDF. The
 #' function will find and merge adjacent SBS pairs into DBS if their VAFs are
@@ -2709,6 +2809,7 @@ CreateOneColDBSMatrix <- function(vcf, sample.id = "count",
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Strelka-SBS-vcf",
 #'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
@@ -2719,6 +2820,7 @@ CreateOneColDBSMatrix <- function(vcf, sample.id = "count",
 #'                                             region = "genome",
 #'                                             output.file =
 #'                                             file.path(tempdir(), "StrelkaSBS"))}
+#'}                                           
 StrelkaSBSVCFFilesToCatalogAndPlotToPdf <-
   function(files,
            ref.genome,
@@ -2728,7 +2830,9 @@ StrelkaSBSVCFFilesToCatalogAndPlotToPdf <-
            output.file = "",
            return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
-
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "StrelkaSBSVCFFilesToCatalogAndPlotToPdf()",
+                              details = 'Please use `VCFsToCatalogsAndPlotToPdf(variant.caller = "strelka")` instead')
     catalogs0 <-
       StrelkaSBSVCFFilesToCatalog(files, ref.genome, trans.ranges,
                                   region, names.of.VCFs,
@@ -2753,10 +2857,12 @@ StrelkaSBSVCFFilesToCatalogAndPlotToPdf <-
     return(catalogs)
   }
 
-#' Create ID (small insertion and deletion) catalog from Strelka ID VCF files
-#' and plot them to PDF
+#' \strong{[Deprecated, use VCFsToCatalogsAndPlotToPdf(variant.caller = "strelka") instead]}
+#' Create ID (small insertions and deletions) catalog from Strelka ID VCF files
+#' and plot them to PDF 
 #'
-#' Create ID (small insertion and deletion) catalog from the Strelka ID VCFs
+#' \strong{[Deprecated, use VCFsToCatalogsAndPlotToPdf(variant.caller = "strelka") instead]}
+#' Create ID (small insertions and deletions) catalog from the Strelka ID VCFs
 #' specified by \code{files} and plot them to PDF
 #'
 #' This function calls \code{\link{StrelkaIDVCFFilesToCatalog}} and
@@ -2771,13 +2877,14 @@ StrelkaSBSVCFFilesToCatalogAndPlotToPdf <-
 #'
 #' @inheritSection StrelkaIDVCFFilesToCatalog Value
 #'
-#' @inheritSection VCFsToIDCatalogs ID classification
+#' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
 #'
 #' @inheritSection VCFsToIDCatalogs Note
 #'
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Strelka-ID-vcf",
 #'                       "Strelka.ID.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
@@ -2787,7 +2894,7 @@ StrelkaSBSVCFFilesToCatalogAndPlotToPdf <-
 #'                                            region = "genome",
 #'                                            output.file =
 #'                                            file.path(tempdir(), "StrelkaID"))}
-#'
+#'} 
 StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
   function(files,
            ref.genome,
@@ -2797,6 +2904,9 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
            flag.mismatches = 0,
            return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "StrelkaIDVCFFilesToCatalogAndPlotToPdf()",
+                              details = 'Please use `VCFsToCatalogsAndPlotToPdf(variant.caller = "strelka")` instead')
 
     list <-
       StrelkaIDVCFFilesToCatalog(files, ref.genome, region, names.of.VCFs,
@@ -2810,8 +2920,11 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
     return(list)
   }
 
-#' Create SBS, DBS and Indel catalogs from Mutect VCF files and plot them to PDF
+#' \strong{\[Deprecated, use VCFsToCatalogsAndPlotToPdf(variant.caller = "mutect") instead\]} 
+#' Create SBS, DBS and Indel catalogs from Mutect VCF files
+#' and plot them to PDF
 #'
+#' \strong{\[Deprecated, use VCFsToCatalogsAndPlotToPdf(variant.caller = "mutect") instead\]}
 #' Create 3 SBS catalogs (96, 192, 1536), 3 DBS catalogs (78, 136, 144) and
 #' Indel catalog from the Mutect VCFs specified by \code{files} and plot them to
 #' PDF
@@ -2825,7 +2938,7 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
 #'   \code{\link{ICAMS}}.
 #'
 #' @param trans.ranges Optional. If \code{ref.genome} specifies one of the
-#'   \code{\link{BSgenome}} object
+#'   \code{\link[BSgenome]{BSgenome}} object
 #'   \enumerate{
 #'     \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
 #'     \item \code{BSgenome.Hsapiens.UCSC.hg38}
@@ -2847,8 +2960,8 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
 #'   in \code{files} and file paths without extensions (and the leading dot)
 #'   will be used as the names of the VCF files.
 #'
-#' @param tumor.col.names Optional. Character vector of column names in VCFs
-#'   which contain the tumor sample information. The order of names in
+#' @param tumor.col.names Optional. Vector of column names or column indices in
+#'   VCFs which contain the tumor sample information. The order of elements in
 #'   \code{tumor.col.names} should match the order of VCFs specified in
 #'   \code{files}. If \code{tumor.col.names} is equal to \code{NA}(default),
 #'   this function will use the 10th column in all the VCFs to calculate VAFs.
@@ -2881,7 +2994,7 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
 #' * \code{catDBS78}, \code{catDBS136}, \code{catDBS144}: Matrix of
 #' 3 DBS catalogs (one each for 78, 136, and 144).
 #'
-#' * \code{catID}: Matrix of ID (small insertion and deletion) catalog.
+#' * \code{catID}: Matrix of ID (small insertions and deletions) catalog.
 #'
 #' * \code{discarded.variants}: \strong{Non-NULL only if} there are variants
 #' that were excluded from the analysis. See the added extra column
@@ -2905,23 +3018,11 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
 #' attributes added. See \code{\link{as.catalog}} for more details.
 #' @md
 #'
-#' @section ID classification:
-#' See \url{https://github.com/steverozen/ICAMS/blob/master/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
-#' for additional information on ID (small insertion and deletion) mutation
-#' classification.
-#' 
-#' See the documentation for \code{\link{Canonicalize1Del}} which first handles
-#' deletions in homopolymers, then handles deletions in simple repeats with
-#' longer repeat units, (e.g. \code{CACACACA}, see
-#' \code{\link{FindMaxRepeatDel}}), and if the deletion is not in a simple
-#' repeat, looks for microhomology (see \code{\link{FindDelMH}}).
-#'
-#' See the code for unexported function \code{\link{CanonicalizeID}}
-#' and the functions it calls for handling of insertions.
+#' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
 #'
 #' @section Note:
 #'  SBS 192 and DBS 144 catalogs include only mutations in transcribed regions.
-#'  In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+#'  In ID (small insertions and deletions) catalogs, deletion repeat sizes range
 #'  from 0 to 5+, but for plotting and end-user documentation deletion repeat
 #'  sizes range from 1 to 6+.
 #'
@@ -2933,6 +3034,7 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Mutect-vcf",
 #'                       "Mutect.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
@@ -2943,6 +3045,7 @@ StrelkaIDVCFFilesToCatalogAndPlotToPdf <-
 #'                                         region = "genome",
 #'                                         output.file =
 #'                                         file.path(tempdir(), "Mutect"))}
+#'}                                        
 MutectVCFFilesToCatalogAndPlotToPdf <-
   function(files,
            ref.genome,
@@ -2954,7 +3057,10 @@ MutectVCFFilesToCatalogAndPlotToPdf <-
            flag.mismatches = 0,
            return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
-
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "MutectVCFFilesToCatalogAndPlotToPdf()",
+                              details = 'Please use `VCFsToCatalogsAndPlotToPdf(variant.caller = "mutect")` instead')
+    
     catalogs0 <-
       MutectVCFFilesToCatalog(files, ref.genome, trans.ranges,
                               region, names.of.VCFs, tumor.col.names,
@@ -3006,7 +3112,7 @@ MutectVCFFilesToCatalogAndPlotToPdf <-
 #'   unless \code{num.of.cores = 1}.
 #'
 #' @param trans.ranges Optional. If \code{ref.genome} specifies one of the
-#'   \code{\link{BSgenome}} object
+#'   \code{\link[BSgenome]{BSgenome}} object
 #'   \enumerate{
 #'     \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
 #'     \item \code{BSgenome.Hsapiens.UCSC.hg38}
@@ -3029,17 +3135,24 @@ MutectVCFFilesToCatalogAndPlotToPdf <-
 #'   will be used as the names of the VCF files.
 #'
 #' @param tumor.col.names Optional. Only applicable to \strong{Mutect} VCFs.
-#'   Character vector of column names in \strong{Mutect} VCFs which contain the
-#'   tumor sample information. The order of names in \code{tumor.col.names}
-#'   should match the order of \strong{Mutect} VCFs specified in \code{files}.
-#'   If \code{tumor.col.names} is equal to \code{NA}(default), this function
-#'   will use the 10th column in all the \strong{Mutect} VCFs to calculate VAFs.
-#'   See \code{\link{GetMutectVAF}} for more details.
+#'   Vector of column names or column indices in \strong{Mutect} VCFs which
+#'   contain the tumor sample information. The order of elements in
+#'   \code{tumor.col.names} should match the order of \strong{Mutect} VCFs
+#'   specified in \code{files}. If \code{tumor.col.names} is equal to
+#'   \code{NA}(default), this function will use the 10th column in all the
+#'   \strong{Mutect} VCFs to calculate VAFs. See \code{\link{GetMutectVAF}} for
+#'   more details.
 #'
-#' @param filter.status The status indicating a variant has passed all filters.
-#'   An example would be \code{"PASS"}. Variants which don't have the specified
-#'   \code{filter.status} in the \code{FILTER} column in VCF will be removed. If
-#'   \code{NULL}(default), no variants will be removed from the original VCF.
+#' @param filter.status The character string in column \code{FILTER} of the VCF
+#'   that indicates that a variant has passed all the variant caller's filters.
+#'   Variants (lines in the VCF) for which the value in column \code{FILTER}
+#'   does not equal \code{filter.status} are silently excluded from the output.
+#'   The internal function \code{DefaultFilterStatus} tries to infer
+#'   \code{filter.status} based on \code{variant.caller}. If
+#'   \code{variant.caller} is "unknown", user must specify \code{filter.status}
+#'   explicitly. If \code{filter.status = NULL}, all variants are retained. If
+#'   there is no \code{FILTER} column in the VCF, all variants are retained with
+#'   a warning.
 #'
 #' @param get.vaf.function Optional. Only applicable when \code{variant.caller} is
 #' \strong{"unknown"}. Function to calculate VAF(variant allele frequency) and read
@@ -3051,10 +3164,11 @@ MutectVCFFilesToCatalogAndPlotToPdf <-
 #'
 #' @param max.vaf.diff \strong{Not} applicable if \code{variant.caller =
 #'   "mutect"}. The maximum difference of VAF, default value is 0.02. If the
-#'   absolute difference of VAFs for adjacent SBSs is bigger than \code{max.vaf.diff},
-#'   then these adjacent SBSs are likely to be "merely" asynchronous single base
-#'   mutations, opposed to a simultaneous doublet mutation or variants involving
-#'   more than two consecutive bases.
+#'   absolute difference of VAFs for adjacent SBSs is bigger than
+#'   \code{max.vaf.diff}, then these adjacent SBSs are likely to be "merely"
+#'   asynchronous single base mutations, opposed to a simultaneous doublet
+#'   mutation or variants involving more than two consecutive bases. Use
+#'   negative value (e.g. -1) to suppress merging adjacent SBSs to DBS.
 #'
 #' @param base.filename Optional. The base name of the PDF files to be produced;
 #'   multiple files will be generated, each ending in \eqn{x}\code{.pdf}, where
@@ -3068,6 +3182,12 @@ MutectVCFFilesToCatalogAndPlotToPdf <-
 #'   warning messages showing information about the discarded variants. Default
 #'   is TRUE.
 #'
+#' @param chr.names.to.process A character vector specifying the chromosome
+#'   names in VCF whose variants will be kept and processed, other chromosome
+#'   variants will be discarded. If NULL(default), all variants will be kept
+#'   except those on chromosomes with names that contain strings "GL", "KI",
+#'   "random", "Hs", "M", "JH", "fix", "alt".
+#'
 #' @section Value:
 #' A list containing the following objects:
 #'
@@ -3077,7 +3197,7 @@ MutectVCFFilesToCatalogAndPlotToPdf <-
 #' * \code{catDBS78}, \code{catDBS136}, \code{catDBS144}: Matrix of
 #' 3 DBS catalogs (one each for 78, 136, and 144).
 #'
-#' * \code{catID}: Matrix of ID (small insertion and deletion) catalog.
+#' * \code{catID}: Matrix of ID (small insertions and deletions) catalog.
 #'
 #' * \code{discarded.variants}: \strong{Non-NULL only if} there are variants
 #' that were excluded from the analysis. See the added extra column
@@ -3102,10 +3222,10 @@ MutectVCFFilesToCatalogAndPlotToPdf <-
 #' @md
 #'
 #' @section ID classification:
-#' See \url{https://github.com/steverozen/ICAMS/blob/master/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
-#' for additional information on ID (small insertion and deletion) mutation
+#' See \url{https://github.com/steverozen/ICAMS/blob/v3.0.9-branch/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
+#' for additional information on ID (small insertions and deletions) mutation
 #' classification.
-#' 
+#'
 #' See the documentation for \code{\link{Canonicalize1Del}} which first handles
 #' deletions in homopolymers, then handles deletions in simple repeats with
 #' longer repeat units, (e.g. \code{CACACACA}, see
@@ -3117,7 +3237,7 @@ MutectVCFFilesToCatalogAndPlotToPdf <-
 #'
 #' @section Note:
 #'  SBS 192 and DBS 144 catalogs include only mutations in transcribed regions.
-#'  In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+#'  In ID (small insertions and deletions) catalogs, deletion repeat sizes range
 #'  from 0 to 5+, but for plotting and end-user documentation deletion repeat
 #'  sizes range from 1 to 6+.
 #'
@@ -3149,13 +3269,14 @@ VCFsToCatalogsAndPlotToPdf <-
            region = "unknown",
            names.of.VCFs = NULL,
            tumor.col.names = NA,
-           filter.status = NULL,
+           filter.status = DefaultFilterStatus(variant.caller),
            get.vaf.function = NULL,
            ...,
            max.vaf.diff = 0.02,
            base.filename = "",
            return.annotated.vcfs = FALSE,
-           suppress.discarded.variants.warnings = TRUE) {
+           suppress.discarded.variants.warnings = TRUE,
+           chr.names.to.process = NULL) {
     num.of.cores <- AdjustNumberOfCores(num.of.cores)
 
     catalogs0 <-
@@ -3173,7 +3294,8 @@ VCFsToCatalogsAndPlotToPdf <-
                      max.vaf.diff = max.vaf.diff,
                      return.annotated.vcfs = return.annotated.vcfs,
                      suppress.discarded.variants.warnings =
-                       suppress.discarded.variants.warnings)
+                       suppress.discarded.variants.warnings,
+                     chr.names.to.process = chr.names.to.process)
 
     # Retrieve the catalog matrix from catalogs0
     catalogs <- catalogs0
@@ -3181,19 +3303,34 @@ VCFsToCatalogsAndPlotToPdf <-
     if (base.filename != "") base.filename <- paste0(base.filename, ".")
 
     for (name in names(catalogs)) {
-      PlotCatalogToPdf(catalogs[[name]],
-                       file = file.path(output.dir,
-                                        paste0(base.filename, name, ".pdf")))
-      if (name == "catSBS192") {
-        PlotCatalogToPdf(catalogs[[name]],
+      non.empty.samples <- RetrieveNonEmptySamples(catalogs[[name]])
+      # Only plot samples which have mutations for a specific mutation class
+      if (!is.null(non.empty.samples)) {
+        PlotCatalogToPdf(non.empty.samples,
                          file = file.path(output.dir,
-                                          paste0(base.filename, "SBS12.pdf")),
-                         plot.SBS12 = TRUE)
+                                          paste0(base.filename, name, ".pdf")))
+        if (name == "catSBS192") {
+          PlotCatalogToPdf(non.empty.samples,
+                           file = file.path(output.dir,
+                                            paste0(base.filename, "SBS12.pdf")),
+                           plot.SBS12 = TRUE)
+        }
       }
     }
 
     return(catalogs0)
   }
+
+#' @keywords internal
+RetrieveNonEmptySamples <- function(catalog) {
+  tmp <- colSums(catalog)
+  indices <- which(tmp > 0)
+  if (length(indices) > 0) {
+    return(catalog[, indices, drop = FALSE])
+  } else {
+    return(NULL)
+  }
+}
 
 #' @keywords internal
 CanonicalizeDBS <- function(ref.vec, alt.vec) {

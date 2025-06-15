@@ -17,7 +17,7 @@ ReadCatalog(
 \item{file}{Path to a catalog on disk in a standardized format.
 The recognized formats are:
 \itemize{
-\item ICAMS formatted SBS96, SBS192, SBS1536, DBS78, DBS136, DBS144, ID
+\item ICAMS formatted SBS96, SBS192, SBS1536, DBS78, DBS136, DBS144, ID, ID166
 (see \code{\link{CatalogRowOrder}}).
 \item SigProfiler-formatted SBS96, DBS78 and ID83 catalogs;
 see \url{https://github.com/AlexandrovLab/SigProfilerExtractor}.
@@ -52,7 +52,7 @@ Read a catalog in standardized format from path.
 See also \code{\link{WriteCatalog}}
 }
 \note{
-In ID (small insertion and deletion) catalogs, deletion repeat sizes
+In ID (small insertions and deletions) catalogs, deletion repeat sizes
 range from 0 to 5+, but for plotting and end-user documentation
 deletion repeat sizes range from 1 to 6+.
 }

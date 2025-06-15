@@ -5,33 +5,41 @@
 \alias{GetStrelkaVAF}
 \alias{GetMutectVAF}
 \alias{GetFreebayesVAF}
-\title{Extract the VAFs (variant allele frequencies) and read depth information from
-a VCF file}
+\alias{GetPCAWGConsensusVAF}
+\title{Extract the VAFs (variant allele frequencies) and read depth information from a VCF file}
 \usage{
 GetStrelkaVAF(vcf, name.of.VCF = NULL)
 
 GetMutectVAF(vcf, name.of.VCF = NULL, tumor.col.name = NA)
 
 GetFreebayesVAF(vcf, name.of.VCF = NULL)
+
+GetPCAWGConsensusVAF(vcf, mc.cores = 1)
 }
 \arguments{
-\item{vcf}{Said VCF as a data.frame.}
+\item{vcf}{An in-memory VCF data frame.}
 
 \item{name.of.VCF}{Name of the VCF file.}
 
 \item{tumor.col.name}{Optional. Only applicable to \strong{Mutect} VCF. Name
-of the column in \strong{Mutect} VCF which contains the tumor sample
-information. It \strong{must} have quotation marks. If
-\code{tumor.col.name} is equal to \code{NA}(default), this function will
-use the 10th column to calculate VAFs.}
+or index of the column in \strong{Mutect} VCF which contains the tumor
+sample information. It \strong{must} have quotation marks if specifying the
+column name. If \code{tumor.col.name} is equal to \code{NA}(default), this
+function will use the 10th column to calculate VAFs.}
+
+\item{mc.cores}{The number of cores to use. Not available on Windows
+unless \code{mc.cores = 1}.}
 }
 \value{
 The original \code{vcf} with two additional columns added which
   contain the VAF(variant allele frequency) and read depth information.
 }
 \description{
-Extract the VAFs (variant allele frequencies) and read depth information from
-a VCF file
+Extract the VAFs (variant allele frequencies) and read depth information from a VCF file
+}
+\note{
+\code{\link{GetPCAWGConsensusVAF}} is analogous to \code{\link{GetMutectVAF}},
+calculating VAF and read depth from PCAWG7 consensus vcfs
 }
 \examples{
 file <- c(system.file("extdata/Strelka-SBS-vcf",

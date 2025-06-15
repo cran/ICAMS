@@ -4,7 +4,7 @@
 #'   \code{\link{AnnotateSBSVCF}}. It \strong{must} have transcript range
 #'   information added.
 #'   
-#' @param expression.data A \code{\link{data.table}} which contains the
+#' @param expression.data A \code{\link[data.table]{data.table}} which contains the
 #'   expression values of genes. \cr See \code{\link{GeneExpressionData}} for more
 #'   details.
 #'   
@@ -56,8 +56,8 @@
 #' file <- c(system.file("extdata/Strelka-SBS-vcf/",
 #'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
-#' list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
-#' SBS.vcf <- list.of.vcfs$SBS.vcfs[[1]]             
+#' list.of.vcfs <- ReadAndSplitVCFs(file, variant.caller = "strelka")
+#' SBS.vcf <- list.of.vcfs$SBS[[1]]             
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
 #'   annotated.SBS.vcf <- AnnotateSBSVCF(SBS.vcf, ref.genome = "hg19",
 #'                                       trans.ranges = trans.ranges.GRCh37)
@@ -103,8 +103,8 @@ PlotTransBiasGeneExp <-
 #' file <- c(system.file("extdata/Strelka-SBS-vcf/",
 #'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
-#' list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
-#' SBS.vcf <- list.of.vcfs$SBS.vcfs[[1]]             
+#' list.of.vcfs <- ReadAndSplitVCFs(file, variant.caller = "strelka")
+#' SBS.vcf <- list.of.vcfs$SBS[[1]]           
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
 #'   annotated.SBS.vcf <- AnnotateSBSVCF(SBS.vcf, ref.genome = "hg19",
 #'                                       trans.ranges = trans.ranges.GRCh37)

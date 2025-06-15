@@ -13,12 +13,13 @@ VCFsToCatalogs(
   region = "unknown",
   names.of.VCFs = NULL,
   tumor.col.names = NA,
-  filter.status = NULL,
+  filter.status = DefaultFilterStatus(variant.caller),
   get.vaf.function = NULL,
   ...,
   max.vaf.diff = 0.02,
   return.annotated.vcfs = FALSE,
-  suppress.discarded.variants.warnings = TRUE
+  suppress.discarded.variants.warnings = TRUE,
+  chr.names.to.process = NULL
 )
 }
 \arguments{
@@ -38,7 +39,7 @@ variant caller is \code{"mutect"}, do \strong{not} merge SBSs into DBS.}
 unless \code{num.of.cores = 1}.}
 
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
-\code{\link{BSgenome}} object
+\code{\link[BSgenome]{BSgenome}} object
 \enumerate{
 \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
 \item \code{BSgenome.Hsapiens.UCSC.hg38}
@@ -61,17 +62,24 @@ in \code{files} and file paths without extensions (and the leading dot)
 will be used as the names of the VCF files.}
 
 \item{tumor.col.names}{Optional. Only applicable to \strong{Mutect} VCFs.
-Character vector of column names in \strong{Mutect} VCFs which contain the
-tumor sample information. The order of names in \code{tumor.col.names}
-should match the order of \strong{Mutect} VCFs specified in \code{files}.
-If \code{tumor.col.names} is equal to \code{NA}(default), this function
-will use the 10th column in all the \strong{Mutect} VCFs to calculate VAFs.
-See \code{\link{GetMutectVAF}} for more details.}
+Vector of column names or column indices in \strong{Mutect} VCFs which
+contain the tumor sample information. The order of elements in
+\code{tumor.col.names} should match the order of \strong{Mutect} VCFs
+specified in \code{files}. If \code{tumor.col.names} is equal to
+\code{NA}(default), this function will use the 10th column in all the
+\strong{Mutect} VCFs to calculate VAFs. See \code{\link{GetMutectVAF}} for
+more details.}
 
-\item{filter.status}{The status indicating a variant has passed all filters.
-An example would be \code{"PASS"}. Variants which don't have the specified
-\code{filter.status} in the \code{FILTER} column in VCF will be removed. If
-\code{NULL}(default), no variants will be removed from the original VCF.}
+\item{filter.status}{The character string in column \code{FILTER} of the VCF
+that indicates that a variant has passed all the variant caller's filters.
+Variants (lines in the VCF) for which the value in column \code{FILTER}
+does not equal \code{filter.status} are silently excluded from the output.
+The internal function \code{DefaultFilterStatus} tries to infer
+\code{filter.status} based on \code{variant.caller}. If
+\code{variant.caller} is "unknown", user must specify \code{filter.status}
+explicitly. If \code{filter.status = NULL}, all variants are retained. If
+there is no \code{FILTER} column in the VCF, all variants are retained with
+a warning.}
 
 \item{get.vaf.function}{Optional. Only applicable when \code{variant.caller} is
 \strong{"unknown"}. Function to calculate VAF(variant allele frequency) and read
@@ -83,10 +91,11 @@ and read depth will be NAs.}
 
 \item{max.vaf.diff}{\strong{Not} applicable if \code{variant.caller =
   "mutect"}. The maximum difference of VAF, default value is 0.02. If the
-absolute difference of VAFs for adjacent SBSs is bigger than \code{max.vaf.diff},
-then these adjacent SBSs are likely to be "merely" asynchronous single base
-mutations, opposed to a simultaneous doublet mutation or variants involving
-more than two consecutive bases.}
+absolute difference of VAFs for adjacent SBSs is bigger than
+\code{max.vaf.diff}, then these adjacent SBSs are likely to be "merely"
+asynchronous single base mutations, opposed to a simultaneous doublet
+mutation or variants involving more than two consecutive bases. Use
+negative value (e.g. -1) to suppress merging adjacent SBSs to DBS.}
 
 \item{return.annotated.vcfs}{Logical. Whether to return the annotated VCFs
 with additional columns showing mutation class for each variant. Default is
@@ -95,6 +104,12 @@ FALSE.}
 \item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
 warning messages showing information about the discarded variants. Default
 is TRUE.}
+
+\item{chr.names.to.process}{A character vector specifying the chromosome
+names in VCF whose variants will be kept and processed, other chromosome
+variants will be discarded. If NULL(default), all variants will be kept
+except those on chromosomes with names that contain strings "GL", "KI",
+"random", "Hs", "M", "JH", "fix", "alt".}
 }
 \description{
 Create 3 SBS catalogs (96, 192, 1536), 3 DBS catalogs (78, 136, 144) and
@@ -112,7 +127,7 @@ A list containing the following objects:
 3 SBS catalogs (one each for 96, 192, and 1536).
 \item \code{catDBS78}, \code{catDBS136}, \code{catDBS144}: Matrix of
 3 DBS catalogs (one each for 78, 136, and 144).
-\item \code{catID}: Matrix of ID (small insertion and deletion) catalog.
+\item \code{catID}: Matrix of ID (small insertions and deletions) catalog.
 \item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
 that were excluded from the analysis. See the added extra column
 \code{discarded.reason} for more details.
@@ -139,8 +154,8 @@ attributes added. See \code{\link{as.catalog}} for more details.
 
 \section{ID classification}{
 
-See \url{https://github.com/steverozen/ICAMS/blob/master/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
-for additional information on ID (small insertion and deletion) mutation
+See \url{https://github.com/steverozen/ICAMS/blob/v3.0.9-branch/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
+for additional information on ID (small insertions and deletions) mutation
 classification.
 
 See the documentation for \code{\link{Canonicalize1Del}} which first handles
@@ -156,7 +171,7 @@ and the functions it calls for handling of insertions.
 \section{Note}{
 
 SBS 192 and DBS 144 catalogs include only mutations in transcribed regions.
-In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+In ID (small insertions and deletions) catalogs, deletion repeat sizes range
 from 0 to 5+, but for plotting and end-user documentation deletion repeat
 sizes range from 1 to 6+.
 }

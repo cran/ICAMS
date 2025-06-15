@@ -2,7 +2,8 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{StrelkaIDVCFFilesToCatalog}
 \alias{StrelkaIDVCFFilesToCatalog}
-\title{Create ID (small insertion and deletion) catalog from Strelka ID VCF files}
+\title{\strong{[Deprecated, use VCFsToCatalogs(variant.caller = "strelka") instead]}
+Create ID (small insertions and deletions) catalog from Strelka ID VCF files}
 \usage{
 StrelkaIDVCFFilesToCatalog(
   files,
@@ -45,7 +46,8 @@ warning messages showing information about the discarded variants. Default
 is TRUE.}
 }
 \description{
-Create ID (small insertion and deletion) catalog from the Strelka ID VCFs
+\strong{[Deprecated, use VCFsToCatalogs(variant.caller = "strelka") instead]}
+Create ID (small insertions and deletions) catalog from the Strelka ID VCFs
 specified by \code{files}
 }
 \details{
@@ -55,7 +57,7 @@ This function calls \code{\link{VCFsToIDCatalogs}}
 
 A \strong{list} of elements:
 \itemize{
-\item \code{catalog}: The ID (small insertion and deletion) catalog with
+\item \code{catalog}: The ID (small insertions and deletions) catalog with
 attributes added. See \code{\link{as.catalog}} for more details.
 \item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
 that were excluded from the analysis. See the added extra column
@@ -71,8 +73,8 @@ be obtained from \code{ID.class} column.
 
 \section{ID classification}{
 
-See \url{https://github.com/steverozen/ICAMS/blob/master/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
-for additional information on ID (small insertion and deletion) mutation
+See \url{https://github.com/steverozen/ICAMS/blob/v3.0.9-branch/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
+for additional information on ID (small insertions and deletions) mutation
 classification.
 
 See the documentation for \code{\link{Canonicalize1Del}} which first handles
@@ -87,16 +89,18 @@ and the functions it calls for handling of insertions.
 
 \section{Note}{
 
-In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+In ID (small insertions and deletions) catalogs, deletion repeat sizes range
 from 0 to 5+, but for plotting and end-user documentation deletion repeat
 sizes range from 1 to 6+.
 }
 
 \examples{
+\dontrun{
 file <- c(system.file("extdata/Strelka-ID-vcf",
                       "Strelka.ID.GRCh37.s1.vcf",
                       package = "ICAMS"))
 if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
   catID <- StrelkaIDVCFFilesToCatalog(file, ref.genome = "hg19",
                                       region = "genome")}
+}                                      
 }

@@ -15,7 +15,7 @@ TransformCatalog(
 }
 \arguments{
 \item{catalog}{An SBS or DBS catalog as described in \code{\link{ICAMS}};
-must \strong{not} be an ID (small insertion and deletion) catalog.}
+must \strong{not} be an ID (small insertions and deletions) catalog.}
 
 \item{target.ref.genome}{A \code{ref.genome} argument as described in
 \code{\link{ICAMS}}. If \code{NULL}, then defaults to the
@@ -36,9 +36,7 @@ strand-agnostic single nucleotide substitutions in trinucleotide -- i.e.
 \code{\link{all.abundance}}. If \code{NULL}, the function tries to infer
 \code{target.abundace} from the class of \code{catalog} and the value of
 the \code{target.ref.genome}, \code{target.region}, and
-\code{target.catalog.type}. If the \code{target.abundance} can be inferred
-and is different from a supplied non-\code{NULL} value of
-\code{target.abundance}, raise an error.}
+\code{target.catalog.type}.}
 }
 \value{
 A catalog as defined in \code{\link{ICAMS}}.

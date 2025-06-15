@@ -7,7 +7,7 @@
 #' @param file Path to a catalog on disk in a standardized format.
 #' The recognized formats are:
 #' 
-#' * ICAMS formatted SBS96, SBS192, SBS1536, DBS78, DBS136, DBS144, ID 
+#' * ICAMS formatted SBS96, SBS192, SBS1536, DBS78, DBS136, DBS144, ID, ID166 
 #'   (see \code{\link{CatalogRowOrder}}).
 #'   
 #' * SigProfiler-formatted SBS96, DBS78 and ID83 catalogs;
@@ -35,7 +35,7 @@
 #'
 #' @return A catalog as an S3 object; see \code{\link{as.catalog}}.
 #'
-#' @note In ID (small insertion and deletion) catalogs, deletion repeat sizes
+#' @note In ID (small insertions and deletions) catalogs, deletion repeat sizes
 #'   range from 0 to 5+, but for plotting and end-user documentation
 #'   deletion repeat sizes range from 1 to 6+.
 #'
@@ -89,6 +89,10 @@ ReadCatalogInternal <- function(file, ref.genome = NULL, region = "unknown",
   ## and a catalog object in this step.
   dt <- data.table::fread(file)
   
+  # In some rare cases, there may be all NA in some columns in dt.
+  # So we remove the columns which have all NA in dt
+  dt <- dt[, which(unlist(lapply(dt, function(x)!all(is.na(x))))), with = FALSE]
+  
   # In some rare cases, there may be NA in dt, then the number of rows will not
   # be accurate to infer catalog type. So we remove the rows which have NA in dt
   dt <- stats::na.omit(dt)
@@ -138,7 +142,7 @@ ReadCatalogErrReturn <-
 #' @param strict If TRUE, do additional checks on the input, and stop if the
 #'   checks fail.
 #'
-#' @note In ID (small insertion and deletion) catalogs, deletion repeat sizes
+#' @note In ID (small insertions and deletions) catalogs, deletion repeat sizes
 #'   range from 0 to 5+, but for plotting and end-user documentation
 #'   deletion repeat sizes range from 1 to 6+.
 #'
@@ -231,4 +235,10 @@ WriteCatalog.DBS136Catalog <- function(catalog, file, strict = TRUE) {
 WriteCatalog.IndelCatalog <- function(catalog, file, strict = TRUE) {
   WriteCat(catalog, file, 83, ICAMS::catalog.row.order$ID,
            catalog.row.headers$ID, strict)
+}
+
+#' @export
+WriteCatalog.ID166Catalog <- function(catalog, file, strict = TRUE) {
+  WriteCat(catalog, file, 166, ICAMS::catalog.row.order$ID166,
+           catalog.row.headers$ID166, strict)
 }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{StrelkaSBSVCFFilesToCatalog}
 \alias{StrelkaSBSVCFFilesToCatalog}
-\title{Create SBS and DBS catalogs from Strelka SBS VCF files}
+\title{\strong{[Deprecated, use VCFsToCatalogs(variant.caller = "strelka") instead]}
+Create SBS and DBS catalogs from Strelka SBS VCF files}
 \usage{
 StrelkaSBSVCFFilesToCatalog(
   files,
@@ -21,7 +22,7 @@ StrelkaSBSVCFFilesToCatalog(
 \code{\link{ICAMS}}.}
 
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
-\code{\link{BSgenome}} object
+\code{\link[BSgenome]{BSgenome}} object
 \enumerate{
 \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
 \item \code{BSgenome.Hsapiens.UCSC.hg38}
@@ -52,6 +53,7 @@ warning messages showing information about the discarded variants. Default
 is TRUE.}
 }
 \description{
+\strong{[Deprecated, use VCFsToCatalogs(variant.caller = "strelka") instead]}
 Create 3 SBS catalogs (96, 192, 1536) and 3 DBS catalogs (78, 136, 144) from
 the Strelka SBS VCFs specified by \code{files}. The function will find and
 merge adjacent SBS pairs into DBS if their VAFs are very similar. The default
@@ -103,6 +105,7 @@ To add or change attributes of the catalog, you can use function
 }
 
 \examples{
+\dontrun{
 file <- c(system.file("extdata/Strelka-SBS-vcf",
                       "Strelka.SBS.GRCh37.s1.vcf",
                       package = "ICAMS"))
@@ -110,4 +113,5 @@ if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
   catalogs <- StrelkaSBSVCFFilesToCatalog(file, ref.genome = "hg19",
                                           trans.ranges = trans.ranges.GRCh37,
                                           region = "genome")}
+}                                        
 }

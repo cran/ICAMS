@@ -13,7 +13,7 @@ AnnotateSBSVCF(SBS.vcf, ref.genome, trans.ranges = NULL, name.of.VCF = NULL)
 \code{\link{ICAMS}}.}
 
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
-\code{\link{BSgenome}} object
+\code{\link[BSgenome]{BSgenome}} object
 \enumerate{
   \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
   \item \code{BSgenome.Hsapiens.UCSC.hg38}
@@ -43,8 +43,8 @@ Add sequence context and transcript information to an in-memory SBS VCF
 file <- c(system.file("extdata/Strelka-SBS-vcf",
                       "Strelka.SBS.GRCh37.s1.vcf",
                       package = "ICAMS"))
-list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
-SBS.vcf <- list.of.vcfs$SBS.vcfs[[1]]
+list.of.vcfs <- ReadAndSplitVCFs(file, variant.caller = "strelka")
+SBS.vcf <- list.of.vcfs$SBS[[1]]
 if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
   annotated.SBS.vcf <- AnnotateSBSVCF(SBS.vcf, ref.genome = "hg19",
                                       trans.ranges = trans.ranges.GRCh37)}

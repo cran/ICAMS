@@ -203,17 +203,35 @@ CheckAndNormalizeTranCatArgs <-
                        target.ref.genome,
                        target.region,
                        target.catalog.type)
-                   
-    if (!is.null(target.abundance) &&
-        !is.null(inferred.abundance)) {
-      if (!all.equal(target.abundance,
-                     inferred.abundance)) {
-        stop("Caller supplied abundance is different from inferred abundance")
+    
+    # The following code surrounded by # has possible problems, better to discuss
+    # with Steve before completely removing it. See NEWS.md for version 2.3.13
+    #########################################################################
+    # If the target.abundance can be inferred and is different from a supplied
+    # non- NULL value of target.abundance, raise an error.
+    if (FALSE) {
+      if (!is.null(target.abundance) &&
+          !is.null(inferred.abundance)) {
+        if (!all.equal(target.abundance,
+                       inferred.abundance)) {
+          stop("Caller supplied abundance is different from inferred abundance")
+        }
+        stopifnot(names(inferred.abundance) == names(target.abundance))
       }
-      stopifnot(names(inferred.abundance) == names(target.abundance))
+    }  
+    ##############################################################################
+    
+    if (is.null(target.abundance)) {
+      target.abundance <- inferred.abundance
+    } else {
+      target.abundance <- target.abundance
     }
-    if (is.null(target.abundance)) target.abundance <- inferred.abundance
-    stopifnot(names(s[["abundance"]]) == names(target.abundance))
+    
+    if (!all(names(s[["abundance"]]) == names(target.abundance))) {
+      stop("The names of target.abundance should be the same as the abundance ",
+           "in the input catalog")
+    }
+    # stopifnot(names(s[["abundance"]]) == names(target.abundance))
 
     if (s$catalog.type == target.catalog.type) {
       if (all(s[["abundance"]] == target.abundance)) { 
@@ -511,6 +529,46 @@ CheckCatalogAttributes <- function(catalog, target.catalog.type) {
   return(check.result)
 }
 
+#' Check whether the BSgenome package is installed
+#'
+#' @param ref.genome A \code{ref.genome} argument as described in
+#'   \code{\link{ICAMS}}.
+#'
+#' @return A logical value indicating whether the BSgenome package is installed.
+#' 
+#' @keywords internal
+IsRefGenomeInstalled <- function(ref.genome) {
+  if (is.null(ref.genome)) stop("Need a non-NULL ref.genome")
+  if (inherits(ref.genome, "BSgenome")) return(TRUE)
+  
+  stopifnot(class(ref.genome) == "character")
+  
+  if (ref.genome %in%
+      c("GRCh38", "hg38", "BSgenome.Hsapiens.UCSC.hg38")) {
+    if("" == system.file(package = "BSgenome.Hsapiens.UCSC.hg38")) {
+      return(FALSE)
+    } else {
+      return(TRUE)
+    }
+  } else if (ref.genome %in%
+             c("GRCh37", "hg19", "BSgenome.Hsapiens.1000genomes.hs37d5")) {
+    if("" == system.file(package = "BSgenome.Hsapiens.1000genomes.hs37d5")) {
+      return(FALSE)
+    } else {
+      return(TRUE)
+    }
+  } else if (ref.genome %in%
+             c("GRCm38", "mm10", "BSgenome.Mmusculus.UCSC.mm10")) {
+    if("" == system.file(package = "BSgenome.Mmusculus.UCSC.mm10")) {
+      return(FALSE)
+    } else {
+      return(TRUE)
+    }
+  } else {
+    return(TRUE)
+  }
+}
+
 #' Transform between counts and density spectrum catalogs
 #' and counts and density signature catalogs
 #'
@@ -554,7 +612,7 @@ CheckCatalogAttributes <- function(catalog, target.catalog.type) {
 #'
 #'
 #' @param catalog An SBS or DBS catalog as described in \code{\link{ICAMS}};
-#'  must \strong{not} be an ID (small insertion and deletion) catalog.
+#'  must \strong{not} be an ID (small insertions and deletions) catalog.
 #'
 #' @param target.ref.genome A \code{ref.genome} argument as described in
 #'   \code{\link{ICAMS}}. If \code{NULL}, then defaults to the
@@ -576,9 +634,7 @@ CheckCatalogAttributes <- function(catalog, target.catalog.type) {
 #'   \code{\link{all.abundance}}. If \code{NULL}, the function tries to infer
 #'   \code{target.abundace} from the class of \code{catalog} and the value of
 #'   the \code{target.ref.genome}, \code{target.region}, and
-#'   \code{target.catalog.type}. If the \code{target.abundance} can be inferred
-#'   and is different from a supplied non-\code{NULL} value of
-#'   \code{target.abundance}, raise an error.
+#'   \code{target.catalog.type}. 
 #'   
 #' @return A catalog as defined in \code{\link{ICAMS}}.
 #' 
@@ -702,7 +758,16 @@ TransformCatalog <-
     } else {
       out2 <- out.catalog
     }
-    return(as.catalog(out2, t[["ref.genome"]], t[["region"]],
+    
+    # Check whether user has the necessary BSgenome package installed
+    # If not, the returned catalog will have NULL ref.genome attribute
+    if (IsRefGenomeInstalled(t[["ref.genome"]])) {
+      ref.genome <- t[["ref.genome"]]
+    } else {
+      ref.genome <- NULL
+    }
+    
+    return(as.catalog(out2, ref.genome, t[["region"]],
                       t[["catalog.type"]], t[["abundance"]]))
 
   }
@@ -874,7 +939,7 @@ PyrPenta <- function(mutstring) {
 
 #' Reverse complement every string in \code{string.vec}
 #' 
-#' Based on \code{\link{reverseComplement}}.
+#' Based on \code{\link[Biostrings]{reverseComplement}}.
 #' Handles IUPAC ambiguity codes but not "u" (uracil). \cr
 #' (see <https://en.wikipedia.org/wiki/Nucleic_acid_notation>).
 #'
@@ -971,6 +1036,8 @@ ReadTranscriptRanges <- function(file) {
 #' @return A data.table keyed by chrom, start, and end. It uses one-based
 #'   coordinates.
 #'   
+#' @note Only chromosomes 1-22 and X and Y will be kept.
+#'   
 #' @keywords internal
 ReadBedRanges <- function(file) {
   dt <- data.table::fread(file)
@@ -986,6 +1053,10 @@ ReadBedRanges <- function(file) {
   dt2$start <- dt2$start + 1L
 
   chrOrder <- c((1:22), "X", "Y")
+  
+  # Only keep chromosomes 1-22 and X and Y 
+  dt2 <- dt2[dt2$chrom %in% chrOrder, ]
+  
   dt2$chrom <- factor(dt2$chrom, chrOrder, ordered = TRUE)
   return(data.table::setkeyv(dt2, c("chrom", "start", "end")))
 }
@@ -1117,14 +1188,14 @@ CreatePentanucAbundance <- function(file) {
   return(abundance)
 }
 
-#' Take strings representing a genome and return the \code{\link{BSgenome}} object.
+#' Take strings representing a genome and return the \code{\link[BSgenome]{BSgenome}} object.
 #'
 #' @param ref.genome A \code{ref.genome} argument as described in
 #'   \code{\link{ICAMS}}.
 #'
 #' @return If \code{ref.genome} is 
-#' a \code{\link{BSgenome}} object, return it.
-#' Otherwise return the \code{\link{BSgenome}} object identified by the
+#' a \code{\link[BSgenome]{BSgenome}} object, return it.
+#' Otherwise return the \code{\link[BSgenome]{BSgenome}} object identified by the
 #' string \code{ref.genome}.
 #'
 #' @keywords internal
@@ -1280,6 +1351,34 @@ IsGRCm38 <- function(x) {
            "BSgenome.Mmusculus.UCSC.mm10")
 }
 
+#' Infer reference genome name from a character string
+#'
+#' @param ref.genome A character string indicating the reference genome.
+#'
+#' @return The inferred reference genome name.
+#' 
+#' @keywords internal
+InferRefGenomeName <- function(ref.genome) {
+  if (is.null(ref.genome)) stop("Need a non-NULL ref.genome")
+  stopifnot(class(ref.genome) == "character")
+  
+  if (ref.genome %in%
+      c("GRCh38", "hg38", "BSgenome.Hsapiens.UCSC.hg38")) {
+    ref.genome.name <- "BSgenome.Hsapiens.UCSC.hg38"
+  } else if (ref.genome %in%
+             c("GRCh37", "hg19", "BSgenome.Hsapiens.1000genomes.hs37d5")) {
+    ref.genome.name <- "BSgenome.Hsapiens.1000genomes.hs37d5"
+  } else if (ref.genome %in%
+             c("GRCm38", "mm10", "BSgenome.Mmusculus.UCSC.mm10")) {
+    ref.genome.name <- "BSgenome.Mmusculus.UCSC.mm10"
+  } else {
+    stop("Unrecoginzed ref.genome:\n", ref.genome,
+         "\nNeed one of the character strings GRCh38, hg38, GRCh37, hg19, ",
+         "GRCm38, mm10")
+  }
+  
+  return(ref.genome.name)
+}
 
 #' Infer \code{abundance} given a matrix-like \code{object} and additional information.
 #'
@@ -1316,8 +1415,14 @@ InferAbundance <- function(object, ref.genome, region, catalog.type) {
     }
     
     if (is.null(ref.genome)) return(NULL)
-    ref.genome <- NormalizeGenomeArg(ref.genome)
-    ab <- ICAMS::all.abundance[[ref.genome@pkgname]]
+    
+    if (inherits(ref.genome, "BSgenome")) {
+      ref.genome.name <- ref.genome@pkgname
+    } else {
+      ref.genome.name <- InferRefGenomeName(ref.genome)
+    }
+    
+    ab <- ICAMS::all.abundance[[ref.genome.name]]
     if (is.null(ab)) return(NULL)
 
     ab2 <- ab[[region]]
@@ -1886,6 +1991,21 @@ GetCustomKmerCounts <- function(k, ref.genome, custom.ranges, filter.path,
   }
 }
 
+#' @export
+`[.ID166Catalog` <- function (x, i, j, drop = if (missing(i)) TRUE else length(cols) ==
+                                1) {
+  y <- NextMethod("[")
+  if (inherits(y, c("integer", "numeric"))) {
+    return(y)
+  } else {
+    class(y) <- class(x)
+    for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
+      attr(y, at) <- attr(x, at, exact = TRUE)
+    }
+    return(y)
+  }
+}
+
 #' @keywords internal
 CheckAndAssignAttributes <- function(x, list0) {
   for (at in c("ref.genome", "catalog.type", "abundance", "region")) {
@@ -2071,6 +2191,16 @@ CheckAndAssignAttributes <- function(x, list0) {
 
 #' @export
 `cbind.IndelCatalog` <- function (..., deparse.level = 1) {
+  x <- base::cbind.data.frame(..., deparse.level = deparse.level)
+  x <- data.matrix(x)
+  class(x) <- class(..1)
+  list0 <- list(...)
+  x <- CheckAndAssignAttributes(x, list0)
+  return(x)
+}
+
+#' @export
+`cbind.ID166Catalog` <- function (..., deparse.level = 1) {
   x <- base::cbind.data.frame(..., deparse.level = deparse.level)
   x <- data.matrix(x)
   class(x) <- class(..1)

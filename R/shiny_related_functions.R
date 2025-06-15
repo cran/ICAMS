@@ -1,5 +1,7 @@
+#' \strong{[Deprecated, use VCFsToZipFile(variant.caller = "strelka") instead]}
 #' Create a zip file which contains catalogs and plot PDFs from Strelka SBS VCF files
 #'
+#' \strong{[Deprecated, use VCFsToZipFile(variant.caller = "strelka") instead]}
 #' Create 3 SBS catalogs (96, 192, 1536), 3 DBS catalogs (78, 136, 144) from the
 #' Strelka SBS VCFs specified by \code{dir}, save the catalogs as CSV files,
 #' plot them to PDF and generate a zip archive of all the output files. The
@@ -30,6 +32,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' dir <- c(system.file("extdata/Strelka-SBS-vcf",
 #'                      package = "ICAMS"))
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
@@ -41,6 +44,7 @@
 #'                                 region = "genome",
 #'                                 base.filename = "Strelka-SBS")
 #'   unlink(file.path(tempdir(), "test.zip"))}
+#'} 
 StrelkaSBSVCFFilesToZipFile <-
   function(dir,
            zipfile,
@@ -51,62 +55,68 @@ StrelkaSBSVCFFilesToZipFile <-
            base.filename = "",
            return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
-  files <- list.files(path = dir, pattern = "\\.vcf$",
-                      full.names = TRUE, ignore.case = TRUE)
-  vcf.names <- basename(files)
-  catalogs0 <-
-    StrelkaSBSVCFFilesToCatalog(files, ref.genome, trans.ranges,
-                                region, names.of.VCFs,
-                                return.annotated.vcfs,
-                                suppress.discarded.variants.warnings)
-  mutation.loads <- GetMutationLoadsFromStrelkaSBSVCFs(catalogs0)
-  strand.bias.statistics<- NULL
-
-  # Retrieve the catalog matrix from catalogs0
-  catalogs <- catalogs0
-  catalogs$discarded.variants <- catalogs$annotated.vcfs <- NULL
-  
-  # Create a new tmp dir
-  tmpdir <- tempfile()
-  dir.create(tmpdir)
-  
-  output.file <- ifelse(base.filename == "",
-                        paste0(tmpdir, .Platform$file.sep),
-                        file.path(tmpdir, paste0(base.filename, ".")))
-
-  for (name in names(catalogs)) {
-    WriteCatalog(catalogs[[name]],
-                 file = paste0(output.file, name, ".csv"))
-  }
-
-  for (name in names(catalogs)) {
-    PlotCatalogToPdf(catalogs[[name]],
-                     file = paste0(output.file, name, ".pdf"))
-
-    if (name == "catSBS192") {
-      list <- PlotCatalogToPdf(catalogs[[name]],
-                               file = paste0(output.file, "SBS12.pdf"),
-                               plot.SBS12 = TRUE)
-      strand.bias.statistics<- c(strand.bias.statistics,
-                                 list$strand.bias.statistics)
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "StrelkaSBSVCFFilesToZipFile()",
+                              details = 'Please use `VCFsToZipFile(variant.caller = "strelka")` instead')
+    
+    files <- list.files(path = dir, pattern = "\\.vcf$",
+                        full.names = TRUE, ignore.case = TRUE)
+    vcf.names <- basename(files)
+    catalogs0 <-
+      StrelkaSBSVCFFilesToCatalog(files, ref.genome, trans.ranges,
+                                  region, names.of.VCFs,
+                                  return.annotated.vcfs,
+                                  suppress.discarded.variants.warnings)
+    mutation.loads <- GetMutationLoadsFromStrelkaSBSVCFs(catalogs0)
+    strand.bias.statistics<- NULL
+    
+    # Retrieve the catalog matrix from catalogs0
+    catalogs <- catalogs0
+    catalogs$discarded.variants <- catalogs$annotated.vcfs <- NULL
+    
+    # Create a new tmp dir
+    tmpdir <- tempfile()
+    dir.create(tmpdir)
+    
+    output.file <- ifelse(base.filename == "",
+                          paste0(tmpdir, .Platform$file.sep),
+                          file.path(tmpdir, paste0(base.filename, ".")))
+    
+    for (name in names(catalogs)) {
+      WriteCatalog(catalogs[[name]],
+                   file = paste0(output.file, name, ".csv"))
     }
+    
+    for (name in names(catalogs)) {
+      PlotCatalogToPdf(catalogs[[name]],
+                       file = paste0(output.file, name, ".pdf"))
+      
+      if (name == "catSBS192") {
+        list <- PlotCatalogToPdf(catalogs[[name]],
+                                 file = paste0(output.file, "SBS12.pdf"),
+                                 plot.SBS12 = TRUE)
+        strand.bias.statistics<- c(strand.bias.statistics,
+                                   list$strand.bias.statistics)
+      }
+    }
+    
+    zipfile.name <- basename(zipfile)
+    AddRunInformation(files, vcf.names, zipfile.name, vcftype = "strelka.sbs",
+                      ref.genome, region, mutation.loads, strand.bias.statistics,
+                      tmpdir)
+    file.names <- list.files(path = tmpdir, pattern = "\\.(pdf|csv|txt)$",
+                             full.names = TRUE)
+    zip::zipr(zipfile = zipfile, files = file.names)
+    unlink(file.names)
+    invisible(catalogs0)
   }
 
-  zipfile.name <- basename(zipfile)
-  AddRunInformation(files, vcf.names, zipfile.name, vcftype = "strelka.sbs",
-                    ref.genome, region, mutation.loads, strand.bias.statistics,
-                    tmpdir)
-  file.names <- list.files(path = tmpdir, pattern = "\\.(pdf|csv|txt)$",
-                           full.names = TRUE)
-  zip::zipr(zipfile = zipfile, files = file.names)
-  unlink(file.names)
-  invisible(catalogs0)
-}
-
-#' Create a zip file which contains ID (small insertion and deletion) catalog
-#' and plot PDF from Strelka ID VCF files
+#' \strong{[Deprecated, use VCFsToZipFile(variant.caller = "strelka") instead]}
+#' Create a zip file which contains ID (small insertions and deletions) catalog
+#' and plot PDF from Strelka ID VCF files 
 #'
-#' Create ID (small insertion and deletion) catalog from the Strelka ID VCFs
+#' \strong{[Deprecated, use VCFsToZipFile(variant.caller = "strelka") instead]}
+#' Create ID (small insertions and deletions) catalog from the Strelka ID VCFs
 #' specified by \code{dir}, save the catalog as CSV file, plot it to PDF and
 #' generate a zip archive of all the output files.
 #'
@@ -131,13 +141,14 @@ StrelkaSBSVCFFilesToZipFile <-
 #'
 #' @inheritSection StrelkaIDVCFFilesToCatalog Value
 #'
-#' @inheritSection VCFsToIDCatalogs ID classification
+#' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
 #'
 #' @inheritSection VCFsToIDCatalogs Note
 #'
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' dir <- c(system.file("extdata/Strelka-ID-vcf",
 #'                      package = "ICAMS"))
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
@@ -148,6 +159,7 @@ StrelkaSBSVCFFilesToZipFile <-
 #'                                region = "genome",
 #'                                base.filename = "Strelka-ID")
 #'   unlink(file.path(tempdir(), "test.zip"))}
+#'} 
 StrelkaIDVCFFilesToZipFile <-
   function(dir,
            zipfile,
@@ -158,6 +170,10 @@ StrelkaIDVCFFilesToZipFile <-
            flag.mismatches = 0,
            return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "StrelkaIDVCFFilesToZipFile()",
+                              details = 'Please use `VCFsToZipFile(variant.caller = "strelka")` instead')
+    
     files <- list.files(path = dir, pattern = "\\.vcf$",
                         full.names = TRUE, ignore.case = TRUE)
     vcf.names <- basename(files)
@@ -171,11 +187,11 @@ StrelkaIDVCFFilesToZipFile <-
     # Retrieve the catalog matrix from catalogs0
     catalogs <- catalogs0
     catalogs$discarded.variants <- catalogs$annotated.vcfs <- NULL
-    
+
     # Create a new tmp dir
     tmpdir <- tempfile()
     dir.create(tmpdir)
-    
+
     output.file <- ifelse(base.filename == "",
                           paste0(tmpdir, .Platform$file.sep),
                           file.path(tmpdir, paste0(base.filename, ".")))
@@ -197,8 +213,10 @@ StrelkaIDVCFFilesToZipFile <-
     invisible(catalogs0)
   }
 
+#' \strong{[Deprecated, use VCFsToZipFile(variant.caller = "mutect") instead]}
 #' Create a zip file which contains catalogs and plot PDFs from Mutect VCF files
 #'
+#' \strong{[Deprecated, use VCFsToZipFile(variant.caller = "mutect") instead]}
 #' Create 3 SBS catalogs (96, 192, 1536), 3 DBS catalogs (78, 136, 144) and
 #' Indel catalog from the Mutect VCFs specified by \code{dir}, save the catalogs
 #' as CSV files, plot them to PDF and generate a zip archive of all the output files.
@@ -218,7 +236,7 @@ StrelkaIDVCFFilesToZipFile <-
 #'   \code{\link{ICAMS}}.
 #'
 #' @param trans.ranges Optional. If \code{ref.genome} specifies one of the
-#'   \code{\link{BSgenome}} object
+#'   \code{\link[BSgenome]{BSgenome}} object
 #'   \enumerate{
 #'     \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
 #'     \item \code{BSgenome.Hsapiens.UCSC.hg38}
@@ -240,12 +258,12 @@ StrelkaIDVCFFilesToZipFile <-
 #'   \code{dir} and file paths without extensions (and the leading dot) will be
 #'   used as the names of the VCF files.
 #'
-#' @param tumor.col.names Optional. Character vector of column names in VCFs which contain
-#'   the tumor sample information. The order of names in \code{tumor.col.names}
-#'   should match the order of VCFs listed in \code{dir}. If
-#'   \code{tumor.col.names} is equal to \code{NA}(default), this function will
-#'   use the 10th column in all the VCFs to calculate VAFs.
-#'   See \code{\link{GetMutectVAF}} for more details.
+#' @param tumor.col.names Optional. Vector of column names or column indices in
+#'   VCFs which contain the tumor sample information. The order of elements in
+#'   \code{tumor.col.names} should match the order of VCFs listed in \code{dir}.
+#'   If \code{tumor.col.names} is equal to \code{NA}(default), this function
+#'   will use the 10th column in all the VCFs to calculate VAFs. See
+#'   \code{\link{GetMutectVAF}} for more details.
 #'
 #' @param base.filename Optional. The base name of the CSV and PDF files to be
 #'   produced; multiple files will be generated, each ending in
@@ -272,7 +290,7 @@ StrelkaIDVCFFilesToZipFile <-
 #'
 #' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf Value
 #'
-#' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf ID classification
+#' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
 #'
 #' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf Note
 #'
@@ -281,6 +299,7 @@ StrelkaIDVCFFilesToZipFile <-
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' dir <- c(system.file("extdata/Mutect-vcf",
 #'                      package = "ICAMS"))
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
@@ -292,6 +311,7 @@ StrelkaIDVCFFilesToZipFile <-
 #'                             region = "genome",
 #'                             base.filename = "Mutect")
 #'   unlink(file.path(tempdir(), "test.zip"))}
+#'}
 MutectVCFFilesToZipFile <-
   function(dir,
            zipfile,
@@ -304,6 +324,10 @@ MutectVCFFilesToZipFile <-
            flag.mismatches = 0,
            return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "MutectVCFFilesToZipFile()",
+                              details = 'Please use `VCFsToZipFile(variant.caller = "mutect")` instead')
+    
     files <- list.files(path = dir, pattern = "\\.vcf$",
                         full.names = TRUE, ignore.case = TRUE)
     vcf.names <- basename(files)
@@ -317,11 +341,11 @@ MutectVCFFilesToZipFile <-
     # Retrieve the catalog matrix from catalogs0
     catalogs <- catalogs0
     catalogs$discarded.variants <- catalogs$annotated.vcfs <- NULL
-    
+
     # Create a new tmp dir
     tmpdir <- tempfile()
     dir.create(tmpdir)
-    
+
     output.file <- ifelse(base.filename == "",
                           paste0(tmpdir, .Platform$file.sep),
                           file.path(tmpdir, paste0(base.filename, ".")))
@@ -369,88 +393,18 @@ MutectVCFFilesToZipFile <-
 #'   \strong{same} variant caller. Each VCF \strong{must} have a file extension
 #'   ".vcf" (case insensitive) and share the \strong{same} \code{ref.genome} and
 #'   \code{region}.
-#'   
-#' @param files Character vector of file paths to the VCF files. Only \strong{one} of 
-#' argument \code{dir} or \code{files} need to be specified.
+#'
+#' @param files Character vector of file paths to the VCF files. Only
+#'   \strong{one} of argument \code{dir} or \code{files} need to be specified.
 #'
 #' @param zipfile Pathname of the zip file to be created.
-#'
-#' @param ref.genome  A \code{ref.genome} argument as described in
-#'   \code{\link{ICAMS}}.
-#'
-#' @param variant.caller Name of the variant caller that produces the VCF, can
-#'   be either \code{"strelka"}, \code{"mutect"}, \code{"freebayes"} or
-#'   \code{"unknown"}. This information is needed to calculate the VAFs (variant
-#'   allele frequencies). If variant caller is \code{"unknown"}(default) and
-#'   \code{get.vaf.function} is NULL, then VAF and read depth will be NAs. If
-#'   variant caller is \code{"mutect"}, do \strong{not} merge SBSs into DBS.
-#'
-#' @param num.of.cores The number of cores to use. Not available on Windows
-#'   unless \code{num.of.cores = 1}.
-#'
-#' @param trans.ranges Optional. If \code{ref.genome} specifies one of the
-#'   \code{\link{BSgenome}} object
-#'   \enumerate{
-#'     \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
-#'     \item \code{BSgenome.Hsapiens.UCSC.hg38}
-#'     \item \code{BSgenome.Mmusculus.UCSC.mm10}
-#'   }
-#'   then the function will infer \code{trans.ranges} automatically. Otherwise,
-#'   user will need to provide the necessary \code{trans.ranges}. Please refer to
-#'   \code{\link{TranscriptRanges}} for more details.
-#'   If \code{is.null(trans.ranges)} do not add transcript range
-#'   information.
-#'
-#' @param region A character string designating a genomic region;
-#'  see \code{\link{as.catalog}} and \code{\link{ICAMS}}.
-#'
-#' @param names.of.VCFs Optional. Character vector of names of the VCF files.
-#'   The order of names in \code{names.of.VCFs} should match the order of VCFs
-#'   listed in \code{dir}. If \code{NULL}(default), this function will remove
-#'   all of the path up to and including the last path separator (if any) in
-#'   \code{dir} and file paths without extensions (and the leading dot) will be
-#'   used as the names of the VCF files.
-#'
-#' @param tumor.col.names Optional. Only applicable to \strong{Mutect} VCFs.
-#'   Character vector of column names in \strong{Mutect} VCFs which contain the
-#'   tumor sample information. The order of names in \code{tumor.col.names}
-#'   should match the order of \strong{Mutect} VCFs specified in \code{files}.
-#'   If \code{tumor.col.names} is equal to \code{NA}(default), this function
-#'   will use the 10th column in all the \strong{Mutect} VCFs to calculate VAFs.
-#'   See \code{\link{GetMutectVAF}} for more details.
-#'
-#' @param filter.status The status indicating a variant has passed all filters.
-#'   An example would be \code{"PASS"}. Variants which don't have the specified
-#'   \code{filter.status} in the \code{FILTER} column in VCF will be removed. If
-#'   \code{NULL}(default), no variants will be removed from the original VCF.
-#'
-#' @param get.vaf.function Optional. Only applicable when \code{variant.caller} is
-#' \strong{"unknown"}. Function to calculate VAF(variant allele frequency) and read
-#'   depth information from original VCF. See \code{\link{GetMutectVAF}} as an example.
-#'   If \code{NULL}(default) and \code{variant.caller} is "unknown", then VAF
-#'   and read depth will be NAs.
-#'
-#' @param ... Optional arguments to \code{get.vaf.function}.
-#'
-#' @param max.vaf.diff \strong{Not} applicable if \code{variant.caller =
-#'   "mutect"}. The maximum difference of VAF, default value is 0.02. If the
-#'   absolute difference of VAFs for adjacent SBSs is bigger than \code{max.vaf.diff},
-#'   then these adjacent SBSs are likely to be "merely" asynchronous single base
-#'   mutations, opposed to a simultaneous doublet mutation or variants involving
-#'   more than two consecutive bases.
 #'
 #' @param base.filename Optional. The base name of the CSV and PDF files to be
 #'   produced; multiple files will be generated, each ending in
 #'   \eqn{x}\code{.csv} or \eqn{x}\code{.pdf}, where \eqn{x} indicates the type
 #'   of catalog.
 #'
-#' @param return.annotated.vcfs Logical. Whether to return the annotated VCFs
-#'   with additional columns showing mutation class for each variant. Default is
-#'   FALSE.
-#'
-#' @param suppress.discarded.variants.warnings Logical. Whether to suppress
-#'   warning messages showing information about the discarded variants. Default
-#'   is TRUE.
+#' @inheritParams VCFsToCatalogsAndPlotToPdf
 #'
 #' @importFrom utils glob2rx
 #'
@@ -487,44 +441,46 @@ VCFsToZipFile <-
            region = "unknown",
            names.of.VCFs = NULL,
            tumor.col.names = NA,
-           filter.status = NULL,
+           filter.status = DefaultFilterStatus(variant.caller),
            get.vaf.function = NULL,
            ...,
            max.vaf.diff = 0.02,
            base.filename = "",
            return.annotated.vcfs = FALSE,
-           suppress.discarded.variants.warnings = TRUE) {
+           suppress.discarded.variants.warnings = TRUE,
+           chr.names.to.process = NULL) {
     if (missing(dir) && missing(files)) {
       stop("One of argument dir or files need to be specified")
     }
-    
+
     if (!missing(dir) && !missing(files)) {
       stop("Only one of argument dir or files can be specified")
     }
-    
+
     if (missing(files) && !missing(dir)) {
       files <- list.files(path = dir, pattern = "\\.vcf$",
                           full.names = TRUE, ignore.case = TRUE)
     }
-    
+
     vcf.names <- basename(files)
     num.of.cores <- AdjustNumberOfCores(num.of.cores)
-    
+
     catalogs0 <-
-      VCFsToCatalogs(files = files, 
+      VCFsToCatalogs(files = files,
                      ref.genome = ref.genome,
-                     variant.caller = variant.caller, 
+                     variant.caller = variant.caller,
                      num.of.cores = num.of.cores,
-                     trans.ranges = trans.ranges, 
+                     trans.ranges = trans.ranges,
                      region = region,
-                     names.of.VCFs = names.of.VCFs, 
+                     names.of.VCFs = names.of.VCFs,
                      tumor.col.names = tumor.col.names,
-                     filter.status = filter.status, 
+                     filter.status = filter.status,
                      get.vaf.function = get.vaf.function,
                      ... = ..., max.vaf.diff = max.vaf.diff,
                      return.annotated.vcfs = return.annotated.vcfs,
-                     suppress.discarded.variants.warnings = 
-                       suppress.discarded.variants.warnings)
+                     suppress.discarded.variants.warnings =
+                       suppress.discarded.variants.warnings,
+                     chr.names.to.process = chr.names.to.process)
 
     mutation.loads <- GetMutationLoadsFromMutectVCFs(catalogs0)
     strand.bias.statistics <- NULL
@@ -532,11 +488,11 @@ VCFsToZipFile <-
     # Retrieve the catalog matrix from catalogs0
     catalogs <- catalogs0
     catalogs$discarded.variants <- catalogs$annotated.vcfs <- NULL
-    
+
     # Create a new tmp dir
     tmpdir <- tempfile()
     dir.create(tmpdir)
-    
+
     output.file <- ifelse(base.filename == "",
                           paste0(tmpdir, .Platform$file.sep),
                           file.path(tmpdir, paste0(base.filename, ".")))
@@ -547,15 +503,19 @@ VCFsToZipFile <-
     }
 
     for (name in names(catalogs)) {
-      PlotCatalogToPdf(catalogs[[name]],
-                       file = paste0(output.file, name, ".pdf"))
+      non.empty.samples <- RetrieveNonEmptySamples(catalogs[[name]])
+      # Only plot samples which have mutations for a specific mutation class
+      if (!is.null(non.empty.samples)) {
+        PlotCatalogToPdf(non.empty.samples,
+                         file = paste0(output.file, name, ".pdf"))
 
-      if (name == "catSBS192") {
-        list <- PlotCatalogToPdf(catalogs[[name]],
-                                 file = paste0(output.file, "SBS12.pdf"),
-                                 plot.SBS12 = TRUE)
-        strand.bias.statistics <-
-          c(strand.bias.statistics, list$strand.bias.statistics)
+        if (name == "catSBS192") {
+          list <- PlotCatalogToPdf(non.empty.samples,
+                                   file = paste0(output.file, "SBS12.pdf"),
+                                   plot.SBS12 = TRUE)
+          strand.bias.statistics <-
+            c(strand.bias.statistics, list$strand.bias.statistics)
+        }
       }
     }
 
@@ -584,7 +544,7 @@ VCFsToZipFileXtra <-
            region = "unknown",
            names.of.VCFs = NULL,
            tumor.col.names = NA,
-           filter.status = NULL,
+           filter.status = DefaultFilterStatus(variant.caller),
            get.vaf.function = NULL,
            ...,
            max.vaf.diff = 0.02,
@@ -595,30 +555,30 @@ VCFsToZipFileXtra <-
                         full.names = TRUE, ignore.case = TRUE)
     vcf.names <- basename(files)
     num.of.cores <- AdjustNumberOfCores(num.of.cores)
-    
+
     catalogs0 <-
-      VCFsToCatalogs(files = files, 
+      VCFsToCatalogs(files = files,
                      ref.genome = ref.genome,
-                     variant.caller = variant.caller, 
+                     variant.caller = variant.caller,
                      num.of.cores = num.of.cores,
-                     trans.ranges = trans.ranges, 
+                     trans.ranges = trans.ranges,
                      region = region,
-                     names.of.VCFs = names.of.VCFs, 
+                     names.of.VCFs = names.of.VCFs,
                      tumor.col.names = tumor.col.names,
-                     filter.status = filter.status, 
+                     filter.status = filter.status,
                      get.vaf.function = get.vaf.function,
                      ... = ..., max.vaf.diff = max.vaf.diff,
                      return.annotated.vcfs = return.annotated.vcfs,
-                     suppress.discarded.variants.warnings = 
+                     suppress.discarded.variants.warnings =
                        suppress.discarded.variants.warnings)
-    
+
     mutation.loads <- GetMutationLoadsFromMutectVCFs(catalogs0)
     strand.bias.statistics <- NULL
-    
+
     # Retrieve the catalog matrix from catalogs0
     catalogs <- catalogs0
     catalogs$discarded.variants <- catalogs$annotated.vcfs <- NULL
-    
+
     # Retrieve the catalog matrix from catalogs0
     catalogs <- catalogs0
     catalogs$discarded.variants <- catalogs$annotated.vcfs <- NULL
@@ -644,11 +604,11 @@ VCFsToZipFileXtra <-
 
     # Transform the counts catalogs to density catalogs
     catalogs.density <- TransCountsCatalogToDensity(catalogs)
-    
+
     # Create a new tmp dir
     tmpdir <- tempfile()
     dir.create(tmpdir)
-    
+
     output.file <- ifelse(base.filename == "",
                           paste0(tmpdir, .Platform$file.sep),
                           file.path(tmpdir, paste0(base.filename, ".")))
@@ -744,8 +704,10 @@ CombineAndReturnCatalogsForStrelkaSBSVCFs <-
     return(combined.list2)
   }
 
+#' \strong{[Deprecated, use VCFsToCatalogs(variant.caller = "strelka") instead]}
 #' Create SBS and DBS catalogs from Strelka SBS VCF files
 #'
+#' \strong{[Deprecated, use VCFsToCatalogs(variant.caller = "strelka") instead]}
 #' Create 3 SBS catalogs (96, 192, 1536) and 3 DBS catalogs (78, 136, 144) from
 #' the Strelka SBS VCFs specified by \code{files}. The function will find and
 #' merge adjacent SBS pairs into DBS if their VAFs are very similar. The default
@@ -767,6 +729,7 @@ CombineAndReturnCatalogsForStrelkaSBSVCFs <-
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Strelka-SBS-vcf",
 #'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
@@ -774,10 +737,14 @@ CombineAndReturnCatalogsForStrelkaSBSVCFs <-
 #'   catalogs <- StrelkaSBSVCFFilesToCatalog(file, ref.genome = "hg19",
 #'                                           trans.ranges = trans.ranges.GRCh37,
 #'                                           region = "genome")}
+#'}                                        
 StrelkaSBSVCFFilesToCatalog <-
   function(files, ref.genome, trans.ranges = NULL, region = "unknown",
            names.of.VCFs = NULL, return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "StrelkaSBSVCFFilesToCatalog()",
+                              details = 'Please use `VCFsToCatalogs(variant.caller = "strelka")` instead')
     split.vcfs <-
       ReadAndSplitStrelkaSBSVCFs(files, names.of.VCFs,
                                  suppress.discarded.variants.warnings)
@@ -800,9 +767,11 @@ StrelkaSBSVCFFilesToCatalog <-
                                               DBS.list = DBS.list)
   }
 
-#' Create ID (small insertion and deletion) catalog from Strelka ID VCF files
-#'
-#' Create ID (small insertion and deletion) catalog from the Strelka ID VCFs
+#' \strong{\[Deprecated, use VCFsToCatalogs(variant.caller = "strelka") instead\]}
+#' Create ID (small insertions and deletions) catalog from Strelka ID VCF files
+#' 
+#' \strong{\[Deprecated, use VCFsToCatalogs(variant.caller = "strelka") instead\]}
+#' Create ID (small insertions and deletions) catalog from the Strelka ID VCFs
 #' specified by \code{files}
 #'
 #' This function calls \code{\link{VCFsToIDCatalogs}}
@@ -813,7 +782,7 @@ StrelkaSBSVCFFilesToCatalog <-
 #'
 #' @section Value:
 #' A \strong{list} of elements:
-#'   * \code{catalog}: The ID (small insertion and deletion) catalog with
+#'   * \code{catalog}: The ID (small insertions and deletions) catalog with
 #'   attributes added. See \code{\link{as.catalog}} for more details.
 #'
 #'   * \code{discarded.variants}: \strong{Non-NULL only if} there are variants
@@ -828,23 +797,29 @@ StrelkaSBSVCFFilesToCatalog <-
 #'   be obtained from \code{ID.class} column.
 #' @md
 #'
-#' @inheritSection VCFsToIDCatalogs ID classification
+#' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
 #'
 #' @inheritSection VCFsToIDCatalogs Note
 #'
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Strelka-ID-vcf",
 #'                       "Strelka.ID.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
 #'   catID <- StrelkaIDVCFFilesToCatalog(file, ref.genome = "hg19",
 #'                                       region = "genome")}
+#'}                                      
 StrelkaIDVCFFilesToCatalog <-
   function(files, ref.genome, region = "unknown", names.of.VCFs = NULL,
            flag.mismatches = 0, return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "StrelkaIDVCFFilesToCatalog()",
+                              details = 'Please use `VCFsToCatalogs(variant.caller = "strelka")` instead')
+    
     vcfs <- ReadStrelkaIDVCFs(files = files, names.of.VCFs = names.of.VCFs)
 
     ID.list <- VCFsToIDCatalogs(list.of.vcfs = vcfs,
@@ -897,6 +872,7 @@ CombineAndReturnCatalogsForMutectVCFs <-
                           catDBS136 = DBS.list$catDBS136,
                           catDBS144 = DBS.list$catDBS144,
                           catID = ID.list$catalog,
+                          catID166 = ID.list$catID166,
                           discarded.variants = discarded.variants.list2,
                           annotated.vcfs = annotated.vcfs.list2)
     # Remove NULL elements from the list
@@ -904,8 +880,10 @@ CombineAndReturnCatalogsForMutectVCFs <-
     return(combined.list2)
   }
 
+#' \strong{[Deprecated, use VCFsToCatalogs(variant.caller = "mutect") instead]}
 #' Create SBS, DBS and Indel catalogs from Mutect VCF files
-#'
+#' 
+#' \strong{[Deprecated, use VCFsToCatalogs(variant.caller = "mutect") instead]}
 #' Create 3 SBS catalogs (96, 192, 1536), 3 DBS catalogs (78, 136, 144) and
 #' Indel catalog from the Mutect VCFs specified by \code{files}
 #'
@@ -918,7 +896,7 @@ CombineAndReturnCatalogsForMutectVCFs <-
 #'
 #' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf Value
 #'
-#' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf ID classification
+#' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
 #'
 #' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf Note
 #'
@@ -927,6 +905,7 @@ CombineAndReturnCatalogsForMutectVCFs <-
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Mutect-vcf",
 #'                       "Mutect.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
@@ -934,11 +913,15 @@ CombineAndReturnCatalogsForMutectVCFs <-
 #'   catalogs <- MutectVCFFilesToCatalog(file, ref.genome = "hg19",
 #'                                       trans.ranges = trans.ranges.GRCh37,
 #'                                       region = "genome")}
+#' }
 MutectVCFFilesToCatalog <-
   function(files, ref.genome, trans.ranges = NULL, region = "unknown",
            names.of.VCFs = NULL, tumor.col.names = NA, flag.mismatches = 0,
            return.annotated.vcfs = FALSE,
            suppress.discarded.variants.warnings = TRUE) {
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "MutectVCFFilesToCatalog()",
+                              details = 'Please use `VCFsToCatalogs(variant.caller = "mutect")` instead')
     split.vcfs <-
       ReadAndSplitMutectVCFs(files, names.of.VCFs, tumor.col.names,
                              suppress.discarded.variants.warnings)
@@ -1011,6 +994,7 @@ CombineAndReturnCatalogsForVCFs <-
                           catDBS136 = DBS.list$catDBS136,
                           catDBS144 = DBS.list$catDBS144,
                           catID = ID.list$catalog,
+                          catID166 = ID.list$catID166,
                           discarded.variants = discarded.variants.list2,
                           annotated.vcfs = annotated.vcfs.list2)
     # Remove NULL elements from the list
@@ -1030,7 +1014,7 @@ CombineAndReturnCatalogsForVCFs <-
 #' \code{\link{VCFsToDBSCatalogs}} and \code{\link{VCFsToIDCatalogs}}
 #'
 #' @inheritParams VCFsToCatalogsAndPlotToPdf
-#' 
+#'
 #' @inheritSection VCFsToCatalogsAndPlotToPdf Value
 #'
 #' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
@@ -1056,27 +1040,29 @@ VCFsToCatalogs <- function(files,
                            region = "unknown",
                            names.of.VCFs = NULL,
                            tumor.col.names = NA,
-                           filter.status = NULL,
+                           filter.status = DefaultFilterStatus(variant.caller),
                            get.vaf.function = NULL,
                            ...,
                            max.vaf.diff = 0.02,
                            return.annotated.vcfs = FALSE,
-                           suppress.discarded.variants.warnings = TRUE) {
+                           suppress.discarded.variants.warnings = TRUE,
+                           chr.names.to.process = NULL) {
   num.of.cores <- AdjustNumberOfCores(num.of.cores)
-  
+
   split.vcfs <-
-    ReadAndSplitVCFs(files = files, 
+    ReadAndSplitVCFs(files = files,
                      variant.caller = variant.caller,
-                     num.of.cores = num.of.cores, 
+                     num.of.cores = num.of.cores,
                      names.of.VCFs = names.of.VCFs,
-                     tumor.col.names = tumor.col.names, 
+                     tumor.col.names = tumor.col.names,
                      filter.status = filter.status,
-                     get.vaf.function = get.vaf.function, 
+                     get.vaf.function = get.vaf.function,
                      ... = ...,
                      max.vaf.diff = max.vaf.diff,
-                     suppress.discarded.variants.warnings = 
-                       suppress.discarded.variants.warnings)
-  
+                     suppress.discarded.variants.warnings =
+                       suppress.discarded.variants.warnings,
+                     chr.names.to.process = chr.names.to.process)
+
   SBS.list <- VCFsToSBSCatalogs(list.of.SBS.vcfs = split.vcfs$SBS,
                                 ref.genome = ref.genome,
                                 num.of.cores = num.of.cores,
@@ -1085,7 +1071,7 @@ VCFsToCatalogs <- function(files,
                                 return.annotated.vcfs = return.annotated.vcfs,
                                 suppress.discarded.variants.warnings =
                                   suppress.discarded.variants.warnings)
-  
+
   DBS.list <- VCFsToDBSCatalogs(list.of.DBS.vcfs = split.vcfs$DBS,
                                 ref.genome = ref.genome,
                                 num.of.cores = num.of.cores,
@@ -1094,7 +1080,7 @@ VCFsToCatalogs <- function(files,
                                 return.annotated.vcfs = return.annotated.vcfs,
                                 suppress.discarded.variants.warnings =
                                   suppress.discarded.variants.warnings)
-  
+
   ID.list <- VCFsToIDCatalogs(list.of.vcfs = split.vcfs$ID,
                               ref.genome = ref.genome,
                               num.of.cores = num.of.cores,
@@ -1102,15 +1088,17 @@ VCFsToCatalogs <- function(files,
                               return.annotated.vcfs = return.annotated.vcfs,
                               suppress.discarded.variants.warnings =
                                 suppress.discarded.variants.warnings)
-  
+
   CombineAndReturnCatalogsForVCFs(split.vcfs.list = split.vcfs,
                                   SBS.list = SBS.list,
                                   DBS.list = DBS.list,
                                   ID.list = ID.list)
 }
 
-#' Read and split Strelka SBS VCF files
+#' \strong{\[Deprecated, use ReadAndSplitVCFs(variant.caller = "strelka") instead\]}
+#' Read and split Strelka SBS VCF files 
 #'
+#' \strong{\[Deprecated, use ReadAndSplitVCFs(variant.caller = "strelka") instead\]}
 #' The function will find and merge adjacent SBS pairs into DBS if their VAFs
 #' are very similar. The default threshold value for VAF is 0.02.
 #'
@@ -1137,13 +1125,19 @@ VCFsToCatalogs <- function(files,
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Strelka-SBS-vcf",
 #'                       "Strelka.SBS.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
 #' list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
+#' }
 ReadAndSplitStrelkaSBSVCFs <-
   function(files, names.of.VCFs = NULL,
            suppress.discarded.variants.warnings = TRUE) {
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "ReadAndSplitStrelkaSBSVCFs()",
+                              details = 'Please use `ReadAndSplitVCFs(variant.caller = "strelka")` instead')
+    
     vcfs <- ReadStrelkaSBSVCFs(files = files, names.of.VCFs = names.of.VCFs)
     split.vcfs <-
       SplitListOfStrelkaSBSVCFs(list.of.vcfs = vcfs,
@@ -1152,8 +1146,9 @@ ReadAndSplitStrelkaSBSVCFs <-
     return(split.vcfs)
   }
 
-#' Read Strelka ID (small insertion and deletion) VCF files
-#'
+#' \strong{[Deprecated, use ReadAndSplitVCFs(variant.caller = "strelka") instead]}
+#' Read Strelka ID (small insertions and deletions) VCF files 
+#' 
 #' @inheritParams ReadMutectVCFs
 #'
 #' @return A list of data frames containing data lines of the VCF files.
@@ -1165,11 +1160,17 @@ ReadAndSplitStrelkaSBSVCFs <-
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Strelka-ID-vcf",
 #'                       "Strelka.ID.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
 #' list.of.vcfs <- ReadStrelkaIDVCFs(file)
+#'}
 ReadStrelkaIDVCFs <- function(files, names.of.VCFs = NULL) {
+  lifecycle::deprecate_soft(when = "3.0.0", 
+                            what = "ReadStrelkaIDVCFs()",
+                            details = 'Please use `ReadAndSplitVCFs(variant.caller = "strelka")` instead')
+  
   vcfs <-
     lapply(files, FUN = ReadStrelkaIDVCF, name.of.VCF = names.of.VCFs)
   if (is.null(names.of.VCFs)) {
@@ -1184,7 +1185,8 @@ ReadStrelkaIDVCFs <- function(files, names.of.VCFs = NULL) {
   return(vcfs)
 }
 
-#' Read and split Mutect VCF files
+#' \strong{\[Deprecated, use ReadAndSplitVCFs(variant.caller = "mutect") instead\]}
+#' Read and split Mutect VCF files 
 #'
 #' @param files Character vector of file paths to the Mutect VCF files.
 #'
@@ -1210,13 +1212,19 @@ ReadStrelkaIDVCFs <- function(files, names.of.VCFs = NULL) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' file <- c(system.file("extdata/Mutect-vcf",
 #'                       "Mutect.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
 #' list.of.vcfs <- ReadAndSplitMutectVCFs(file)
+#'}  
 ReadAndSplitMutectVCFs <-
   function(files, names.of.VCFs = NULL, tumor.col.names = NA,
            suppress.discarded.variants.warnings = TRUE) {
+    lifecycle::deprecate_soft(when = "3.0.0", 
+                              what = "ReadAndSplitMutectVCFs()",
+                              details = 'Please use `ReadAndSplitVCFs(variant.caller = "mutect")` instead')
+    
     vcfs <- ReadMutectVCFs(files = files, names.of.VCFs = names.of.VCFs,
                            tumor.col.names =  tumor.col.names)
     split.vcfs <-
@@ -1228,68 +1236,16 @@ ReadAndSplitMutectVCFs <-
 
 #' Read and split VCF files
 #'
-#' @param files Character vector of file paths to the VCF files.
-#'
-#' @param variant.caller Name of the variant caller that produces the VCF, can
-#'   be either \code{"strelka"}, \code{"mutect"}, \code{"freebayes"} or
-#'   \code{"unknown"}. This information is needed to calculate the VAFs (variant
-#'   allele frequencies). If variant caller is \code{"unknown"}(default) and
-#'   \code{get.vaf.function} is NULL, then VAF and read depth will be NAs. If
-#'   variant caller is \code{"mutect"}, do \strong{not} merge SBSs into DBS.
-#'
-#' @param num.of.cores The number of cores to use. Not available on Windows
-#'   unless \code{num.of.cores = 1}.
-#'
-#' @param names.of.VCFs Character vector of names of the VCF files. The order
-#'   of names in \code{names.of.VCFs} should match the order of VCF file paths
-#'   in \code{files}. If \code{NULL}(default), this function will remove all of
-#'   the path up to and including the last path separator (if any) and file
-#'   paths without extensions (and the leading dot) will be used as the names of
-#'   the VCF files.
-#'
-#' @param tumor.col.names Optional. Only applicable to \strong{Mutect} VCFs.
-#'   Character vector of column names in \strong{Mutect} VCFs which contain the
-#'   tumor sample information. The order of names in \code{tumor.col.names}
-#'   should match the order of \strong{Mutect} VCFs specified in \code{files}.
-#'   If \code{tumor.col.names} is equal to \code{NA}(default), this function
-#'   will use the 10th column in all the \strong{Mutect} VCFs to calculate VAFs.
-#'   See \code{\link{GetMutectVAF}} for more details.
-#'
-#' @param filter.status The status indicating a variant has passed all filters.
-#'   An example would be \code{"PASS"}. Variants which don't have the specified
-#'   \code{filter.status} in the \code{FILTER} column in VCF will be removed. If
-#'   \code{NULL}(default), no variants will be removed from the original VCF.
-#'
-#' @param get.vaf.function Optional. Only applicable when \code{variant.caller} is
-#' \strong{"unknown"}. Function to calculate VAF(variant allele frequency) and read
-#'   depth information from original VCF. See \code{\link{GetMutectVAF}} as an example.
-#'   If \code{NULL}(default) and \code{variant.caller} is "unknown", then VAF
-#'   and read depth will be NAs.
+#' @param always.merge.SBS If \code{TRUE} merge adjacent SBSs as DBSs
+#'   regardless of VAFs and regardless of the value of \code{max.vaf.diff}
+#'   and regardless of the value of \code{get.vaf.function}. It is an
+#'   error to set this to \code{TRUE} when \code{variant.caller = "mutect"}.
 #'   
-#' @param max.vaf.diff \strong{Not} applicable if \code{variant.caller =
-#'   "mutect"}. The maximum difference of VAF, default value is 0.02. If the
-#'   absolute difference of VAFs for adjacent SBSs is bigger than \code{max.vaf.diff},
-#'   then these adjacent SBSs are likely to be "merely" asynchronous single base
-#'   mutations, opposed to a simultaneous doublet mutation or variants involving
-#'   more than two consecutive bases.
-#'
-#' @param ... Optional arguments to \code{get.vaf.function}.
-#'
-#' @param max.vaf.diff \strong{Not} applicable if \code{variant.caller =
-#'   "mutect"}. The maximum difference of VAF, default value is 0.02. If the
-#'   absolute difference of VAFs for adjacent SBSs is bigger than \code{max.vaf.diff},
-#'   then these adjacent SBSs are likely to be "merely" asynchronous single base
-#'   mutations, opposed to a simultaneous doublet mutation or variants involving
-#'   more than two consecutive bases.
-#'
-#' @param suppress.discarded.variants.warnings Logical. Whether to suppress
-#'   warning messages showing information about the discarded variants. Default
-#'   is TRUE.
+#' @inheritParams VCFsToCatalogsAndPlotToPdf
 #'
 #' @section Value: A list containing the following objects:
 #'
 #'   * \code{SBS}: List of VCFs with only single base substitutions.
-#'
 #'
 #'   * \code{DBS}: List of VCFs with only doublet base substitutions.
 #'
@@ -1310,14 +1266,22 @@ ReadAndSplitMutectVCFs <-
 #'                       package = "ICAMS"))
 #' list.of.vcfs <- ReadAndSplitVCFs(file, variant.caller = "mutect")
 ReadAndSplitVCFs <-
-  function(files, variant.caller = "unknown", num.of.cores = 1,
-           names.of.VCFs = NULL, tumor.col.names = NA,
-           filter.status = NULL, get.vaf.function = NULL, ...,
+  function(files,
+           variant.caller = "unknown",
+           num.of.cores = 1,
+           names.of.VCFs = NULL,
+           tumor.col.names = NA,
+           filter.status = DefaultFilterStatus(variant.caller),
+           get.vaf.function = NULL,
+           ...,
            max.vaf.diff = 0.02,
-           suppress.discarded.variants.warnings = TRUE) {
+           suppress.discarded.variants.warnings = TRUE,
+           always.merge.SBS                     = FALSE,
+           chr.names.to.process                 = NULL
+           ) {
     num.of.cores <- AdjustNumberOfCores(num.of.cores)
-    
-    vcfs <- ReadVCFs(files = files, 
+
+    vcfs <- ReadVCFs(files = files,
                      variant.caller = variant.caller,
                      num.of.cores = num.of.cores,
                      names.of.VCFs = names.of.VCFs,
@@ -1331,7 +1295,10 @@ ReadAndSplitVCFs <-
                       max.vaf.diff = max.vaf.diff,
                       num.of.cores = num.of.cores,
                       suppress.discarded.variants.warnings =
-                        suppress.discarded.variants.warnings)
+                        suppress.discarded.variants.warnings,
+                      always.merge.SBS = always.merge.SBS,
+                      chr.names.to.process = chr.names.to.process
+                      )
     return(split.vcfs)
   }
 
@@ -1443,7 +1410,7 @@ CheckAndReturnSBSCatalogs <-
 #' file <- c(system.file("extdata/Mutect-vcf",
 #'                       "Mutect.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
-#' list.of.SBS.vcfs <- ReadAndSplitMutectVCFs(file)$SBS
+#' list.of.SBS.vcfs <- ReadAndSplitVCFs(file, variant.caller = "mutect")$SBS
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
 #'   catalogs.SBS <- VCFsToSBSCatalogs(list.of.SBS.vcfs, ref.genome = "hg19",
 #'                                     trans.ranges = trans.ranges.GRCh37,
@@ -1464,14 +1431,14 @@ VCFsToSBSCatalogs <- function(list.of.SBS.vcfs,
 
   annotated.vcfs <- discarded.variants <- list()
 
-  GetSBSCatalogs <- 
+  GetSBSCatalogs <-
     function(i, list.of.SBS.vcfs) {
     SBS.vcf <- list.of.SBS.vcfs[[i]]
     sample.id <- names(list.of.SBS.vcfs)[i]
-    annotated.SBS.vcf <- 
-      AnnotateSBSVCF(SBS.vcf = SBS.vcf, 
-                     ref.genome = ref.genome, 
-                     trans.ranges = trans.ranges, 
+    annotated.SBS.vcf <-
+      AnnotateSBSVCF(SBS.vcf = SBS.vcf,
+                     ref.genome = ref.genome,
+                     trans.ranges = trans.ranges,
                      name.of.VCF = sample.id)
     if (suppress.discarded.variants.warnings == TRUE) {
       SBS.cat <-
@@ -1503,7 +1470,7 @@ VCFsToSBSCatalogs <- function(list.of.SBS.vcfs,
                 annotated.vcfs = annotated.vcfs))
   }
 
-  list0 <- parallel::mclapply(1:ncol, 
+  list0 <- parallel::mclapply(1:ncol,
                               FUN = GetSBSCatalogs,
                               list.of.SBS.vcfs = list.of.SBS.vcfs,
                               mc.cores = num.of.cores)
@@ -1654,7 +1621,7 @@ CheckAndReturnDBSCatalogs <-
 #' file <- c(system.file("extdata/Mutect-vcf",
 #'                       "Mutect.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
-#' list.of.DBS.vcfs <- ReadAndSplitMutectVCFs(file)$DBS
+#' list.of.DBS.vcfs <- ReadAndSplitVCFs(file, variant.caller = "mutect")$DBS
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
 #'   catalogs.DBS <- VCFsToDBSCatalogs(list.of.DBS.vcfs, ref.genome = "hg19",
 #'                                     trans.ranges = trans.ranges.GRCh37,
@@ -1678,10 +1645,10 @@ VCFsToDBSCatalogs <- function(list.of.DBS.vcfs,
   GetDBSCatalogs <- function(i, list.of.DBS.vcfs) {
     DBS.vcf <- list.of.DBS.vcfs[[i]]
     sample.id <- names(list.of.DBS.vcfs)[i]
-    annotated.DBS.vcf <- 
-      AnnotateDBSVCF(DBS.vcf = DBS.vcf, 
-                     ref.genome = ref.genome, 
-                     trans.ranges = trans.ranges, 
+    annotated.DBS.vcf <-
+      AnnotateDBSVCF(DBS.vcf = DBS.vcf,
+                     ref.genome = ref.genome,
+                     trans.ranges = trans.ranges,
                      name.of.VCF = sample.id)
     if (suppress.discarded.variants.warnings == TRUE) {
       DBS.cat <-
@@ -1756,6 +1723,8 @@ VCFsToDBSCatalogs <- function(list.of.DBS.vcfs,
 #' Check and return ID catalog
 #'
 #' @param catID An ID catalog.
+#' 
+#' @param catID166 An ID166 (genic-intergenic indel) catalog.
 #'
 #' @param discarded.variants A list of discarded variants.
 #'
@@ -1766,24 +1735,27 @@ VCFsToDBSCatalogs <- function(list.of.DBS.vcfs,
 #'
 #' @keywords internal
 CheckAndReturnIDCatalog <-
-  function(catID, discarded.variants, annotated.vcfs) {
+  function(catID, catID166, discarded.variants, annotated.vcfs) {
     if (length(discarded.variants) == 0) {
       if (length(annotated.vcfs) == 0) {
-        return(list(catalog = catID))
+        return(list(catalog = catID, catID166 = catID166))
       } else {
-        return(list(catalog = catID, annotated.vcfs = annotated.vcfs))
+        return(list(catalog = catID, catID166 = catID166,
+                    annotated.vcfs = annotated.vcfs))
       }
     } else {
       if (length(annotated.vcfs) == 0) {
-        return(list(catalog = catID, discarded.variants = discarded.variants))
+        return(list(catalog = catID, catID166 = catID166,
+                    discarded.variants = discarded.variants))
       } else {
-        return(list(catalog = catID, discarded.variants = discarded.variants,
+        return(list(catalog = catID, catID166 = catID166,
+                    discarded.variants = discarded.variants,
                     annotated.vcfs = annotated.vcfs))
       }
     }
   }
 
-#' Create ID (small insertion and deletion) catalog from ID VCFs
+#' Create ID (small insertions and deletions) catalog from ID VCFs
 #'
 #' @param list.of.vcfs List of in-memory ID VCFs. The list names will be
 #' the sample ids in the output catalog.
@@ -1801,7 +1773,7 @@ CheckAndReturnIDCatalog <-
 #'
 #' @section Value:
 #' A \strong{list} of elements:
-#'   * \code{catalog}: The ID (small insertion and deletion) catalog with
+#'   * \code{catalog}: The ID (small insertions and deletions) catalog with
 #'   attributes added. See \code{\link{as.catalog}} for details.
 #'
 #'   * \code{discarded.variants}: \strong{Non-NULL only if} there are variants
@@ -1816,10 +1788,10 @@ CheckAndReturnIDCatalog <-
 #' be obtained from \code{ID.class} column.
 #' @md
 #'
-#' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf ID classification
+#' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
 #'
 #' @section Note:
-#'  In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+#'  In ID (small insertions and deletions) catalogs, deletion repeat sizes range
 #'  from 0 to 5+, but for plotting and end-user documentation deletion repeat
 #'  sizes range from 1 to 6+.
 #'
@@ -1829,7 +1801,7 @@ CheckAndReturnIDCatalog <-
 #' file <- c(system.file("extdata/Strelka-ID-vcf/",
 #'                       "Strelka.ID.GRCh37.s1.vcf",
 #'                       package = "ICAMS"))
-#' list.of.ID.vcfs <- ReadStrelkaIDVCFs(file)
+#' list.of.ID.vcfs <- ReadAndSplitVCFs(file, variant.caller = "strelka")$ID
 #' if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5",
 #'  quietly = TRUE)) {
 #'   catID <- VCFsToIDCatalogs(list.of.ID.vcfs, ref.genome = "hg19",
@@ -1837,15 +1809,20 @@ CheckAndReturnIDCatalog <-
 VCFsToIDCatalogs <- function(list.of.vcfs,
                              ref.genome,
                              num.of.cores = 1,
+                             trans.ranges = NULL,
                              region = "unknown",
                              flag.mismatches = 0,
                              return.annotated.vcfs = FALSE,
                              suppress.discarded.variants.warnings = TRUE) {
   ncol <- length(list.of.vcfs)
 
-  # Create a 0-column matrix with the correct row labels.
+  # Create 0-column matrices with the correct row labels.
   catID <- matrix(0, nrow = length(ICAMS::catalog.row.order$ID), ncol = 0)
   rownames(catID) <- ICAMS::catalog.row.order$ID
+  catID166 <- 
+    matrix(0, nrow = length(ICAMS::catalog.row.order$ID166), ncol = 0)
+  rownames(catID166) <- ICAMS::catalog.row.order$ID166
+  
   annotated.vcfs <- discarded.variants <- list()
 
   GetIDCatalogs <- function(i, list.of.vcfs) {
@@ -1855,10 +1832,12 @@ VCFsToIDCatalogs <- function(list.of.vcfs,
     if (suppress.discarded.variants.warnings == TRUE) {
       list <-
         suppressWarnings(AnnotateIDVCF(ID.vcf = ID, ref.genome = ref.genome,
+                                       trans.ranges = trans.ranges,
                                        flag.mismatches = flag.mismatches,
                                        name.of.VCF = sample.id))
     } else {
       list <- AnnotateIDVCF(ID.vcf = ID, ref.genome = ref.genome,
+                            trans.ranges = trans.ranges,
                             flag.mismatches = flag.mismatches,
                             name.of.VCF = sample.id)
     }
@@ -1869,7 +1848,7 @@ VCFsToIDCatalogs <- function(list.of.vcfs,
     if (!is.null(list$discarded.variants)) {
       df <- dplyr::bind_rows(df, list$discarded.variants)
     }
-    # Unlike the case for SBS and DBS, we do not add transcript information.
+    
     if (suppress.discarded.variants.warnings == TRUE) {
       tmp <- suppressWarnings({
         CreateOneColIDMatrix(list$annotated.vcf,
@@ -1881,6 +1860,7 @@ VCFsToIDCatalogs <- function(list.of.vcfs,
                                   return.annotated.vcf = return.annotated.vcfs)
     }
     one.ID.column <- tmp$catalog
+    one.ID166.column <- tmp$catID166
     rm(ID)
 
     if (return.annotated.vcfs == TRUE) {
@@ -1896,6 +1876,7 @@ VCFsToIDCatalogs <- function(list.of.vcfs,
     }
 
     return(list(ID.column = one.ID.column,
+                ID166.column = one.ID166.column,
                 discarded.variants = discarded.variants,
                 annotated.vcfs = annotated.vcfs))
   }
@@ -1908,14 +1889,20 @@ VCFsToIDCatalogs <- function(list.of.vcfs,
   ID.cat1 <- do.call("cbind", ID.cat)
   catID <- as.catalog(ID.cat1, ref.genome = ref.genome,
                       region = region, catalog.type = "counts")
+  
+  ID166.cat <- lapply(list0, FUN = "[[", 2)
+  ID166.cat1 <- do.call("cbind", ID166.cat)
+  catID166 <- as.catalog(ID166.cat1, ref.genome = ref.genome,
+                         region = region, catalog.type = "counts")
 
-  discarded.variants1 <- lapply(list0, FUN = "[[", 2)
+  discarded.variants1 <- lapply(list0, FUN = "[[", 3)
   discarded.variants2 <- do.call("c", discarded.variants1)
 
-  annotated.vcfs1 <- lapply(list0, FUN = "[[", 3)
+  annotated.vcfs1 <- lapply(list0, FUN = "[[", 4)
   annotated.vcfs2 <- do.call("c", annotated.vcfs1)
 
-  CheckAndReturnIDCatalog(catID = catID, discarded.variants = discarded.variants2,
+  CheckAndReturnIDCatalog(catID = catID, catID166 = catID166,
+                          discarded.variants = discarded.variants2,
                           annotated.vcfs = annotated.vcfs2)
 }
 
@@ -2025,9 +2012,9 @@ AddRunInformation <-
     } else if (vcftype == "mutect") {
       vcftype <- "Mutect"
     }
-    
+
     ref.genome <- NormalizeGenomeArg(ref.genome)
-    
+
     if (ref.genome@pkgname == "BSgenome.Hsapiens.1000genomes.hs37d5") {
       ref.genome <- "Human GRCh37/hg19"
     } else if (ref.genome@pkgname == "BSgenome.Hsapiens.UCSC.hg38") {
@@ -2267,7 +2254,7 @@ GetMutationLoadsFromStrelkaSBSVCFs <- function(catalogs) {
 #' Get mutation loads information from Strelka ID VCF files.
 #'
 #' @param catalogs A list generated by calling function
-#'   \code{\link{StrelkaIDVCFFilesToCatalog}} to Strelka ID VCF files.
+#'   \code{\link{ReadStrelkaIDVCFs}} to Strelka ID VCF files.
 #'
 #' @return A list containing mutation loads information from Strelka ID VCF
 #'   files:

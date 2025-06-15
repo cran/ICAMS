@@ -2,9 +2,29 @@ Package: ICAMS
 Type: Package
 Title: In-Depth Characterization and Analysis of Mutational Signatures
         ('ICAMS')
-Version: 2.3.12
-Author: Steve Rozen, Nanhai Jiang, Arnoud Boot, Mo Liu, Yang Wu
-Maintainer: Steve Rozen <steverozen@gmail.com>
+Version: 3.0.11
+Authors@R: c(person(given = "Steve",
+                      family = "Rozen",
+                      role = c("aut", "cre"),
+                      email = "steverozen@gmail.com"),
+               person(given = "Nanhai",
+                      family = "Jiang",
+                      role = "aut"),
+               person(given = "Arnoud",
+                      family = "Boot",
+                      role = "aut"),
+               person(given = "Mo",
+                      family = "Liu",
+                      role = "aut"),
+               person(given = "Yang",
+                      family = "Wu",
+                      role = "aut"),
+               person(given = c("Mi", "Ni"),
+                      family = "Huang",
+                      role = "aut"),
+               person(given = c("Jia", "Geng"),
+                      family = "Chang",
+                      role = "aut"))
 Description: Analysis and visualization of experimentally elucidated mutational
     signatures -- the kind of analysis and visualization in Boot et al.,
     "In-depth characterization of the cisplatin mutational signature in 
@@ -26,15 +46,23 @@ Encoding: UTF-8
 LazyData: true
 Language: en-US
 biocViews:
-Imports: Biostrings, BSgenome, data.table, dplyr, GenomeInfoDb,
-        GenomicRanges, graphics, grDevices, IRanges, RColorBrewer,
-        stats, stringi, utils, zip
+Imports: Biostrings, BSgenome, data.table, dplyr, fuzzyjoin,
+        GenomeInfoDb, GenomicRanges, graphics, grDevices, IRanges,
+        lifecycle, RColorBrewer, stats, stringi, utils, zip
 Depends: R (>= 3.5),
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Suggests: BSgenome.Hsapiens.1000genomes.hs37d5,
         BSgenome.Hsapiens.UCSC.hg38, BSgenome.Mmusculus.UCSC.mm10,
-        testthat
+        ggplot2, reshape2, rlang, testthat
 NeedsCompilation: no
-Packaged: 2024-02-08 11:48:14 UTC; User
+Packaged: 2025-06-14 02:31:56 UTC; steve
+Author: Steve Rozen [aut, cre],
+  Nanhai Jiang [aut],
+  Arnoud Boot [aut],
+  Mo Liu [aut],
+  Yang Wu [aut],
+  Mi Ni Huang [aut],
+  Jia Geng Chang [aut]
+Maintainer: Steve Rozen <steverozen@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-02-09 15:20:08 UTC
+Date/Publication: 2025-06-15 00:30:15 UTC

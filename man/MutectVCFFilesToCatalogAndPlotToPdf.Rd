@@ -2,7 +2,9 @@
 % Please edit documentation in R/VCF_to_catalog_functions.R
 \name{MutectVCFFilesToCatalogAndPlotToPdf}
 \alias{MutectVCFFilesToCatalogAndPlotToPdf}
-\title{Create SBS, DBS and Indel catalogs from Mutect VCF files and plot them to PDF}
+\title{\strong{[Deprecated, use VCFsToCatalogsAndPlotToPdf(variant.caller = "mutect") instead]}
+Create SBS, DBS and Indel catalogs from Mutect VCF files
+and plot them to PDF}
 \usage{
 MutectVCFFilesToCatalogAndPlotToPdf(
   files,
@@ -24,7 +26,7 @@ MutectVCFFilesToCatalogAndPlotToPdf(
 \code{\link{ICAMS}}.}
 
 \item{trans.ranges}{Optional. If \code{ref.genome} specifies one of the
-\code{\link{BSgenome}} object
+\code{\link[BSgenome]{BSgenome}} object
 \enumerate{
 \item \code{BSgenome.Hsapiens.1000genomes.hs37d5}
 \item \code{BSgenome.Hsapiens.UCSC.hg38}
@@ -46,8 +48,8 @@ remove all of the path up to and including the last path separator (if any)
 in \code{files} and file paths without extensions (and the leading dot)
 will be used as the names of the VCF files.}
 
-\item{tumor.col.names}{Optional. Character vector of column names in VCFs
-which contain the tumor sample information. The order of names in
+\item{tumor.col.names}{Optional. Vector of column names or column indices in
+VCFs which contain the tumor sample information. The order of elements in
 \code{tumor.col.names} should match the order of VCFs specified in
 \code{files}. If \code{tumor.col.names} is equal to \code{NA}(default),
 this function will use the 10th column in all the VCFs to calculate VAFs.
@@ -72,6 +74,7 @@ warning messages showing information about the discarded variants. Default
 is TRUE.}
 }
 \description{
+\strong{[Deprecated, use VCFsToCatalogsAndPlotToPdf(variant.caller = "mutect") instead]}
 Create 3 SBS catalogs (96, 192, 1536), 3 DBS catalogs (78, 136, 144) and
 Indel catalog from the Mutect VCFs specified by \code{files} and plot them to
 PDF
@@ -88,7 +91,7 @@ A list containing the following objects:
 3 SBS catalogs (one each for 96, 192, and 1536).
 \item \code{catDBS78}, \code{catDBS136}, \code{catDBS144}: Matrix of
 3 DBS catalogs (one each for 78, 136, and 144).
-\item \code{catID}: Matrix of ID (small insertion and deletion) catalog.
+\item \code{catID}: Matrix of ID (small insertions and deletions) catalog.
 \item \code{discarded.variants}: \strong{Non-NULL only if} there are variants
 that were excluded from the analysis. See the added extra column
 \code{discarded.reason} for more details.
@@ -113,10 +116,25 @@ ICAMS, SBS 192 and DBS 144 catalog will not be generated. Each catalog has
 attributes added. See \code{\link{as.catalog}} for more details.
 }
 
+\section{Note}{
+
+SBS 192 and DBS 144 catalogs include only mutations in transcribed regions.
+In ID (small insertions and deletions) catalogs, deletion repeat sizes range
+from 0 to 5+, but for plotting and end-user documentation deletion repeat
+sizes range from 1 to 6+.
+}
+
+\section{Comments}{
+
+To add or change attributes of the catalog, you can use function
+\code{\link[base]{attr}}. \cr For example, \code{attr(catalog, "abundance")
+<- custom.abundance}.
+}
+
 \section{ID classification}{
 
-See \url{https://github.com/steverozen/ICAMS/blob/master/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
-for additional information on ID (small insertion and deletion) mutation
+See \url{https://github.com/steverozen/ICAMS/blob/v3.0.9-branch/data-raw/PCAWG7_indel_classification_2021_09_03.xlsx}
+for additional information on ID (small insertions and deletions) mutation
 classification.
 
 See the documentation for \code{\link{Canonicalize1Del}} which first handles
@@ -129,22 +147,8 @@ See the code for unexported function \code{\link{CanonicalizeID}}
 and the functions it calls for handling of insertions.
 }
 
-\section{Note}{
-
-SBS 192 and DBS 144 catalogs include only mutations in transcribed regions.
-In ID (small insertion and deletion) catalogs, deletion repeat sizes range
-from 0 to 5+, but for plotting and end-user documentation deletion repeat
-sizes range from 1 to 6+.
-}
-
-\section{Comments}{
-
-To add or change attributes of the catalog, you can use function
-\code{\link[base]{attr}}. \cr For example, \code{attr(catalog, "abundance")
-<- custom.abundance}.
-}
-
 \examples{
+\dontrun{
 file <- c(system.file("extdata/Mutect-vcf",
                       "Mutect.GRCh37.s1.vcf",
                       package = "ICAMS"))
@@ -155,4 +159,5 @@ if (requireNamespace("BSgenome.Hsapiens.1000genomes.hs37d5", quietly = TRUE)) {
                                         region = "genome",
                                         output.file =
                                         file.path(tempdir(), "Mutect"))}
+}                                        
 }

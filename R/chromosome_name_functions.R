@@ -31,6 +31,11 @@ StandardChromName <- function(df) {
   if (sum(grepl("M", df[[1]])) > 0) {
     df <- df[-grep("M", df[[1]]), ]
   }
+  
+  # Is there any row in df whose Chromosome names contain "JH"?
+  if (sum(grepl("JH", df[[1]])) > 0) {
+    df <- df[-grep("JH", df[[1]]), ]
+  }
 
   # Remove the "chr" character in the Chromosome's name
   df[, 1] <- sub(pattern = "chr", replacement = "", df[[1]])
@@ -47,10 +52,10 @@ StandardChromName <- function(df) {
 #' @return A \strong{list} with the elements
 #' * \code{df} a data frame with variants that had "legal" chromosome
 #'   names (see below for illegal chromosome names).
-#'   Leading "chr" strings are removed.
-#' * \code{discarded.variants}: \strong{Non-NULL only if} there
-#'   variants with illegal chromosome names; these are
-#'   names that contain the strings "GL", "Hs", "KI", "M", "random".
+#'   
+#' * \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+#' with illegal chromosome names; these are names that contain the strings "GL",
+#' "KI", "random", "Hs", "M", "JH", "fix", "alt".
 #' @md
 #'
 #' @keywords internal
@@ -137,13 +142,98 @@ StandardChromNameNew <- function(df, name.of.VCF = NULL) {
   } else {
     df5 <- df4
   }
+  
+  # Is there any row in df whose Chromosome names contain "JH"?
+  if (sum(grepl("JH", df5$CHROM)) > 0) {
+    warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
+            " ", sum(grepl("JH", df5$CHROM)), " row out of ",
+            nrow(df), " had chromosome names that contain 'JH' and ",
+            "were removed. ",
+            "See discarded.variants in the return value for more details")
+    df6 <- df5[-grep("JH", df5$CHROM), ]
+    df6.to.remove <- df5[grep("JH", df5$CHROM), ]
+    df6.to.remove$discarded.reason <- 'Chromosome name contains "JH"'
+    discarded.variants <-
+      dplyr::bind_rows(discarded.variants, df6.to.remove)
+  } else {
+    df6 <- df5
+  }
+  
+  # Is there any row in df whose Chromosome names contain "fix"?
+  if (sum(grepl("fix", df6$CHROM)) > 0) {
+    warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
+            " ", sum(grepl("fix", df6$CHROM)), " row out of ",
+            nrow(df), " had chromosome names that contain 'fix' and ",
+            "were removed. ",
+            "See discarded.variants in the return value for more details")
+    df7 <- df6[-grep("fix", df6$CHROM), ]
+    df7.to.remove <- df6[grep("fix", df6$CHROM), ]
+    df7.to.remove$discarded.reason <- 'Chromosome name contains "fix"'
+    discarded.variants <-
+      dplyr::bind_rows(discarded.variants, df7.to.remove)
+  } else {
+    df7 <- df6
+  }
+  
+  # Is there any row in df whose Chromosome names contain "alt"?
+  if (sum(grepl("alt", df7$CHROM)) > 0) {
+    warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
+            " ", sum(grepl("alt", df7$CHROM)), " row out of ",
+            nrow(df), " had chromosome names that contain 'alt' and ",
+            "were removed. ",
+            "See discarded.variants in the return value for more details")
+    df8 <- df7[-grep("alt", df7$CHROM), ]
+    df8.to.remove <- df7[grep("alt", df7$CHROM), ]
+    df8.to.remove$discarded.reason <- 'Chromosome name contains "alt"'
+    discarded.variants <-
+      dplyr::bind_rows(discarded.variants, df8.to.remove)
+  } else {
+    df8 <- df7
+  }
 
   if (nrow(discarded.variants) == 0) {
-    return(list(df = df5))
+    return(list(df = df8))
   } else {
-    return(list(df = df5, discarded.variants = discarded.variants))
+    return(list(df = df8, discarded.variants = discarded.variants))
   }
 }
+
+#' Select variants according to chromosome names specified by user
+#'
+#' @param df An in-memory data.frame representing a VCF.
+#' 
+#' @param chr.names.to.process A character vector specifying the chromosome
+#'   names in \code{df} whose variants will be kept.
+#'
+#' @param name.of.VCF Name of the VCF file.
+#'
+#' @return A \strong{list} with the elements
+#' * \code{df}: A data frame with variants only from chromosomes specified by
+#' \code{chr.names.to.process}.
+#'   
+#' * \code{discarded.variants}: \strong{Non-NULL only if} there are variants
+#' that are from chromosomes not specified by \code{chr.names.to.process}.
+#' @md
+#'
+#' @keywords internal
+SelectVariantsByChromName <- 
+  function(df, chr.names.to.process, name.of.VCF = NULL) {
+    df1 <- dplyr::filter(df, CHROM %in% chr.names.to.process)
+    discarded.variants <- dplyr::filter(df, !CHROM %in% chr.names.to.process)
+    
+    if (nrow(discarded.variants) == 0) {
+      return(list(df = df1))
+    } else {
+      warning("In VCF ", ifelse(is.null(name.of.VCF), "", dQuote(name.of.VCF)),
+              " ", nrow(discarded.variants), " row out of ",
+              nrow(df), " had chromosome names that were not selected by user and ",
+              "were removed. ",
+              "See discarded.variants in the return value for more details")
+      discarded.variants$discarded.reason <- 'Chromosome names not selected by user'
+      return(list(df = df1, discarded.variants = discarded.variants))
+    }
+  }
+
 
 #' Check and, if possible, correct the chromosome names in a VCF \code{data.frame}.
 #'

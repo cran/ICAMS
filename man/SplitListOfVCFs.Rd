@@ -10,11 +10,15 @@ SplitListOfVCFs(
   variant.caller,
   max.vaf.diff = 0.02,
   num.of.cores = 1,
-  suppress.discarded.variants.warnings = TRUE
+  suppress.discarded.variants.warnings = TRUE,
+  always.merge.SBS = FALSE,
+  chr.names.to.process = NULL
 )
 }
 \arguments{
-\item{list.of.vcfs}{List of VCFs as in-memory data.frames.}
+\item{list.of.vcfs}{List of VCFs as in-memory data frames. The VCFs should
+have \code{VAF} and \code{read.depth} information added. See
+\code{ReadVCFs} for more details.}
 
 \item{variant.caller}{Name of the variant caller that produces the VCF, can
 be either \code{"strelka"}, \code{"mutect"}, \code{"freebayes"} or
@@ -25,7 +29,8 @@ SBSs into DBS.}
 the absolute difference of VAFs for adjacent SBSs is bigger than
 \code{max.vaf.diff}, then these adjacent SBSs are likely to be "merely"
 asynchronous single base mutations, opposed to a simultaneous doublet
-mutation or variants involving more than two consecutive bases.}
+mutation or variants involving more than two consecutive bases. Use negative
+value (e.g. -1) to suppress merging adjacent SBSs to DBS.}
 
 \item{num.of.cores}{The number of cores to use. Not available on Windows
 unless \code{num.of.cores = 1}.}
@@ -33,6 +38,16 @@ unless \code{num.of.cores = 1}.}
 \item{suppress.discarded.variants.warnings}{Logical. Whether to suppress
 warning messages showing information about the discarded variants. Default
 is TRUE.}
+
+\item{always.merge.SBS}{If \code{TRUE} merge adjacent SBSs as DBSs regardless
+of VAFs and regardless of the value of \code{max.vaf.diff}. It is an error
+to set this to \code{TRUE} when \code{variant.caller = "mutect"}.}
+
+\item{chr.names.to.process}{A character vector specifying the chromosome
+names in VCF whose variants will be kept and processed, other chromosome
+variants will be discarded. If \code{NULL}(default), all variants will be kept
+except those on chromosomes with names that contain strings "GL", "KI",
+"random", "Hs", "M", "JH", "fix", "alt".}
 }
 \description{
 Split each VCF into SBS, DBS, and ID VCFs (plus
@@ -51,4 +66,10 @@ that were excluded from the analysis. See the added extra column
 }
 }
 
-\keyword{internal}
+\examples{
+file <- c(system.file("extdata/Mutect-vcf",
+                      "Mutect.GRCh37.s1.vcf",
+                      package = "ICAMS"))
+list.of.vcfs <- ReadVCFs(file, variant.caller = "mutect")
+split.vcfs <- SplitListOfVCFs(list.of.vcfs, variant.caller = "mutect")
+}

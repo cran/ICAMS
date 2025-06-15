@@ -2,7 +2,8 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{ReadAndSplitStrelkaSBSVCFs}
 \alias{ReadAndSplitStrelkaSBSVCFs}
-\title{Read and split Strelka SBS VCF files}
+\title{\strong{[Deprecated, use ReadAndSplitVCFs(variant.caller = "strelka") instead]}
+Read and split Strelka SBS VCF files}
 \usage{
 ReadAndSplitStrelkaSBSVCFs(
   files,
@@ -25,6 +26,7 @@ warning messages showing information about the discarded variants. Default
 is TRUE.}
 }
 \description{
+\strong{[Deprecated, use ReadAndSplitVCFs(variant.caller = "strelka") instead]}
 The function will find and merge adjacent SBS pairs into DBS if their VAFs
 are very similar. The default threshold value for VAF is 0.02.
 }
@@ -43,10 +45,12 @@ that were excluded from the analysis. See the added extra column
 }
 
 \examples{
+\dontrun{
 file <- c(system.file("extdata/Strelka-SBS-vcf",
                       "Strelka.SBS.GRCh37.s1.vcf",
                       package = "ICAMS"))
 list.of.vcfs <- ReadAndSplitStrelkaSBSVCFs(file)
+}
 }
 \seealso{
 \code{\link{StrelkaSBSVCFFilesToCatalog}}

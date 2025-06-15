@@ -4,7 +4,13 @@
 \alias{SplitOneVCF}
 \title{Split a VCF into SBS, DBS, and ID VCFs, plus a list of other mutations}
 \usage{
-SplitOneVCF(vcf.df, max.vaf.diff = 0.02, name.of.VCF = NULL)
+SplitOneVCF(
+  vcf.df,
+  max.vaf.diff = 0.02,
+  name.of.VCF = NULL,
+  always.merge.SBS = FALSE,
+  chr.names.to.process = NULL
+)
 }
 \arguments{
 \item{vcf.df}{An in-memory data.frame representing a VCF, including
@@ -14,9 +20,19 @@ VAFs, which are added by \code{\link{ReadVCF}}.}
 the absolute difference of VAFs for adjacent SBSs is bigger than
 \code{max.vaf.diff}, then these adjacent SBSs are likely to be "merely"
 asynchronous single base mutations, opposed to a simultaneous doublet
-mutation or variants involving more than two consecutive bases.}
+mutation or variants involving more than two consecutive bases. Use negative
+value (e.g. -1) to suppress merging adjacent SBSs to DBS.}
 
 \item{name.of.VCF}{Name of the VCF file.}
+
+\item{always.merge.SBS}{If \code{TRUE} merge adjacent SBSs as DBSs
+regardless of VAFs and regardless of the value of \code{max.vaf.diff}.}
+
+\item{chr.names.to.process}{A character vector specifying the chromosome
+names in VCF whose variants will be kept and processed, other chromosome
+variants will be discarded. If \code{NULL}(default), all variants will be kept
+except those on chromosomes with names that contain strings "GL", "KI",
+"random", "Hs", "M", "JH", "fix", "alt".}
 }
 \value{
 A list with 3 in-memory VCFs and discarded variants that were not
@@ -24,8 +40,7 @@ A list with 3 in-memory VCFs and discarded variants that were not
 
  * \code{SBS}: VCF with only single base substitutions.
 
- * \code{DBS}: VCF with only doublet base substitutions
-  as called by Mutect.
+ * \code{DBS}: VCF with only doublet base substitutions.
 
  * \code{ID}: VCF with only small insertions and deletions.
 

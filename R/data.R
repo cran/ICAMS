@@ -9,9 +9,9 @@
 #' @format A list of character vectors indicating the standard
 #'   orders of row names in catalogs.
 #'
-#' @inheritSection MutectVCFFilesToCatalogAndPlotToPdf ID classification
+#' @inheritSection VCFsToCatalogsAndPlotToPdf ID classification
 #'
-#' @note In ID (small insertion and deletion) catalogs, deletion repeat sizes
+#' @note In ID (small insertions and deletions) catalogs, deletion repeat sizes
 #'   range from 0 to 5+, but for plotting and end-user documentation deletion
 #'   repeat sizes range from 1 to 6+. In ID83 catalogs, deletion repeat sizes
 #'   range from 0 to 5.
@@ -124,7 +124,7 @@ NULL
 #' This data is designed to be used as an example in function \cr
 #' \code{\link{PlotTransBiasGeneExp}} and \code{\link{PlotTransBiasGeneExpToPdf}}.
 #'
-#' @format A \code{\link{data.table}} which contains the expression values of genes.
+#' @format A \code{\link[data.table]{data.table}} which contains the expression values of genes.
 #'   
 #' @name GeneExpressionData
 #' 
@@ -158,9 +158,9 @@ if(getRversion() >= "2.15.1") {
                            "ALT.y", "ref2alt", "minus1bs", "minus2bs", "plus1bs",
                            "plus2bs", "POS.plus.one", "HIGH", "POS.y", "VAF.x",
                            "VAF.y", "delete.flag", "trans.ranges.GRCh37", "cols",
-                           "Ensembl.gene.ID", "readthrough", "exp.value", 
+                           "Ensembl.gene.ID", "readthrough", "exp.value", "dna.region", 
                            "trans.end.pos", "trans.start.pos", "read.depth", "VAF", 
                            "read.depth.x", "read.depth.y","exp.level", "FILTER",
                            "trans.Ensembl.gene.ID", "..col.names.order", "remark.for.DBS",
-                           "..column.to.use"))
+                           "..column.to.use", "SampleID", "variable", "value", "chrom.y"))
 }

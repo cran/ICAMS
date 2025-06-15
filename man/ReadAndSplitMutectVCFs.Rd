@@ -2,7 +2,8 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{ReadAndSplitMutectVCFs}
 \alias{ReadAndSplitMutectVCFs}
-\title{Read and split Mutect VCF files}
+\title{\strong{[Deprecated, use ReadAndSplitVCFs(variant.caller = "mutect") instead]}
+Read and split Mutect VCF files}
 \usage{
 ReadAndSplitMutectVCFs(
   files,
@@ -21,8 +22,8 @@ remove all of the path up to and including the last path separator (if any)
 in \code{files} and file paths without extensions (and the leading dot)
 will be used as the names of the VCF files.}
 
-\item{tumor.col.names}{Optional. Character vector of column names in VCFs
-which contain the tumor sample information. The order of names in
+\item{tumor.col.names}{Optional. Vector of column names or column indices in
+VCFs which contain the tumor sample information. The order of elements in
 \code{tumor.col.names} should match the order of VCFs specified in
 \code{files}. If \code{tumor.col.names} is equal to \code{NA}(default),
 this function will use the 10th column in all the VCFs to calculate VAFs.
@@ -33,6 +34,7 @@ warning messages showing information about the discarded variants. Default
 is TRUE.}
 }
 \description{
+\strong{[Deprecated, use ReadAndSplitVCFs(variant.caller = "mutect") instead]}
 Read and split Mutect VCF files
 }
 \section{Value}{
@@ -49,10 +51,12 @@ that were excluded from the analysis. See the added extra column
 }
 
 \examples{
+\dontrun{
 file <- c(system.file("extdata/Mutect-vcf",
                       "Mutect.GRCh37.s1.vcf",
                       package = "ICAMS"))
 list.of.vcfs <- ReadAndSplitMutectVCFs(file)
+}  
 }
 \seealso{
 \code{\link{MutectVCFFilesToCatalog}}

@@ -2,7 +2,8 @@
 % Please edit documentation in R/shiny_related_functions.R
 \name{ReadStrelkaIDVCFs}
 \alias{ReadStrelkaIDVCFs}
-\title{Read Strelka ID (small insertion and deletion) VCF files}
+\title{\strong{[Deprecated, use ReadAndSplitVCFs(variant.caller = "strelka") instead]}
+Read Strelka ID (small insertions and deletions) VCF files}
 \usage{
 ReadStrelkaIDVCFs(files, names.of.VCFs = NULL)
 }
@@ -20,20 +21,23 @@ names of the VCF files.}
 A list of data frames containing data lines of the VCF files.
 }
 \description{
-Read Strelka ID (small insertion and deletion) VCF files
+\strong{[Deprecated, use ReadAndSplitVCFs(variant.caller = "strelka") instead]}
+Read Strelka ID (small insertions and deletions) VCF files
 }
 \section{Note}{
 
-In ID (small insertion and deletion) catalogs, deletion repeat sizes range
+In ID (small insertions and deletions) catalogs, deletion repeat sizes range
 from 0 to 5+, but for plotting and end-user documentation deletion repeat
 sizes range from 1 to 6+.
 }
 
 \examples{
+\dontrun{
 file <- c(system.file("extdata/Strelka-ID-vcf",
                       "Strelka.ID.GRCh37.s1.vcf",
                       package = "ICAMS"))
 list.of.vcfs <- ReadStrelkaIDVCFs(file)
+}
 }
 \seealso{
 \code{\link{StrelkaIDVCFFilesToCatalog}}
